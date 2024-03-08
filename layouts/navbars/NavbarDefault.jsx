@@ -15,7 +15,8 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
         onToggle={(collapsed) => setExpandedMenu(collapsed)}
         expanded={expandedMenu}
         expand="lg"
-        className={`navbar p-2 bg-primary`}
+        style={{ backgroundColor: "#0c1959b3" }}
+        className={`navbar p-2`}
       >
         <Container fluid className="px-0">
           <Navbar.Brand as={Link} href="/">

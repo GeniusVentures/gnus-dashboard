@@ -6,7 +6,7 @@ import { Provider } from "react-redux";
 import { store } from "../store/store";
 import "../styles/theme.scss";
 
-function ETHDenver({ Component, pageProps }) {
+function GNUSDashboard({ Component, pageProps }) {
   const router = useRouter();
   const pageURL = process.env.baseURL + router.pathname;
   const title = "GNUS.AI Dashboard";
@@ -44,4 +44,4 @@ function ETHDenver({ Component, pageProps }) {
   );
 }
 
-export default ETHDenver;
+export default GNUSDashboard;

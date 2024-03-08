@@ -11,6 +11,11 @@ const NavbarDefaultRoutes = [
     menuitem: "Analytics",
     link: "/analytics",
   },
+  {
+    id: uuid(),
+    menuitem: "Wallet",
+    link: "/wallet",
+  },
 ];
 
 export default NavbarDefaultRoutes;
