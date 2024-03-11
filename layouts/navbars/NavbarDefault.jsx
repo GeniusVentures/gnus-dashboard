@@ -4,6 +4,7 @@ import { Image, Navbar, Nav, Container } from "react-bootstrap";
 import NavDropdownMain from "../../sub-components/navbar/NavDropdownMain";
 import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
+import Search from "sub-components/navbar/Search";
 // import DarkLightMode from "layouts/DarkLightMode";
 
 const NavbarDefault = ({ stSetter, headerstyle }) => {
@@ -34,7 +35,7 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
             <span className="icon-bar bottom-bar"></span>
           </Navbar.Toggle>
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-3">
+            <Nav className="ms-3 me-4">
               {NavbarDefaultRoutes.map((item, index) => {
                 if (item.children === undefined) {
                   return (
@@ -59,7 +60,10 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
                 }
               })}
             </Nav>
-            <Nav className="navbar-nav navbar-right-wrap ms-auto d-flex nav-top-wrap">
+            <Nav className="mx-auto">
+              <Search />
+            </Nav>
+            <Nav className="ms-auto navbar-nav navbar-right-wrap nav-top-wrap">
               <Socials />
             </Nav>
           </Navbar.Collapse>

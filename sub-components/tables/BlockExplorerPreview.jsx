@@ -30,7 +30,7 @@ const BlockExplorerPreview = ({ blockData }) => {
                     return (
                       <tr
                         onClick={() => {
-                          router.push(`/blocks/${item.block}`);
+                          router.push(`/block/${item.block}`);
                         }}
                         className="text-center cursor-pointer"
                         key={index}

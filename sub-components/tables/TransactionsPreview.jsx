@@ -32,7 +32,7 @@ const TransactionsPreview = ({ transData }) => {
                     return (
                       <tr
                         onClick={() => {
-                          router.push(`/transactions/${item.txHash}`);
+                          router.push(`/transaction/${item.txHash}`);
                         }}
                         className="text-center cursor-pointer"
                         key={index}

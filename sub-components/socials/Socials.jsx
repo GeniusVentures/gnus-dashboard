@@ -11,6 +11,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/logo/gnus-icon-white.png"
           alt="GNUS.AI Icon"
@@ -22,7 +23,12 @@ const Socials = () => {
         target="_blank"
         rel="noreferrer noopener"
       >
-        <Image height={30} src="images/socials/github.png" alt="GitHub Icon" />
+        <Image
+          className="my-1"
+          height={30}
+          src="images/socials/github.png"
+          alt="GitHub Icon"
+        />
       </Link>
       <Link
         className="mx-2"
@@ -30,7 +36,12 @@ const Socials = () => {
         target="_blank"
         rel="noreferrer noopener"
       >
-        <Image height={30} src="images/socials/x-logo.png" alt="X Icon" />
+        <Image
+          className="my-1"
+          height={30}
+          src="images/socials/x-logo.png"
+          alt="X Icon"
+        />
       </Link>
       <Link
         className="mx-2"
@@ -39,6 +50,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/socials/youtube.png"
           alt="YouTube Icon"
@@ -51,6 +63,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/socials/instagram.png"
           alt="Instagram Icon"
@@ -63,6 +76,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/socials/linkedin.png"
           alt="LinkedIn Icon"
@@ -75,6 +89,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/socials/telegram.png"
           alt="Telegram Icon"
@@ -87,6 +102,7 @@ const Socials = () => {
         rel="noreferrer noopener"
       >
         <Image
+          className="my-1"
           height={30}
           src="images/socials/discord.png"
           alt="Discord Icon"

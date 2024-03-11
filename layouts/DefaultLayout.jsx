@@ -7,10 +7,15 @@ import NavbarDefault from "../layouts/navbars/NavbarDefault";
 
 const DefaultLayout = (props) => {
   useEffect(() => {
-    document.body.className = "bg-gray-100";
+    document.body.className = "bg-primary";
   }, []);
   return (
     <Fragment>
+      <div className="video-background">
+        <video autoPlay loop muted>
+          <source src="/videos/gnus-ai-background.mp4" type="video/mp4" />
+        </video>
+      </div>
       <NavbarDefault />
       <main>{props.children}</main>
       {/* <Footer /> */}
