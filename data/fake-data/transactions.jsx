@@ -5,6 +5,7 @@ const transactions = [
     type: "Test TX",
     value: "0.125 GNUS",
     time: "2024-03-08T18:31:29.771Z",
+    height: "357443",
   },
   {
     txHash:
@@ -12,6 +13,7 @@ const transactions = [
     type: "Test TX",
     value: "0.734 GNUS",
     time: "2024-03-08T18:31:29.771Z",
+    height: "618198",
   },
   {
     txHash:
@@ -19,6 +21,7 @@ const transactions = [
     type: "Test TX",
     value: "0.256 GNUS",
     time: "2024-03-08T18:31:29.771Z",
+    height: "1674651",
   },
   {
     txHash:
@@ -26,6 +29,7 @@ const transactions = [
     type: "Test TX",
     value: "2.567 GNUS",
     time: "2024-03-08T18:31:29.771Z",
+    height: "1616169",
   },
   {
     txHash:
@@ -33,6 +37,7 @@ const transactions = [
     type: "Test TX",
     value: "1.002 GNUS",
     time: "2024-03-08T18:31:29.771Z",
+    height: "165968",
   },
   {
     txHash:
@@ -40,6 +45,7 @@ const transactions = [
     type: "Test TX",
     value: "0.815 GNUS",
     time: "2024-03-08T19:36:29.771Z",
+    height: "15686684",
   },
   {
     txHash:
@@ -47,6 +53,7 @@ const transactions = [
     type: "Test TX",
     value: "0.369 GNUS",
     time: "2024-03-08T19:37:29.771Z",
+    height: "1981616",
   },
 ];
 

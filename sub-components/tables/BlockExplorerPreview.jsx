@@ -1,16 +1,18 @@
-import { Fragment, useEffect } from "react";
-import { Card, Table } from "react-bootstrap";
+import { Fragment, useEffect, useState } from "react";
+import { Card, Modal, Table } from "react-bootstrap";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import elapsedTime from "functions/time/elapseTime";
 import { useRouter } from "next/router";
+import Link from "next/link";
 const BlockExplorerPreview = ({ blockData }) => {
   const [parent] = useAutoAnimate();
   const router = useRouter();
+  const [modal, setModal] = useState(false);
 
   return (
     <Fragment>
-      <Card>
-        <h3 className="text-white text-center mt-3 display-7">Recent Blocks</h3>
+      <Card style={{ backdropFilter: "blur(5px)" }}>
+        <h3 className="text-white text-center mt-3 fs-4">Recent Blocks</h3>
         <Card.Body className="pt-1">
           <Card className="bg-white table-responsive">
             <Table className="mb-0">
@@ -28,17 +30,18 @@ const BlockExplorerPreview = ({ blockData }) => {
                   .slice(0, 9)
                   .map((item, index) => {
                     return (
-                      <tr
-                        onClick={() => {
-                          router.push(`/block/${item.block}`);
-                        }}
-                        className="text-center cursor-pointer"
-                        key={index}
-                      >
-                        <td className="text-primary">{item.block}</td>
+                      <tr className="text-center" key={index}>
+                        <td className="text-primary">
+                          <Link
+                            className="text-primary"
+                            href={`/block/${item.block}`}
+                          >
+                            <u>{item.block}</u>
+                          </Link>
+                        </td>
                         <td className="text-primary">{item.proposer}</td>
                         <td className="text-primary">{item.txs}</td>
-                        <td className="text-primary">
+                        <td className="text-primary text-nowrap">
                           {elapsedTime(item.time)} ago
                         </td>
                       </tr>
@@ -48,7 +51,28 @@ const BlockExplorerPreview = ({ blockData }) => {
             </Table>
           </Card>
         </Card.Body>
+        <Card.Footer
+          className="p-2"
+          type="button"
+          onClick={() => {
+            setModal(true);
+          }}
+        >
+          <p className="mb-0 text-white text-center">
+            Expand{" "}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 -960 960 960"
+              width="24"
+              fill="currentColor"
+            >
+              <path d="M200-200v-240h80v160h160v80H200Zm480-320v-160H520v-80h240v240h-80Z" />
+            </svg>
+          </p>
+        </Card.Footer>
       </Card>
+      <Modal show={modal} onHide={() => setModal(false)}></Modal>
     </Fragment>
   );
 };

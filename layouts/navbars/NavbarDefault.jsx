@@ -1,3 +1,4 @@
+// import node module libraries
 import { Fragment, useState } from "react";
 import Link from "next/link";
 import { Image, Navbar, Nav, Container } from "react-bootstrap";
@@ -5,7 +6,6 @@ import NavDropdownMain from "../../sub-components/navbar/NavDropdownMain";
 import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
 import Search from "sub-components/navbar/Search";
-// import DarkLightMode from "layouts/DarkLightMode";
 
 const NavbarDefault = ({ stSetter, headerstyle }) => {
   const [expandedMenu, setExpandedMenu] = useState(false);
@@ -16,7 +16,15 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
         onToggle={(collapsed) => setExpandedMenu(collapsed)}
         expanded={expandedMenu}
         expand="lg"
-        style={{ backgroundColor: "#0c1959b3" }}
+        style={{
+          backgroundColor: "#0c1959b3",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          backdropFilter: "blur(10px)",
+        }}
         className={`navbar p-2`}
       >
         <Container fluid className="px-0">
@@ -69,6 +77,7 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
           </Navbar.Collapse>
         </Container>
       </Navbar>
+      <div style={{ paddingTop: "100px" }} />
     </Fragment>
   );
 };

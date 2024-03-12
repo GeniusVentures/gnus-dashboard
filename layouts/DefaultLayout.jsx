@@ -1,9 +1,6 @@
-// import node module libraries
 import { Fragment, useEffect } from "react";
-
-// import layouts
 import NavbarDefault from "../layouts/navbars/NavbarDefault";
-// import Footer from "layouts/footers/Footer";
+import Footer from "layouts/footers/Footer";
 
 const DefaultLayout = (props) => {
   useEffect(() => {
@@ -18,7 +15,7 @@ const DefaultLayout = (props) => {
       </div>
       <NavbarDefault />
       <main>{props.children}</main>
-      {/* <Footer /> */}
+      <Footer />
     </Fragment>
   );
 };

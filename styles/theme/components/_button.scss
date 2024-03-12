@@ -4,12 +4,29 @@
 // btn play
 .btn-play {
   background-color: var(--#{$prefix}white);
+  border-color: var(--#{$prefix}white);
+
   color: var(--#{$prefix}primary);
   transition: 0.2s ease;
   &:hover {
     background-color: var(--#{$prefix}primary);
     color: var(--#{$prefix}white);
     transition: 0.2s ease;
+  }
+}
+
+//btn-trans
+.btn-trans {
+  background-color: #0c1959b3;
+  border-color: #0c1959b3;
+  color: $white;
+  transition: 0.2s ease;
+  backdrop-filter: blur(5px);
+  &:hover {
+    background-color: #08113db3;
+    color: $white;
+    transition: 0.2s ease;
+    backdrop-filter: blur(5px);
   }
 }
 
