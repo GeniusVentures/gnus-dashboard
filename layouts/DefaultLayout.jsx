@@ -1,6 +1,7 @@
 import { Fragment, useEffect } from "react";
 import NavbarDefault from "../layouts/navbars/NavbarDefault";
 import Footer from "layouts/footers/Footer";
+import { Image } from "react-bootstrap";
 
 const DefaultLayout = (props) => {
   useEffect(() => {
@@ -8,10 +9,8 @@ const DefaultLayout = (props) => {
   }, []);
   return (
     <Fragment>
-      <div className="video-background">
-        <video autoPlay loop muted>
-          <source src="/videos/gnus-ai-background.mp4" type="video/mp4" />
-        </video>
+      <div className="image-background">
+        <Image src="/images/background/brain-still.png" />
       </div>
       <NavbarDefault />
       <main style={{ minHeight: "70vh" }}>{props.children}</main>
