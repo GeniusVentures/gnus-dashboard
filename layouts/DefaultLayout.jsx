@@ -14,7 +14,7 @@ const DefaultLayout = (props) => {
         </video>
       </div>
       <NavbarDefault />
-      <main>{props.children}</main>
+      <main style={{ minHeight: "70vh" }}>{props.children}</main>
       <Footer />
     </Fragment>
   );

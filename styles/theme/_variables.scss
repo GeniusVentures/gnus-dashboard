@@ -216,7 +216,7 @@ $border-widths: (
 ) !default;
 
 // $border-color: $gray-200 !default;
-$border-color: var(--#{$prefix}border-color) !default;
+$border-color: $white !default;
 $border-color-translucent: rgba($gray-300, 1) !default;
 
 // scss-docs-start border-radius-variables

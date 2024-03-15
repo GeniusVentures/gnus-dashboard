@@ -18,7 +18,7 @@
 //btn-trans
 .btn-trans {
   background-color: #0c1959b3;
-  border-color: #0c1959b3;
+  border: 1px solid #ffffff !important; /* Add solid border with white color */
   color: $white;
   transition: 0.2s ease;
   backdrop-filter: blur(5px);
@@ -27,6 +27,7 @@
     color: $white;
     transition: 0.2s ease;
     backdrop-filter: blur(5px);
+    border: 1px solid #ffffff !important; /* Add solid border with white color */
   }
 }
 

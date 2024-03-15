@@ -24,7 +24,8 @@
   min-height: 100%;
   width: auto;
   height: auto;
-  z-index: -1; /* Ensure the video stays behind other content */
+  z-index: -2; /* Ensure the video stays behind other content */
+  opacity: 0.1;
 }
 
 // bg cover
