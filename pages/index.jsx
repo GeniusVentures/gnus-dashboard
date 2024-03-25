@@ -40,9 +40,7 @@ const Landing = () => {
     <Fragment>
       <Row className="justify-content-center mx-3 mx-lg-10">
         <div className="text-center mt-5">
-          <h1 className="display-5 text-white">
-            GNUS.AI Network Mainnet Dashboard
-          </h1>
+          <h1 className="display-5 text-white">GNUS.AI Testnet Dashboard</h1>
           <p className="text-white pb-2">Last updated: {updated}</p>
         </div>
         <Row className="px-0">

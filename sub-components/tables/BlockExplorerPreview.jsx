@@ -25,28 +25,25 @@ const BlockExplorerPreview = ({ blockData }) => {
                 </tr>
               </thead>
               <tbody ref={parent}>
-                {blockData
-                  .reverse()
-                  .slice(0, 9)
-                  .map((item, index) => {
-                    return (
-                      <tr className="text-center" key={index}>
-                        <td className="text-primary">
-                          <Link
-                            className="text-primary"
-                            href={`/block/${item.block}`}
-                          >
-                            <u>{item.block}</u>
-                          </Link>
-                        </td>
-                        <td className="text-primary">{item.proposer}</td>
-                        <td className="text-primary">{item.txs}</td>
-                        <td className="text-primary text-nowrap">
-                          {elapsedTime(item.time)} ago
-                        </td>
-                      </tr>
-                    );
-                  })}
+                {blockData.slice(0, 9).map((item, index) => {
+                  return (
+                    <tr className="text-center" key={index}>
+                      <td className="text-primary">
+                        <Link
+                          className="text-primary"
+                          href={`/block/${item.block}`}
+                        >
+                          <u>{item.block}</u>
+                        </Link>
+                      </td>
+                      <td className="text-primary">{item.proposer}</td>
+                      <td className="text-primary">{item.txs}</td>
+                      <td className="text-primary text-nowrap">
+                        {elapsedTime(item.time)} ago
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </Card>

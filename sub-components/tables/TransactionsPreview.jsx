@@ -27,32 +27,29 @@ const TransactionsPreview = ({ transData }) => {
                 </tr>
               </thead>
               <tbody ref={parent}>
-                {transData
-                  .reverse()
-                  .slice(0, 9)
-                  .map((item, index) => {
-                    return (
-                      <tr className="text-center" key={index}>
-                        <td className="text-primary">
-                          <Link
-                            className="text-primary"
-                            href={`/transaction/${item.txHash}`}
-                          >
-                            <u>
-                              {item.txHash.slice(0, 6) +
-                                "..." +
-                                item.txHash.slice(-6)}
-                            </u>
-                          </Link>
-                        </td>
-                        <td className="text-primary">{item.type}</td>
-                        <td className="text-primary">{item.value}</td>
-                        <td className="text-primary text-nowrap">
-                          {elapsedTime(item.time)} ago
-                        </td>
-                      </tr>
-                    );
-                  })}
+                {transData.slice(0, 9).map((item, index) => {
+                  return (
+                    <tr className="text-center" key={index}>
+                      <td className="text-primary">
+                        <Link
+                          className="text-primary"
+                          href={`/transaction/${item.txHash}`}
+                        >
+                          <u>
+                            {item.txHash?.slice(0, 6) +
+                              "..." +
+                              item.txHash?.slice(-6)}
+                          </u>
+                        </Link>
+                      </td>
+                      <td className="text-primary">{item.type}</td>
+                      <td className="text-primary">{item.value}</td>
+                      <td className="text-primary text-nowrap">
+                        {elapsedTime(item.time)} ago
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </Card>

@@ -10,7 +10,10 @@ const DefaultLayout = (props) => {
   return (
     <Fragment>
       <div className="image-background">
-        <Image src="/images/background/brain-still.png" />
+        <Image
+          src="/images/background/brain-still.png"
+          alt="Background image of a brain"
+        />
       </div>
       <NavbarDefault />
       <main style={{ minHeight: "70vh" }}>{props.children}</main>

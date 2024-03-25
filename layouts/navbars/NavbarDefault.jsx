@@ -23,9 +23,8 @@ const NavbarDefault = ({ stSetter, headerstyle }) => {
           left: 0,
           right: 0,
           zIndex: 1000,
-          backdropFilter: "blur(10px)",
         }}
-        className={`navbar p-2`}
+        className={`navbar p-2 blur`}
       >
         <Container fluid className="px-0">
           <Navbar.Brand as={Link} href="/">
