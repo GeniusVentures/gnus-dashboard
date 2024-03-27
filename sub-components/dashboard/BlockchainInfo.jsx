@@ -85,8 +85,8 @@ const BlockchainInfo = () => {
   useEffect(() => {
     setBlockData(fakeBlocks);
     setTransData(fakeTransactions);
-    newTransactions();
-    newBlocks();
+    // newTransactions();
+    // newBlocks();
   }, []);
 
   return (

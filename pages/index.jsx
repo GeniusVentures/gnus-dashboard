@@ -3,6 +3,7 @@ import { Button, Row } from "react-bootstrap";
 import BlockchainInfo from "sub-components/dashboard/BlockchainInfo";
 import { useRouter } from "next/router";
 import axios from "axios";
+import createNode from "functions/ipfs/createNode";
 
 const Landing = () => {
   const router = useRouter();
@@ -10,14 +11,15 @@ const Landing = () => {
 
   useEffect(() => {
     updateDate();
-    startLibp2p();
+    // startLibp2p();
+    createNode();
   }, []);
 
-  const startLibp2p = () => {
-    axios.get("/api/libp2p/startLibp2p").then((res) => {
-      console.log(res);
-    });
-  };
+  // const startLibp2p = () => {
+  //   axios.get("/api/libp2p/startLibp2p").then((res) => {
+  //     console.log(res);
+  //   });
+  // };
 
   const updateDate = () => {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
