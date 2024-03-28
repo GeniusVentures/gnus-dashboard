@@ -42,7 +42,12 @@ const Landing = () => {
     <Fragment>
       <Row className="justify-content-center mx-3 mx-lg-10">
         <div className="text-center mt-5">
-          <h1 className="display-5 text-white">GNUS.AI Testnet Dashboard</h1>
+          <h1
+            className="display-5 text-white"
+            style={{ fontFamily: "HKModularBold" }}
+          >
+            GNUS.AI Testnet Dashboard
+          </h1>
           <p className="text-white pb-2">Last updated: {updated}</p>
         </div>
         <Row className="px-0">
@@ -52,10 +57,10 @@ const Landing = () => {
       <Row className="justify-content-center mt-5">
         <Button
           onClick={() => router.push("/analytics")}
-          style={{ width: "300px" }}
-          className="btn btn-trans fs-3"
+          style={{ width: "350px", fontFamily: "HKModularBold" }}
+          className="btn btn-trans fs-3 pb-2 py-3"
         >
-          See Analytics
+          View Analytics
         </Button>
       </Row>
     </Fragment>

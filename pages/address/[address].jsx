@@ -27,7 +27,12 @@ const Blocks = () => {
   return (
     <Fragment>
       <Row className="justify-content-center mx-3 mx-lg-15 mb-10">
-        <h1 className="display-4 text-white mt-lg-5 mb-3">Address Details</h1>
+        <h1
+          className="display-4 text-white mt-lg-5 mb-3"
+          style={{ fontFamily: "HKModularBold" }}
+        >
+          Address Details
+        </h1>
         <Card className="p-5 px-lg-10 blur">
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">

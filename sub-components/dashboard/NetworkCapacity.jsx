@@ -10,7 +10,12 @@ const NetworkCapacity = () => {
   return (
     <Fragment>
       <Row className="">
-        <h2 className="display-6 text-white">Network Capacity</h2>
+        <h2
+          className="display-7 text-white"
+          style={{ fontFamily: "HKModularBold" }}
+        >
+          Network Capacity
+        </h2>
       </Row>
       <Row className="">
         <Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">

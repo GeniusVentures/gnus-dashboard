@@ -10,7 +10,12 @@ const SpentAssets = () => {
   return (
     <Fragment>
       <Row className="">
-        <h2 className="display-6 text-white">Spent Assets</h2>
+        <h2
+          className="display-7 text-white"
+          style={{ fontFamily: "HKModularBold" }}
+        >
+          Spent Assets
+        </h2>
       </Row>
       <Row className="">
         <Col xl={3} lg={3} md={4} sm={6} xs={12} className="mb-4">

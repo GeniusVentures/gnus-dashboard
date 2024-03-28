@@ -19,7 +19,12 @@ const Transaction = () => {
   return (
     <Fragment>
       <Row className="justify-content-center mx-3 mx-lg-15">
-        <h1 className="display-4 text-white mt-5 mb-3">Transaction Details</h1>
+        <h1
+          className="display-4 text-white mt-5 mb-3"
+          style={{ fontFamily: "HKModularBold" }}
+        >
+          Transaction Details
+        </h1>
         <Card style={{ backdropFilter: "blur(5px)" }} className="p-5 px-lg-10">
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
