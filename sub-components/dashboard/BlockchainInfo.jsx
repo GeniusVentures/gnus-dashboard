@@ -13,7 +13,7 @@ const BlockchainInfo = () => {
   const [blockchainInfo, setBlockchainInfo] = useState({
     height: "15,400,118",
     transactions: "1134369",
-    tokens: "825,139.47",
+    tokens: 825139.47,
   });
   const [transactions, setTransactions] = useState(1134369);
   const [blockHeight, setBlockHeight] = useState(3708);
@@ -102,7 +102,7 @@ const BlockchainInfo = () => {
           <Card className="h-100 blur">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Height</h4>
-              <p className="mb-0 display-4">{blockHeight}</p>
+              <p className="mb-0 display-4">{blockHeight.toLocaleString()}</p>
             </Card.Body>
           </Card>
         </Col>
@@ -110,7 +110,7 @@ const BlockchainInfo = () => {
           <Card className="h-100 blur">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Transactions</h4>
-              <p className="mb-0 display-4">{transactions}</p>
+              <p className="mb-0 display-4">{transactions.toLocaleString()}</p>
             </Card.Body>
           </Card>
         </Col>
@@ -118,7 +118,9 @@ const BlockchainInfo = () => {
           <Card className="h-100 blur">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Tokens</h4>
-              <p className="mb-0 display-4">{blockchainInfo.tokens}</p>
+              <p className="mb-0 display-4">
+                {blockchainInfo.tokens.toLocaleString()}
+              </p>
             </Card.Body>
           </Card>
         </Col>
