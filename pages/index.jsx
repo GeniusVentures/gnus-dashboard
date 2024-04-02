@@ -11,15 +11,7 @@ const Landing = () => {
 
   useEffect(() => {
     updateDate();
-    startLibp2p();
-    // createNode();
   }, []);
-
-  const startLibp2p = () => {
-    axios.get("/api/libp2p/startLibp2p").then((res) => {
-      console.log(res);
-    });
-  };
 
   const updateDate = () => {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

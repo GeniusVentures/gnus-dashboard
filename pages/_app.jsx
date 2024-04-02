@@ -1,10 +1,11 @@
+import "../styles/theme.scss";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import DefaultLayout from "../layouts/DefaultLayout";
 import { NextSeo } from "next-seo";
 import { Provider } from "react-redux";
 import { store } from "../store/store";
-import "../styles/theme.scss";
+import { IPFSWrapper } from "context/ipfs/IPFSContext";
 
 function GNUSDashboard({ Component, pageProps }) {
   const router = useRouter();
@@ -26,7 +27,7 @@ function GNUSDashboard({ Component, pageProps }) {
         openGraph={{
           url: pageURL,
           title: title,
-          site_name: "GNUS 2FA",
+          site_name: "GNUS Dashboard",
           images: [
             {
               url: "images/logo/funding-chain-logo.png",
@@ -36,9 +37,11 @@ function GNUSDashboard({ Component, pageProps }) {
         }}
       />
       <Provider store={store}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        <IPFSWrapper>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </IPFSWrapper>
       </Provider>
     </>
   );
