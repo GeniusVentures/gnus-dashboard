@@ -6,13 +6,18 @@ import { NextSeo } from "next-seo";
 import { Provider } from "react-redux";
 import { store } from "../store/store";
 import { IPFSWrapper } from "context/ipfs/IPFSContext";
-
+import { useEffect } from "react";
+import axios from "axios";
 function GNUSDashboard({ Component, pageProps }) {
   const router = useRouter();
   const pageURL = process.env.baseURL + router.pathname;
   const title = "GNUS.AI Dashboard";
 
   const Layout = DefaultLayout;
+
+  useEffect(() => {
+    axios.get("/api/libp2p/startLibp2p");
+  }, []);
 
   return (
     <>

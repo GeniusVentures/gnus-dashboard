@@ -3,7 +3,6 @@ import { Button, Row } from "react-bootstrap";
 import BlockchainInfo from "sub-components/dashboard/BlockchainInfo";
 import { useRouter } from "next/router";
 import axios from "axios";
-// import createNode from "functions/ipfs/createNode";
 
 const Landing = () => {
   const router = useRouter();

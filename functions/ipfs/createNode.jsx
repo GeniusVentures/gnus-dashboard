@@ -1,42 +1,89 @@
-// import Helia from "helia";
-// import TCP from "@libp2p/tcp";
-// import { noise } from "@chainsafe/libp2p-noise";
-// import { mplex } from "@libp2p/mplex";
+import { createHelia } from "helia";
+import { tcp } from "@libp2p/tcp";
+import { noise } from "@chainsafe/libp2p-noise";
+import { yamux } from "@chainsafe/libp2p-yamux";
+import { gossipsub } from "@chainsafe/libp2p-gossipsub";
+import { createDelegatedRoutingV1HttpApiClient } from "@helia/delegated-routing-v1-http-api-client";
+import { autoNAT } from "@libp2p/autonat";
+import { bootstrap } from "@libp2p/bootstrap";
+import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
+import { dcutr } from "@libp2p/dcutr";
+import { identify } from "@libp2p/identify";
+import { kadDHT } from "@libp2p/kad-dht";
+import { keychain, KeychainInit } from "@libp2p/keychain";
+import { mplex } from "@libp2p/mplex";
+import { ping } from "@libp2p/ping";
+import { webRTC, webRTCDirect } from "@libp2p/webrtc";
+import { webSockets } from "@libp2p/websockets";
+import { webTransport } from "@libp2p/webtransport";
+import { ipnsSelector } from "ipns/selector";
+import { ipnsValidator } from "ipns/validator";
+import * as libp2pInfo from "libp2p/version";
+import { name, version } from "data/ipfs/version";
+import { bootstrapConfig } from "data/ipfs/bootstrapConfig";
+import { createLibp2p as create } from "libp2p";
+import { MemoryBlockstore } from "blockstore-core";
+import { MemoryDatastore } from "datastore-core";
+import { Libp2p, PeerId } from "@libp2p/interface";
+import { DNS } from "@multiformats/dns";
+
+let node = null;
 
 const createNode = async () => {
-  // Initialize TCP transport
-  //   const transport = new TCP();
-  //   // Initialize Noise encryption
-  //   const noiseConfig = {
-  //     // Your Noise configuration here
-  //   };
-  //   const noiseSecure = new noise.Noise(noiseConfig);
-  //   // Initialize Mplex multiplexing
-  //   const multiplex = new mplex.Multiplex();
-  //   // Helia node configuration
-  //   const libp2pOptions = {
-  //     modules: {
-  //       transport: [transport],
-  //       streamMuxer: [multiplex],
-  //       connEncryption: [noiseSecure],
-  //     },
-  //     config: {
-  //       peerDiscovery: {
-  //         autoDial: true,
-  //       },
-  //     },
-  //   };
-  //   // Create Helia node
-  //   const node = new Helia(libp2pOptions);
-  //   // Start Helia node
-  //   node
-  //     .start()
-  //     .then(() => {
-  //       console.log("Helia node started successfully");
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error starting Helia node:", error);
-  //     });
+  const blockstore = new MemoryBlockstore();
+  const datastore = new MemoryDatastore();
+
+  const libp2p = await create({
+    peerId: PeerId,
+    dns: DNS,
+    addresses: {
+      listen: ["/webrtc"],
+    },
+    transports: [
+      tcp(),
+      circuitRelayTransport({
+        discoverRelays: 1,
+      }),
+      webRTC(),
+      webRTCDirect(),
+      webTransport(),
+      webSockets(),
+    ],
+    connectionEncryption: [noise()],
+    streamMuxers: [yamux(), mplex()],
+    peerDiscovery: [bootstrap(bootstrapConfig)],
+    services: {
+      pubsub: gossipsub(),
+      autoNAT: autoNAT(),
+      dcutr: dcutr(),
+      delegatedRouting: () =>
+        createDelegatedRoutingV1HttpApiClient("https://delegated-ipfs.dev"),
+      dht: kadDHT({
+        clientMode: true,
+        validators: {
+          ipns: ipnsValidator,
+        },
+        selectors: {
+          ipns: ipnsSelector,
+        },
+      }),
+      identify: identify(),
+      keychain: keychain(KeychainInit),
+      ping: ping(),
+    },
+  });
+
+  // Create Helia node
+  const heliaNode = await createHelia({
+    datastore,
+    blockstore,
+    libp2p,
+  }).catch((error) => {
+    console.error("Error starting Helia node:", error);
+  });
+  node = heliaNode;
+  console.log(node);
+  console.log(libp2p.getMultiaddrs());
 };
 
 export default createNode;
