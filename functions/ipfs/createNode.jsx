@@ -31,32 +31,39 @@ const createNode = async () => {
 			peerId: PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/0.0.0.0/tcp/0"],
+				listen: ["/ip4/192.168.10.132/tcp/51939"],
 			},
 			transports: [
 				tcp(),
-				webSockets(),
-				circuitRelayTransport({
-					discoverRelays: 1,
-				}),
+				// webSockets(),
+				// circuitRelayTransport({
+				// 	discoverRelays: 1,
+				// }),
 			],
-			connectionEncryption: [noise()],
+			// connectionEncryption: [noise()],
 			streamMuxers: [mplex()],
 			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
-				pubsub: gossipsub(),
-				dht: kadDHT({
-					clientMode: true,
-					validators: {
-						ipns: ipnsValidator,
-					},
-					selectors: {
-						ipns: ipnsSelector,
-					},
+				ping: ping({
+					protocolPrefix: "ipfs", // default
 				}),
-				identify: identify(),
-				keychain: keychain(KeychainInit),
-				// ping: ping(),
+
+				pubsub: gossipsub(),
+				// dht: kadDHT({
+				// 	clientMode: true,
+				// 	validators: {
+				// 		ipns: ipnsValidator,
+				// 	},
+				// 	selectors: {
+				// 		ipns: ipnsSelector,
+				// 	},
+				// }),
+				// identify: identify(),
+				// keychain: keychain(KeychainInit),
+				// ping: ping([
+				// 	"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+				// 	"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
+				// ]),
 			},
 		});
 
@@ -70,9 +77,7 @@ const createNode = async () => {
 		});
 		node = heliaNode;
 		console.log("line74: " + node.libp2p.getMultiaddrs()[0]);
-		libp2p.services.pubsub.subscribe(
-			"projects/pubsub-public-data/topics/nyc-citibike-trips",
-		);
+		libp2p.services.pubsub.subscribe("SuperGenius");
 
 		node.libp2p.addEventListener("connection:open", () => {
 			console.log("opened" + node.libp2p.getPeers().length);
