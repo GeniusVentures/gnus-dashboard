@@ -20,8 +20,8 @@ export const bootstrapConfig = {
 		// "/dns4/bootstrap.libp2p.io/tcp/443/wss/p2p/QmNnooDu7bfjPFoTZYxMNLWUee6bS44uoKv7zrcgP3wJzW",
 		// // Infura Bootstrappers
 		// "/dns4/ipfs.infura.io/tcp/443/wss/p2p/QmZ6TbgeokBhDJ2dKiiV5yyfT5xEnSsLVK91sTt1uVd8ZB",
-		// fuu
-		"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
-		"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
+		// // fuu
+		// "/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+		// "/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
 	],
 };

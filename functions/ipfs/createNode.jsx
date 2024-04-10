@@ -19,6 +19,7 @@ import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
 import { PeerId } from "@libp2p/interface";
 import { DNS } from "@multiformats/dns";
+import { plaintext } from "@libp2p/plaintext";
 
 let node = null;
 
@@ -31,7 +32,7 @@ const createNode = async () => {
 			peerId: PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/192.168.10.132/tcp/51939"],
+				listen: ["/ip4/192.168.10.132/tcp/51820"],
 			},
 			transports: [
 				tcp(),
@@ -40,14 +41,13 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			// connectionEncryption: [noise()],
+			connectionEncryption: [
+				//noise(),
+				plaintext(),
+			],
 			streamMuxers: [mplex()],
 			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
-				ping: ping({
-					protocolPrefix: "ipfs", // default
-				}),
-
 				pubsub: gossipsub(),
 				// dht: kadDHT({
 				// 	clientMode: true,

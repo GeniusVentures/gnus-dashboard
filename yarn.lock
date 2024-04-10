@@ -417,6 +417,18 @@
     progress-events "^1.0.0"
     uint8arraylist "^2.4.8"
 
+"@libp2p/interface@^1.1.6":
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/@libp2p/interface/-/interface-1.1.6.tgz#379e3201f776ca13482ea60d31c4c5d40d88f7de"
+  integrity sha512-CLz6TAZf+Mw1PCIU8pjMIct1uh3A1fIene2/t+E57Tw4uJLCBJE9CLed/Opxliy5RH0e32Aa6bi4QSXtkJTK7A==
+  dependencies:
+    "@multiformats/multiaddr" "^12.2.1"
+    it-pushable "^3.2.3"
+    it-stream-types "^2.0.1"
+    multiformats "^13.1.0"
+    progress-events "^1.0.0"
+    uint8arraylist "^2.4.8"
+
 "@libp2p/kad-dht@^12.0.10", "@libp2p/kad-dht@^12.0.8":
   version "12.0.10"
   resolved "https://registry.yarnpkg.com/@libp2p/kad-dht/-/kad-dht-12.0.10.tgz#54421447cad069d59e9d3ad1d6b97d82db043905"
@@ -551,6 +563,15 @@
     multiformats "^13.1.0"
     uint8arrays "^5.0.2"
 
+"@libp2p/peer-id@^4.0.9":
+  version "4.0.9"
+  resolved "https://registry.yarnpkg.com/@libp2p/peer-id/-/peer-id-4.0.9.tgz#2a08374f234e3d56c4b8a04ac434ab2f1d6cd143"
+  integrity sha512-XrGimVDNym7BXPGBJetC1RyNU8N22NJLBzjM1FXADnlUsJZyKRZOkE8wRTqpLvVptnQImqobe1PVPkirjxZEwA==
+  dependencies:
+    "@libp2p/interface" "^1.1.6"
+    multiformats "^13.1.0"
+    uint8arrays "^5.0.3"
+
 "@libp2p/peer-record@^7.0.11":
   version "7.0.11"
   resolved "https://registry.yarnpkg.com/@libp2p/peer-record/-/peer-record-7.0.11.tgz#ab7c367794eca34e7202601874e97c0affcbad18"
@@ -596,6 +617,18 @@
     it-first "^3.0.4"
     it-pipe "^3.0.1"
     uint8arrays "^5.0.2"
+
+"@libp2p/plaintext@^1.0.18":
+  version "1.0.18"
+  resolved "https://registry.yarnpkg.com/@libp2p/plaintext/-/plaintext-1.0.18.tgz#5b473203bf3278339ac9d9ba4ba07995d00f6236"
+  integrity sha512-e+KyXdxaW45uqn4oCX13Axu/L5ylKioHtKXlrC03V59b8ZCbf/2Gcb0ocLZIwHVwCRvoNRKiWQFCj3/L126fFQ==
+  dependencies:
+    "@libp2p/interface" "^1.1.6"
+    "@libp2p/peer-id" "^4.0.9"
+    it-protobuf-stream "^1.1.2"
+    it-stream-types "^2.0.1"
+    protons-runtime "^5.4.0"
+    uint8arraylist "^2.4.8"
 
 "@libp2p/pubsub@^9.0.8":
   version "9.0.12"
@@ -4447,7 +4480,7 @@ uint8arrays@^3.0.0:
   dependencies:
     multiformats "^9.4.2"
 
-uint8arrays@^5.0.0, uint8arrays@^5.0.1, uint8arrays@^5.0.2:
+uint8arrays@^5.0.0, uint8arrays@^5.0.1, uint8arrays@^5.0.2, uint8arrays@^5.0.3:
   version "5.0.3"
   resolved "https://registry.yarnpkg.com/uint8arrays/-/uint8arrays-5.0.3.tgz#92b894d9c4269ba97c51544d6e1f279fe6f80d1f"
   integrity sha512-6LBuKji28kHjgPJMkQ6GDaBb1lRwIhyOYq6pDGwYMoDPfImE9SkuYENVmR0yu9yGgs2clHUSY9fKDukR+AXfqQ==
