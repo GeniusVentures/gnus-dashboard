@@ -17,9 +17,10 @@ import { bootstrapConfig } from "data/ipfs/bootstrapConfig";
 import { createLibp2p as create } from "libp2p";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
-import { PeerId } from "@libp2p/interface";
+// import { PeerId } from "@libp2p/interface";
 import { DNS } from "@multiformats/dns";
 import { plaintext } from "@libp2p/plaintext";
+import { createEd25519PeerId } from "@libp2p/peer-id-factory";
 
 let node = null;
 
@@ -29,10 +30,9 @@ const createNode = async () => {
 		const datastore = new MemoryDatastore();
 
 		const libp2p = await create({
-			peerId: PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/192.168.10.132/tcp/51820"],
+				listen: ["/ip4/10.14.0.2/tcp/52428"],
 			},
 			transports: [
 				tcp(),
@@ -41,25 +41,22 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [
-				//noise(),
-				plaintext(),
-			],
+			connectionEncryption: [noise(), plaintext()],
 			streamMuxers: [mplex()],
 			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(),
-				// dht: kadDHT({
-				// 	clientMode: true,
-				// 	validators: {
-				// 		ipns: ipnsValidator,
-				// 	},
-				// 	selectors: {
-				// 		ipns: ipnsSelector,
-				// 	},
-				// }),
-				// identify: identify(),
-				// keychain: keychain(KeychainInit),
+				dht: kadDHT({
+					clientMode: true,
+					validators: {
+						ipns: ipnsValidator,
+					},
+					selectors: {
+						ipns: ipnsSelector,
+					},
+				}),
+				identify: identify(),
+				keychain: keychain(KeychainInit),
 				// ping: ping([
 				// 	"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
 				// 	"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
