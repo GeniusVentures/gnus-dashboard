@@ -31,9 +31,9 @@ import { generateKeyPair } from "@libp2p/crypto/keys";
 let node = null;
 
 const createNode = async () => {
-	let id = null;
-	id = await generateKeyPair("Ed25519");
-	console.log(id);
+	// let id = null;
+	// id = await generateKeyPair("Ed25519");
+	// console.log(id);
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
