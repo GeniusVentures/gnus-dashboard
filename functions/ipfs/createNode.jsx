@@ -127,6 +127,7 @@ const createNode = async () => {
 			console.error("Error starting Helia node:", error);
 		});
 		node = heliaNode;
+		console.log(JSON.stringify(libp2p));
 
 		const log = logger("node:libp2p");
 		log("with this peer: %p", {});
@@ -142,6 +143,10 @@ const createNode = async () => {
 		});
 		libp2p.addEventListener("connection:close", () => {
 			console.log("closed" + node.libp2p.getPeers().length);
+		});
+
+		libp2p.addEventListener("connection:close", (e) => {
+			console.log("closed connection event try 2:  " + e);
 		});
 
 		libp2p.services.pubsub.addEventListener("message", (message) => {
