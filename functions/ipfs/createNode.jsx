@@ -128,15 +128,6 @@ const createNode = async () => {
 		});
 		node = heliaNode;
 
-		const log = logger("node:libp2p");
-		log("with this peer: %p", {});
-		log("and this base58btc: %b", Uint8Array.from([0, 1, 2, 3]));
-		log("and this base32: %t", Uint8Array.from([4, 5, 6, 7]));
-
-		console.log("line74: " + node.libp2p.getMultiaddrs()[0]);
-		console.log("wew " + node.libp2p.peerId.toString());
-		console.log("public key " + node.libp2p.peerId.publicKey);
-		console.log("privat key " + node.libp2p.peerId.privateKey);
 		libp2p.addEventListener("connection:open", () => {
 			console.log("opened" + node.libp2p.getPeers().length);
 		});
@@ -144,34 +135,76 @@ const createNode = async () => {
 			console.log("closed" + node.libp2p.getPeers().length);
 		});
 
-		libp2p.addEventListener("connection:open", (e) => {
-			console.log("closed connection event:", e);
-			const connection = e.connection;
+		libp2p.addEventListener("connection:open", async (e) => {
+			console.log("New connection opened:", e);
 
-			if (connection) {
-				console.log("Event type:", e.type);
-				console.log("Peer ID:", connection.remotePeer.toB58String()); // Convert peer ID to a string
-				console.log("Timestamp:", new Date().toISOString()); // Current timestamp
-				console.log("Reason:", connection.stat.stat.status); // Connection status as the reason
-				console.log("Connection object:", connection);
-			} else {
-				console.log("Connection object is undefined");
+			const peerInfo = libp2p.peerStore.get(e.peerId);
+
+			if (peerInfo) {
+				const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+				if (connection) {
+					console.log("Peer ID:", e.peerId);
+					console.log("Local peer ID:", libp2p.peerId);
+
+					// Fetch additional details from the connection object
+					const stat = await connection.getStats();
+					console.log("Protocol:", stat.protocol);
+					console.log("Latency:", stat.latency);
+					console.log("Bytes sent:", stat.muxer.bytesSent);
+					console.log("Bytes received:", stat.muxer.bytesReceived);
+					console.log("Stream count:", stat.muxer.streams);
+				}
 			}
 		});
 
-		libp2p.addEventListener("connection:close", (e) => {
-			console.log("closed connection event:", e);
-			const connection = e.connection;
+		libp2p.addEventListener("connection:close", async (e) => {
+			console.log("Connection closed:", e);
 
-			if (connection) {
-				console.log("Event type:", e.type);
-				console.log("Peer ID:", connection.remotePeer.toB58String()); // Convert peer ID to a string
-				console.log("Timestamp:", new Date().toISOString()); // Current timestamp
-				console.log("Reason:", connection.stat.stat.status); // Connection status as the reason
-				console.log("Connection object:", connection);
-			} else {
-				console.log("Connection object is undefined");
+			const peerInfo = libp2p.peerStore.get(e.peerId);
+
+			if (peerInfo) {
+				const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+				if (connection) {
+					console.log("Peer ID:", e.peerId);
+					console.log("Local peer ID:", libp2p.peerId);
+
+					// Fetch additional details from the connection object
+					const stat = await connection.getStats();
+					console.log("Reason:", stat.stat.status);
+					console.log("Closed by:", stat.stat.by);
+					console.log("Duration:", stat.stat.duration);
+				}
 			}
+		});
+
+		libp2p.addEventListener("peer:discovery", (e) => {
+			console.log("New peer discovered:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect", (e) => {
+			console.log("Peer connected:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:disconnect", (e) => {
+			console.log("Peer disconnected:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect:error", (e) => {
+			console.log("Error connecting to peer:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect:abort", (e) => {
+			console.log("Connection attempt to peer aborted:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect:timeout", (e) => {
+			console.log("Connection attempt to peer timed out:", e);
+			console.log("Peer ID:", e.peerId);
 		});
 
 		libp2p.services.pubsub.addEventListener("message", (message) => {
