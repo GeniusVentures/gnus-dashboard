@@ -127,7 +127,6 @@ const createNode = async () => {
 			console.error("Error starting Helia node:", error);
 		});
 		node = heliaNode;
-		console.log(JSON.stringify(libp2p));
 
 		const log = logger("node:libp2p");
 		log("with this peer: %p", {});
