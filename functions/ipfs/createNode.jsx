@@ -36,6 +36,7 @@ import {
 import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
+import { logger } from "@libp2p/logger";
 
 let node = null;
 
@@ -126,6 +127,12 @@ const createNode = async () => {
 			console.error("Error starting Helia node:", error);
 		});
 		node = heliaNode;
+
+		const log = logger("node:libp2p");
+		log("with this peer: %p", {});
+		log("and this base58btc: %b", Uint8Array.from([0, 1, 2, 3]));
+		log("and this base32: %t", Uint8Array.from([4, 5, 6, 7]));
+
 		console.log("line74: " + node.libp2p.getMultiaddrs()[0]);
 		console.log("wew " + node.libp2p.peerId.toString());
 		console.log("public key " + node.libp2p.peerId.publicKey);
