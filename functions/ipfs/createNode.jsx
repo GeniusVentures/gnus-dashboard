@@ -144,8 +144,34 @@ const createNode = async () => {
 			console.log("closed" + node.libp2p.getPeers().length);
 		});
 
+		libp2p.addEventListener("connection:open", (e) => {
+			console.log("closed connection event:", e);
+			const connection = e.connection;
+
+			if (connection) {
+				console.log("Event type:", e.type);
+				console.log("Peer ID:", connection.remotePeer.toB58String()); // Convert peer ID to a string
+				console.log("Timestamp:", new Date().toISOString()); // Current timestamp
+				console.log("Reason:", connection.stat.stat.status); // Connection status as the reason
+				console.log("Connection object:", connection);
+			} else {
+				console.log("Connection object is undefined");
+			}
+		});
+
 		libp2p.addEventListener("connection:close", (e) => {
-			console.log("closed connection event try 2:  " + e);
+			console.log("closed connection event:", e);
+			const connection = e.connection;
+
+			if (connection) {
+				console.log("Event type:", e.type);
+				console.log("Peer ID:", connection.remotePeer.toB58String()); // Convert peer ID to a string
+				console.log("Timestamp:", new Date().toISOString()); // Current timestamp
+				console.log("Reason:", connection.stat.stat.status); // Connection status as the reason
+				console.log("Connection object:", connection);
+			} else {
+				console.log("Connection object is undefined");
+			}
 		});
 
 		libp2p.services.pubsub.addEventListener("message", (message) => {
