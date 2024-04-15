@@ -68,14 +68,20 @@ const createNode = async () => {
 				id: peerIdFromString(
 					"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
 				),
-				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40001")],
+				addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
 			},
 			{
 				id: peerIdFromString(
 					"12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
 				),
-				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40002")],
+				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG")],
 			},
+			// {
+			// 	id: peerIdFromString(
+			// 		"12D3KooWSyvmzbSVzDVKEZSeCbt4pQ8cWMWT4wESSaUGvir4FzPF",
+			// 	),
+			// 	addrs: [multiaddr("/ip4/192.168.46.18/tcp/52454/p2p/12D3KooWSyvmzbSVzDVKEZSeCbt4pQ8cWMWT4wESSaUGvir4FzPF")],
+			// },
 		];
 		const opubptions = {
 			emitSelf: true,
@@ -85,7 +91,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/52453"],
+				listen: ["/ip4/0.0.0.0/tcp/52453"],
 			},
 			transports: [
 				tcp(),
@@ -94,20 +100,20 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [noise(), plaintext()],
-			streamMuxers: [yamux(), mplex()],
+			connectionEncryption: [plaintext()],
+			streamMuxers: [yamux()],
 			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
-				dht: kadDHT({
-					clientMode: true,
-					validators: {
-						ipns: ipnsValidator,
-					},
-					selectors: {
-						ipns: ipnsSelector,
-					},
-				}),
+				// dht: kadDHT({
+				// 	clientMode: true,
+				// 	validators: {
+				// 		ipns: ipnsValidator,
+				// 	},
+				// 	selectors: {
+				// 		ipns: ipnsSelector,
+				// 	},
+				// }),
 				identify: identify(),
 				keychain: keychain(KeychainInit),
 				ping: ping(),
@@ -119,62 +125,55 @@ const createNode = async () => {
 		});
 
 		// Create Helia node
-		const heliaNode = await createHelia({
-			datastore,
-			blockstore,
-			libp2p,
-		}).catch((error) => {
-			console.error("Error starting Helia node:", error);
-		});
-		node = heliaNode;
-
-		libp2p.addEventListener("connection:open", () => {
-			console.log("opened" + node.libp2p.getPeers().length);
-		});
-		libp2p.addEventListener("connection:close", () => {
-			console.log("closed" + node.libp2p.getPeers().length);
-		});
+		// const heliaNode = await createHelia({
+		// 	datastore,
+		// 	blockstore,
+		// 	libp2p,
+		// }).catch((error) => {
+		// 	console.error("Error starting Helia node:", error);
+		// });
+		// node = heliaNode;
 
 		libp2p.addEventListener("connection:open", async (e) => {
 			console.log("New connection opened:", e);
 
-			const peerInfo = libp2p.peerStore.get(e.peerId);
+			//const peerInfo = libp2p.peerStore.get(e.peerId);
 
-			if (peerInfo) {
-				const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
-				if (connection) {
-					console.log("Peer ID:", e.peerId);
-					console.log("Local peer ID:", libp2p.peerId);
+			// if (peerInfo) {
+			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+			// 	if (connection) {
+			// 		console.log("Peer ID:", e.peerId);
+			// 		console.log("Local peer ID:", libp2p.peerId);
 
-					// Fetch additional details from the connection object
-					const stat = await connection.getStats();
-					console.log("Protocol:", stat.protocol);
-					console.log("Latency:", stat.latency);
-					console.log("Bytes sent:", stat.muxer.bytesSent);
-					console.log("Bytes received:", stat.muxer.bytesReceived);
-					console.log("Stream count:", stat.muxer.streams);
-				}
-			}
+			// 		// Fetch additional details from the connection object
+			// 		const stat = await connection.getStats();
+			// 		console.log("Protocol:", stat.protocol);
+			// 		console.log("Latency:", stat.latency);
+			// 		console.log("Bytes sent:", stat.muxer.bytesSent);
+			// 		console.log("Bytes received:", stat.muxer.bytesReceived);
+			// 		console.log("Stream count:", stat.muxer.streams);
+			// 	}
+			// }
 		});
 
 		libp2p.addEventListener("connection:close", async (e) => {
 			console.log("Connection closed:", e);
 
-			const peerInfo = libp2p.peerStore.get(e.peerId);
+			//const peerInfo = libp2p.peerStore.get(e.peerId);
 
-			if (peerInfo) {
-				const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
-				if (connection) {
-					console.log("Peer ID:", e.peerId);
-					console.log("Local peer ID:", libp2p.peerId);
+			// if (peerInfo) {
+			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+			// 	if (connection) {
+			// 		console.log("Peer ID:", e.peerId);
+			// 		console.log("Local peer ID:", libp2p.peerId);
 
-					// Fetch additional details from the connection object
-					const stat = await connection.getStats();
-					console.log("Reason:", stat.stat.status);
-					console.log("Closed by:", stat.stat.by);
-					console.log("Duration:", stat.stat.duration);
-				}
-			}
+			// 		// Fetch additional details from the connection object
+			// 		const stat = await connection.getStats();
+			// 		console.log("Reason:", stat.stat.status);
+			// 		console.log("Closed by:", stat.stat.by);
+			// 		console.log("Duration:", stat.stat.duration);
+			// 	}
+			// }
 		});
 
 		libp2p.addEventListener("peer:discovery", (e) => {
@@ -221,7 +220,7 @@ const createNode = async () => {
 		);
 
 		setInterval(() => {
-			const peerList = libp2p.services.pubsub.getSubscribers();
+			const peerList = libp2p.services.pubsub.getSubscribers("SuperGenius");
 			libp2p.services.pubsub.publish(
 				"SuperGenius",
 				new TextEncoder().encode("banana"),
