@@ -37,7 +37,7 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
-
+import {GraphSync, unixfsPathSelector, getPeer, SelectorNode } from "@dcdn/graphsync";
 import { sgns as sgnsBroadcast } from "data/fake-data/broadcast.ts";
 import { sgns as sgnsBcast } from "data/fake-data/bcast.ts";
 
@@ -50,59 +50,6 @@ const { pb } = crdtBcast;
 let node = null;
 
 const createNode = async () => {
-	// const root = await protobuf.load("data/fake-data/SGProcessing.proto");
-
-	// // Find the message type dynamically
-	// let messageType;
-	// root.nestedArray.forEach((nested) => {
-	// 	console.log(nested);
-	// 	if (nested instanceof protobuf.Type) {
-	// 		messageType = nested;
-	// 	}
-	// });
-
-	// if (!messageType) {
-	// 	throw new Error("Message type not found");
-	// }
-
-	// // Example buffer (replace this with the actual buffer from the uploaded file)
-	// const buffer = Buffer.from(/* your protobuf file content */);
-
-	// // Decode the protobuf message
-	// const message = messageType.decode(buffer);
-
-	// // Log or return the parsed message
-	// console.log("Decoded Message:", message);
-
-	// const foo = {
-	// 	message: "hello world",
-	// };
-
-	// const encoded = SGProcessing.Task;
-
-	// const decoded = SGProcessing.GridChannelMessage;
-	// console.log(decoded);
-
-	// const newTask = {
-	// 	ipfsBlockId: "blockIdValue",
-	// 	blockLen: 100,
-	// 	blockStride: 10,
-	// 	blockLineStride: 5,
-	// 	randomSeed: 0.5,
-	// 	resultsChannel: "resultsChannelValue",
-	// };
-
-	// // Encode the Task object into a Uint8Array
-	// const encodedTask = SGProcessing.Task.encode(newTask);
-
-	// // Use the Task message as needed in your application
-	// //console.log(task);
-	// console.log("Encoded Task Message:", encodedTask);
-
-	// const decodedTask = SGProcessing.Task.decode(encodedTask);
-
-	// // Log out the decoded Task object
-	// console.log("Decoded Task Object:", decodedTask);
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -150,7 +97,7 @@ const createNode = async () => {
 			// },
 		];
 		const opubptions = {
-			emitSelf: true,
+			//emitSelf: true,
 			directPeers: mydirectPeers,
 		};
 		const libp2p = await create({
@@ -190,15 +137,9 @@ const createNode = async () => {
 			},
 		});
 
-		// Create Helia node
-		// const heliaNode = await createHelia({
-		// 	datastore,
-		// 	blockstore,
-		// 	libp2p,
-		// }).catch((error) => {
-		// 	console.error("Error starting Helia node:", error);
-		// });
-		// node = heliaNode;
+		//Graphsync
+		const exchange = new GraphSync(libp2p, blockstore);
+
 
 		libp2p.addEventListener("connection:open", async (e) => {
 			console.log("New connection opened:", e);
@@ -272,64 +213,78 @@ const createNode = async () => {
 			console.log("Peer ID:", e.peerId);
 		});
 
-		libp2p.services.pubsub.addEventListener("message", (message) => {
+		libp2p.services.pubsub.addEventListener("message", async (message) => {
 			// console.log(
 			// 	`${message.detail.topic}:`,
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
-			const decoder = new TextDecoder();
-			const datastring = decoder.decode(message.detail.data);
-			//console.log("Message::::" + datastring);
-			const encoder = new TextEncoder();
-			const dataBytes = encoder.encode(datastring);
+
 			try{
 				const decodedTask = broadcasting.BroadcastMessage.decode(message.detail.data);
-				console.log("Decoded Task Object:", decodedTask);
+				//console.log("Decoded Task Object:", decodedTask);
 				//const buffer = decodedTask.data;
 				//const cidString = decodedTask.data.toString('utf-8');
 				//console.log("CID String:::: " + cidString);
 				try{
 					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
-					//console.log("CIDS ::: " + cids);
-					cids.heads.forEach((head, index) => {
-						console.log(`Head ${index + 1}:` + head.cid);
-						// try{
-						// 	const cid = pb.Head.decode(head.cid);
-						// 	console.log("Final CID:::::" + cid);
-						// } catch(err)
-						// {
-						// 	console.log("can't decode cid");
-						// }
-
-					  });
+					for (const head of cids.heads) {
+						console.log(`Head: ${head.cid}`);
+						const provider = getPeer(decodedTask.multiaddress);
+						console.log("ID CHECK:::" + provider.id);
+						libp2p.peerStore.save(provider.id, provider.multiaddrs);
+						//const kSelectorMatcher = new Uint8Array([0xa1, 0x61, 0x2e, 0xa0]);
+						const kSelectorMatcher = {
+							"~": { // ExploreInterpretAs
+							  as: "unixfs",
+							  ">": {
+								".": { // Matcher
+								  "[": 0,
+								  "]": 0,
+								},
+							  },
+							},
+						  };
+						//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
+						const request = exchange.request(head.cid, kSelectorMatcher);
+						request.open(provider.id);
+						
+						// Save the blocks into the store;
+						await request.drain();
+					}
 				} catch(err)
 				{
-					console.log("can't decode CIDs");
+					console.log("can't decode CIDs:" + err);
 				}
 
 			} catch(err)
 			{
-				console.log("can'tdecode:   " + dataBytes);
+				console.log("can'tdecode:");
 			}
 		});
 		libp2p.services.pubsub.subscribe("CRDT.Datastore.TEST.Channel");
 
-		libp2p.services.pubsub.publish(
-			"CRDT.Datastore.TEST.Channel",
-			new TextEncoder().encode("banana"),
-		);
+		//libp2p.services.pubsub.publish(
+		//	"CRDT.Datastore.TEST.Channel",
+		//	new TextEncoder().encode("banana"),
+		//);
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers("CRDT.Datastore.TEST.Channel");
-			libp2p.services.pubsub.publish(
-				"CRDT.Datastore.TEST.Channel",
-				new TextEncoder().encode("banana"),
-			);
+			//libp2p.services.pubsub.publish(
+			//	"CRDT.Datastore.TEST.Channel",
+			//	new TextEncoder().encode("banana"),
+			//);
+			console.log(blockstore.getAll());
 			console.log(peerList);
 		}, 3000);
 	} catch (err) {
 		console.log(err);
 	}
+};
+
+const processBlocks = async (cid, selector, providerId) => {
+	console.log("Process Blocks");
+
 };
 
 export default createNode;
