@@ -37,10 +37,62 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
+import { Task } from "data/fake-data/SGProcessing.ts";
+import protobuf from "protobufjs";
 
 let node = null;
 
 const createNode = async () => {
+	// const root = await protobuf.load("data/fake-data/SGProcessing.proto");
+
+	// // Find the message type dynamically
+	// let messageType;
+	// root.nestedArray.forEach((nested) => {
+	// 	console.log(nested);
+	// 	if (nested instanceof protobuf.Type) {
+	// 		messageType = nested;
+	// 	}
+	// });
+
+	// if (!messageType) {
+	// 	throw new Error("Message type not found");
+	// }
+
+	// // Example buffer (replace this with the actual buffer from the uploaded file)
+	// const buffer = Buffer.from(/* your protobuf file content */);
+
+	// // Decode the protobuf message
+	// const message = messageType.decode(buffer);
+
+	// // Log or return the parsed message
+	// console.log("Decoded Message:", message);
+
+	// const foo = {
+	// 	message: "hello world",
+	// };
+
+	// const encoded = SGProcessing.Task;
+
+	// const decoded = SGProcessing.GridChannelMessage;
+	// console.log(decoded);
+
+	// Create a new instance of the Task message
+	const task = Task.codec();
+
+	// Set the values for the fields of the Task message
+	task.ipfsBlockId = "your-ipfs-block-id";
+	task.blockLen = 100; // Example value, replace it with your desired value
+	task.blockStride = 10; // Example value, replace it with your desired value
+	task.blockLineStride = 20; // Example value, replace it with your desired value
+	task.randomSeed = 0.5; // Example value, replace it with your desired value
+	task.resultsChannel = "your-results-channel";
+
+	// Optionally, serialize the Task message to send it over the network or store it
+	const serializedTask = task.serializeBinary();
+
+	// Use the Task message as needed in your application
+	console.log(task);
+
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -68,13 +120,21 @@ const createNode = async () => {
 				id: peerIdFromString(
 					"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
 				),
-				addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
+				addrs: [
+					multiaddr(
+						"/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+					),
+				],
 			},
 			{
 				id: peerIdFromString(
 					"12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
 				),
-				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG")],
+				addrs: [
+					multiaddr(
+						"/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
+					),
+				],
 			},
 			// {
 			// 	id: peerIdFromString(
