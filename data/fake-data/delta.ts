@@ -47,7 +47,7 @@ export namespace sgns {
                 }
               }
 
-              if ((obj.priority != null && obj.priority !== 0n)) {
+              if ((obj.priority != null && obj.priority !== BigInt(0))) {
                 w.uint32(24)
                 w.uint64(obj.priority)
               }
@@ -59,7 +59,7 @@ export namespace sgns {
               const obj: any = {
                 elements: [],
                 tombstones: [],
-                priority: 0n
+                priority: BigInt(0)
               }
 
               const end = length == null ? reader.len : reader.pos + length
