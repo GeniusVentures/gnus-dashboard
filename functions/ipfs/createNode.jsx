@@ -38,10 +38,13 @@ import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
 
-import { sgns } from "data/fake-data/broadcast.ts";
+import { sgns as sgnsBroadcast } from "data/fake-data/broadcast.ts";
+import { sgns as sgnsBcast } from "data/fake-data/bcast.ts";
 
-const { crdt } = sgns;
-const { broadcasting } = crdt;
+const { crdt: crdtBroadcast } = sgnsBroadcast;
+const { crdt: crdtBcast } = sgnsBcast;
+const { broadcasting } = crdtBroadcast;
+const { pb } = crdtBcast;
 //import protobuf from "protobufjs";
 
 let node = null;
@@ -283,8 +286,27 @@ const createNode = async () => {
 				const decodedTask = broadcasting.BroadcastMessage.decode(message.detail.data);
 				console.log("Decoded Task Object:", decodedTask);
 				//const buffer = decodedTask.data;
-				const cidString = decodedTask.data.toString('utf-8');
-				console.log("CID String:::: " + cidString);
+				//const cidString = decodedTask.data.toString('utf-8');
+				//console.log("CID String:::: " + cidString);
+				try{
+					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
+					//console.log("CIDS ::: " + cids);
+					cids.heads.forEach((head, index) => {
+						console.log(`Head ${index + 1}:` + head.cid);
+						// try{
+						// 	const cid = pb.Head.decode(head.cid);
+						// 	console.log("Final CID:::::" + cid);
+						// } catch(err)
+						// {
+						// 	console.log("can't decode cid");
+						// }
+
+					  });
+				} catch(err)
+				{
+					console.log("can't decode CIDs");
+				}
+
 			} catch(err)
 			{
 				console.log("can'tdecode:   " + dataBytes);
