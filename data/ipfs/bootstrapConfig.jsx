@@ -21,7 +21,7 @@ export const bootstrapConfig = {
 		// // Infura Bootstrappers
 		// "/dns4/ipfs.infura.io/tcp/443/wss/p2p/QmZ6TbgeokBhDJ2dKiiV5yyfT5xEnSsLVK91sTt1uVd8ZB",
 		// fuu
-		"/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
-		"/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
+		"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
+		//"/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
 	],
 };

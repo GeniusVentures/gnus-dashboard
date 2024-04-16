@@ -37,8 +37,8 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
-import { Task } from "data/fake-data/SGProcessing.ts";
-import protobuf from "protobufjs";
+import { SGProcessing } from "data/fake-data/SGProcessing.ts";
+//import protobuf from "protobufjs";
 
 let node = null;
 
@@ -76,23 +76,26 @@ const createNode = async () => {
 	// const decoded = SGProcessing.GridChannelMessage;
 	// console.log(decoded);
 
-	// Create a new instance of the Task message
-	const task = Task.codec();
-
-	// Set the values for the fields of the Task message
-	task.ipfsBlockId = "your-ipfs-block-id";
-	task.blockLen = 100; // Example value, replace it with your desired value
-	task.blockStride = 10; // Example value, replace it with your desired value
-	task.blockLineStride = 20; // Example value, replace it with your desired value
-	task.randomSeed = 0.5; // Example value, replace it with your desired value
-	task.resultsChannel = "your-results-channel";
-
-	// Optionally, serialize the Task message to send it over the network or store it
-	const serializedTask = task.serializeBinary();
+	const newTask = {
+		ipfsBlockId: 'blockIdValue',
+		blockLen: 100,
+		blockStride: 10,
+		blockLineStride: 5,
+		randomSeed: 0.5,
+		resultsChannel: 'resultsChannelValue'
+	  };
+	  
+	  // Encode the Task object into a Uint8Array
+	  const encodedTask = SGProcessing.Task.encode(newTask);
 
 	// Use the Task message as needed in your application
-	console.log(task);
+	//console.log(task);
+	console.log('Encoded Task Message:', encodedTask);
 
+	const decodedTask = SGProcessing.Task.decode(encodedTask);
+
+	// Log out the decoded Task object
+	console.log('Decoded Task Object:', decodedTask);
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -116,25 +119,17 @@ const createNode = async () => {
 
 		const myEd25519PeerId = await createFromPrivKey(privateKey);
 		const mydirectPeers = [
+			// {
+			// 	id: peerIdFromString(
+			// 		"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+			// 	),
+			// 	addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
+			// },
 			{
 				id: peerIdFromString(
-					"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+					"12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
 				),
-				addrs: [
-					multiaddr(
-						"/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
-					),
-				],
-			},
-			{
-				id: peerIdFromString(
-					"12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
-				),
-				addrs: [
-					multiaddr(
-						"/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
-					),
-				],
+				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5")],
 			},
 			// {
 			// 	id: peerIdFromString(
