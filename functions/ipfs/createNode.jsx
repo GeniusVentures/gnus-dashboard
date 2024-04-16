@@ -37,7 +37,11 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
-import { SGProcessing } from "data/fake-data/SGProcessing.ts";
+
+import { sgns } from "data/fake-data/broadcast.ts";
+
+const { crdt } = sgns;
+const { broadcasting } = crdt;
 //import protobuf from "protobufjs";
 
 let node = null;
@@ -76,26 +80,26 @@ const createNode = async () => {
 	// const decoded = SGProcessing.GridChannelMessage;
 	// console.log(decoded);
 
-	const newTask = {
-		ipfsBlockId: "blockIdValue",
-		blockLen: 100,
-		blockStride: 10,
-		blockLineStride: 5,
-		randomSeed: 0.5,
-		resultsChannel: "resultsChannelValue",
-	};
+	// const newTask = {
+	// 	ipfsBlockId: "blockIdValue",
+	// 	blockLen: 100,
+	// 	blockStride: 10,
+	// 	blockLineStride: 5,
+	// 	randomSeed: 0.5,
+	// 	resultsChannel: "resultsChannelValue",
+	// };
 
-	// Encode the Task object into a Uint8Array
-	const encodedTask = SGProcessing.Task.encode(newTask);
+	// // Encode the Task object into a Uint8Array
+	// const encodedTask = SGProcessing.Task.encode(newTask);
 
-	// Use the Task message as needed in your application
-	//console.log(task);
-	console.log("Encoded Task Message:", encodedTask);
+	// // Use the Task message as needed in your application
+	// //console.log(task);
+	// console.log("Encoded Task Message:", encodedTask);
 
-	const decodedTask = SGProcessing.Task.decode(encodedTask);
+	// const decodedTask = SGProcessing.Task.decode(encodedTask);
 
-	// Log out the decoded Task object
-	console.log("Decoded Task Object:", decodedTask);
+	// // Log out the decoded Task object
+	// console.log("Decoded Task Object:", decodedTask);
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -266,22 +270,37 @@ const createNode = async () => {
 		});
 
 		libp2p.services.pubsub.addEventListener("message", (message) => {
-			console.log(
-				`${message.detail.topic}:`,
-				new TextDecoder().decode(message.detail.data),
-			);
+			// console.log(
+			// 	`${message.detail.topic}:`,
+			// 	new TextDecoder().decode(message.detail.data),
+			// );
+			const decoder = new TextDecoder();
+			const datastring = decoder.decode(message.detail.data);
+			//console.log("Message::::" + datastring);
+			const encoder = new TextEncoder();
+			const dataBytes = encoder.encode(datastring);
+			try{
+				const decodedTask = broadcasting.BroadcastMessage.decode(message.detail.data);
+				console.log("Decoded Task Object:", decodedTask);
+				//const buffer = decodedTask.data;
+				const cidString = decodedTask.data.toString('utf-8');
+				console.log("CID String:::: " + cidString);
+			} catch(err)
+			{
+				console.log("can'tdecode:   " + dataBytes);
+			}
 		});
-		libp2p.services.pubsub.subscribe("SuperGenius");
+		libp2p.services.pubsub.subscribe("CRDT.Datastore.TEST.Channel");
 
 		libp2p.services.pubsub.publish(
-			"SuperGenius",
+			"CRDT.Datastore.TEST.Channel",
 			new TextEncoder().encode("banana"),
 		);
 
 		setInterval(() => {
-			const peerList = libp2p.services.pubsub.getSubscribers("SuperGenius");
+			const peerList = libp2p.services.pubsub.getSubscribers("CRDT.Datastore.TEST.Channel");
 			libp2p.services.pubsub.publish(
-				"SuperGenius",
+				"CRDT.Datastore.TEST.Channel",
 				new TextEncoder().encode("banana"),
 			);
 			console.log(peerList);
