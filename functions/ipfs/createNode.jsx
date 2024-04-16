@@ -77,25 +77,25 @@ const createNode = async () => {
 	// console.log(decoded);
 
 	const newTask = {
-		ipfsBlockId: 'blockIdValue',
+		ipfsBlockId: "blockIdValue",
 		blockLen: 100,
 		blockStride: 10,
 		blockLineStride: 5,
 		randomSeed: 0.5,
-		resultsChannel: 'resultsChannelValue'
-	  };
-	  
-	  // Encode the Task object into a Uint8Array
-	  const encodedTask = SGProcessing.Task.encode(newTask);
+		resultsChannel: "resultsChannelValue",
+	};
+
+	// Encode the Task object into a Uint8Array
+	const encodedTask = SGProcessing.Task.encode(newTask);
 
 	// Use the Task message as needed in your application
 	//console.log(task);
-	console.log('Encoded Task Message:', encodedTask);
+	console.log("Encoded Task Message:", encodedTask);
 
 	const decodedTask = SGProcessing.Task.decode(encodedTask);
 
 	// Log out the decoded Task object
-	console.log('Decoded Task Object:', decodedTask);
+	console.log("Decoded Task Object:", decodedTask);
 	try {
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -129,7 +129,11 @@ const createNode = async () => {
 				id: peerIdFromString(
 					"12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
 				),
-				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5")],
+				addrs: [
+					multiaddr(
+						"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
+					),
+				],
 			},
 			// {
 			// 	id: peerIdFromString(
