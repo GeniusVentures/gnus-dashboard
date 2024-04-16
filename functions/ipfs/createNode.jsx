@@ -119,25 +119,17 @@ const createNode = async () => {
 
 		const myEd25519PeerId = await createFromPrivKey(privateKey);
 		const mydirectPeers = [
+			// {
+			// 	id: peerIdFromString(
+			// 		"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+			// 	),
+			// 	addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
+			// },
 			{
 				id: peerIdFromString(
-					"12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+					"12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
 				),
-				addrs: [
-					multiaddr(
-						"/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
-					),
-				],
-			},
-			{
-				id: peerIdFromString(
-					"12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
-				),
-				addrs: [
-					multiaddr(
-						"/ip4/192.168.46.18/tcp/40003/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
-					),
-				],
+				addrs: [multiaddr("/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5")],
 			},
 			// {
 			// 	id: peerIdFromString(
