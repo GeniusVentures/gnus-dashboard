@@ -14,7 +14,7 @@ import { webSockets } from "@libp2p/websockets";
 import { ipnsSelector } from "ipns/selector";
 import { ipnsValidator } from "ipns/validator";
 import { bootstrapConfig } from "data/ipfs/bootstrapConfig";
-import { createLibp2p as create, PeerStore } from "libp2p";
+import { createLibp2p as create } from "libp2p";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
 //import { PeerId, Ed25519PeerId } from "@libp2p/interface";
@@ -38,6 +38,8 @@ import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
 import {GraphSync, unixfsPathSelector, getPeer, SelectorNode } from "@dcdn/graphsync";
+import {newRequest } from "@dcdn/graphsync/dist/src/messages.js";
+import {pipe} from "it-pipe";
 import { sgns as sgnsBroadcast } from "data/fake-data/broadcast.ts";
 import { sgns as sgnsBcast } from "data/fake-data/bcast.ts";
 
@@ -261,13 +263,16 @@ const createNode = async () => {
 						  };
 						//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
 						const request = exchange.request(head.cid, kSelectorMatcher);
+						console.log("REQ: " + request.id);
+						console.log("REQ: " + request.root);
+						console.log("REQ: " + request.selector);
 						//libp2p.dial(provider.id);
 						//request.open(provider.multiaddrs);
 						const stream = await libp2p2.dialProtocol(provider.multiaddrs,"/ipfs/graphsync/2.0.0");
-						await pipe(
-							[request.newRequest(request.id, request.root, request.selector, extensions)],
-							stream
-						  );
+						 await pipe(
+						 	[newRequest(request.id, request.root, request.selector)],
+						 	stream
+						   );
 						//libp2p2.dial(provider.multiaddrs);
 						// Save the blocks into the store;
 						await request.drain();
