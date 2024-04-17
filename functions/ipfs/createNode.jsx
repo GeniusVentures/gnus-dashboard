@@ -14,7 +14,7 @@ import { webSockets } from "@libp2p/websockets";
 import { ipnsSelector } from "ipns/selector";
 import { ipnsValidator } from "ipns/validator";
 import { bootstrapConfig } from "data/ipfs/bootstrapConfig";
-import { createLibp2p as create } from "libp2p";
+import { createLibp2p as create, PeerStore } from "libp2p";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
 //import { PeerId, Ed25519PeerId } from "@libp2p/interface";
@@ -81,11 +81,11 @@ const createNode = async () => {
 			// },
 			{
 				id: peerIdFromString(
-					"12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
+					"12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
 				),
 				addrs: [
 					multiaddr(
-						"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWQg6JZ8KhBMhSWX1F3LpAkaXQG9ppBhbGfPeeMv5gWNX5",
+						"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
 					),
 				],
 			},
@@ -115,7 +115,7 @@ const createNode = async () => {
 			],
 			connectionEncryption: [plaintext()],
 			streamMuxers: [yamux()],
-			peerDiscovery: [bootstrap(bootstrapConfig)],
+			//peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
 				// dht: kadDHT({
@@ -136,10 +136,23 @@ const createNode = async () => {
 				// ]),
 			},
 		});
-
+		const keyPair = await createEd25519PeerId();
+		const peerid2 = keyPair;
+		const libp2p2 = await create({
+			peerId: peerid2,
+			addresses: {
+				listen: ["/ip4/0.0.0.0/tcp/42453"],
+			},
+			streamMuxers: [mplex()],
+			transports: [
+				tcp(),
+			],
+			connectionEncryption: [noise()],
+		});
 		//Graphsync
-		const exchange = new GraphSync(libp2p, blockstore);
+		const exchange = new GraphSync(libp2p2, blockstore);
 
+		console.log("line74: " + libp2p.getMultiaddrs()[0]);
 
 		libp2p.addEventListener("connection:open", async (e) => {
 			console.log("New connection opened:", e);
@@ -229,10 +242,12 @@ const createNode = async () => {
 					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
 					for (const head of cids.heads) {
 						console.log(`Head: ${head.cid}`);
+						console.log("Addresss : " + decodedTask.multiaddress)
 						const provider = getPeer(decodedTask.multiaddress);
 						console.log("ID CHECK:::" + provider.id);
-						libp2p.peerStore.save(provider.id, provider.multiaddrs);
-						//const kSelectorMatcher = new Uint8Array([0xa1, 0x61, 0x2e, 0xa0]);
+						libp2p2.peerStore.save(provider.id, provider.multiaddrs);
+						//console.log("HAS ID" + libp2p2.peerStore.has(provider.id));
+						//libp2p.peerStore.addressBook.add(provider.id, provider.multiaddrs);
 						const kSelectorMatcher = {
 							"~": { // ExploreInterpretAs
 							  as: "unixfs",
@@ -246,8 +261,14 @@ const createNode = async () => {
 						  };
 						//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
 						const request = exchange.request(head.cid, kSelectorMatcher);
-						request.open(provider.id);
-						
+						//libp2p.dial(provider.id);
+						//request.open(provider.multiaddrs);
+						const stream = await libp2p2.dialProtocol(provider.multiaddrs,"/ipfs/graphsync/2.0.0");
+						await pipe(
+							[request.newRequest(request.id, request.root, request.selector, extensions)],
+							stream
+						  );
+						//libp2p2.dial(provider.multiaddrs);
 						// Save the blocks into the store;
 						await request.drain();
 					}
