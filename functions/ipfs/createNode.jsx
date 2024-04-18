@@ -48,6 +48,12 @@ import { pipe } from "it-pipe";
 import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
 import { sgns as sgnsBcast } from "data/protobuf/bcast";
 //import protobuf from "protobufjs";
+import { v4 as uuidv4 } from 'uuid';
+import { CID } from 'multiformats/cid'
+import {Buffer} from "buffer";
+const { Message, Message_Request, Message_Response, Message_Block } = require("/data/protobuf/message");
+import { SGTransaction } from "/data/protobuf/SGTransaction";
+import {encode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
 
 let node = null;
 
@@ -76,6 +82,7 @@ const createNode = async () => {
 		const privateKey = new Ed25519PrivateKey(privateKeyBytes, publicKeyBytes);
 		//const key = await generateKeyPair('Ed25519', 1024);
 		//const key = new PrivateKey();
+		let requestIdCounter = 0;
 
 		const myEd25519PeerId = await createFromPrivKey(privateKey);
 		const mydirectPeers = [
@@ -154,7 +161,7 @@ const createNode = async () => {
 			connectionEncryption: [noise()],
 		});
 		//Graphsync
-		const exchange = new GraphSync(libp2p2, blockstore);
+		//const exchange = new GraphSync(libp2p2, blockstore);
 
 		console.log("line74: " + libp2p.getMultiaddrs()[0]);
 
@@ -229,7 +236,8 @@ const createNode = async () => {
 			console.log("Connection attempt to peer timed out:", e);
 			console.log("Peer ID:", e.peerId);
 		});
-
+		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
+		const requestedCids = [];
 		libp2p.services.pubsub.addEventListener("message", async (message) => {
 			// console.log(
 			// 	`${message.detail.topic}:`,
@@ -247,44 +255,60 @@ const createNode = async () => {
 				try {
 					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
 					for (const head of cids.heads) {
-						console.log(`Head: ${head.cid}`);
-						console.log("Addresss : " + decodedTask.multiaddress);
-						const provider = getPeer(decodedTask.multiaddress);
-						console.log("ID CHECK:::" + provider.id);
-						libp2p2.peerStore.save(provider.id, provider.multiaddrs);
-						//console.log("HAS ID" + libp2p2.peerStore.has(provider.id));
-						//libp2p.peerStore.addressBook.add(provider.id, provider.multiaddrs);
-						const kSelectorMatcher = {
-							"~": {
-								// ExploreInterpretAs
-								as: "unixfs",
-								">": {
-									".": {
-										// Matcher
-										"[": 0,
-										"]": 0,
-									},
-								},
-							},
-						};
-						//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
-						const request = exchange.request(head.cid, kSelectorMatcher);
-						console.log("REQ: " + request.id);
-						console.log("REQ: " + request.root);
-						console.log("REQ: " + request.selector);
-						//libp2p.dial(provider.id);
-						//request.open(provider.multiaddrs);
-						const stream = await libp2p2.dialProtocol(
-							provider.multiaddrs,
-							"/ipfs/graphsync/2.0.0",
-						);
-						await pipe(
-							[newRequest(request.id, request.root, request.selector)],
-							stream,
-						);
-						//libp2p2.dial(provider.multiaddrs);
-						// Save the blocks into the store;
-						await request.drain();
+						if(!requestedCids.includes(String(head.cid)))
+						{
+							requestedCids.push(String(head.cid));
+							console.log(`Head: ${head.cid}`);
+							console.log("Addresss : " + decodedTask.multiaddress);
+							const provider = getPeer(decodedTask.multiaddress);
+							console.log("ID CHECK:::" + provider.id);
+							libp2p2.peerStore.merge(provider.id, {
+								multiaddrs: provider.multiaddrs
+							});
+							//console.log("HAS ID" + libp2p2.peerStore.has(provider.id));
+							//libp2p.peerStore.addressBook.add(provider.id, provider.multiaddrs);
+	
+							//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
+							//const request = exchange.request(head.cid, kSelectorMatcher);
+	
+							//libp2p.dial(provider.id);
+							//request.open(provider.multiaddrs);
+	
+							const stream = await libp2p2.dialProtocol(
+								provider.id,
+								"/ipfs/graphsync/2.0.0",
+							);
+							// await pipe(
+							// 	[newRequest(request.id, request.root, request.selector)],
+							// 	stream,
+							// );
+							
+							await pipe(
+								[RequestBlock(head.cid,requestIdCounter)],
+								stream,respondHandler
+							);
+							// sendRequestAndReceiveResponse(libp2p2, provider, head, requestIdCounter)
+							// 	.then(response => {
+							// 		console.log('Received response:', response)
+							// 	})
+							// 	.catch(error => {
+							// 		console.error('Error:', error)
+							// 	})
+							// sendRequestAndReceiveResponse(libp2p2, provider, head, requestIdCounter)
+							// .then(response => {
+							// 	console.log('Received response:', response)
+							//   })
+							//   .catch(error => {
+							// 	console.error('Error:', error)
+							//   })
+							//await stream.close();
+							requestIdCounter++;
+							requestedCids.push(head.cid);
+							//libp2p2.dial(provider.multiaddrs);
+							// Save the blocks into the store;
+							//await request.drain();
+						}
+
 					}
 				} catch (err) {
 					console.log("can't decode CIDs:" + err);
@@ -315,7 +339,98 @@ const createNode = async () => {
 		console.log(err);
 	}
 };
+function respondHandler(source) {
+	console.log('Incoming message received!')
+	console.log('Stream:', source)
 
+	
+	// Handle the incoming message here
+	// For example, you can listen to the stream for incoming data
+    ;(async () => {
+        let binaryData = [];
+        for await (const chunk of source) {
+            console.log('Received chunk:', chunk);
+			const uint8Array = new Uint8Array(chunk.bufs[0]);
+			//console.log("UINT8" + uint8Array);
+			const message = Message.fromBinary(chunk.bufs[0]);
+			
+			
+			console.log('Decoded message:', message);
+			const dag = SGTransaction.DAGStruct.decode(message.data[0].data);
+			console.log("Dag" + dag.type);
+			//const bloakarray = new Uint8Array(message.data[0]);
+			//const messageblock = Message_Block.fromBinary(bloakarray);
+			//console.log("message block" + messageblock.data)
+			//console.log('Decoded block' + messageblock.prefix);
+			//console.log('Decoded block' + bloakarray);
+            //binaryData.push(chunk.bufs[0]); // Assuming you want the first buffer in each chunk
+        }
+        // Concatenate all received buffers into a single Uint8Array
+        //const binaryMessage = Buffer.concat(binaryData);
+        
+        // Deserialize the binary message into a message object
+        
+
+        // Now you can use the 'message' object for further processing
+        
+    })()
+  }
+  async function sendRequestAndReceiveResponse(libp2p2, provider, head, requestIdCounter) {
+	try {
+	  const stream = await libp2p2.dialProtocol(provider.id, "/ipfs/graphsync/2.0.0")
+  
+	  const requestData = RequestBlock(head.cid, requestIdCounter)
+	  
+	  const response = await new Promise((resolve, reject) => {
+		try {
+		  pipe(
+			[requestData],
+			stream,
+			async function* (source) {
+				console.log("Response");
+			  let responseData = ''
+			  for await (const chunk of source) {
+				responseData += chunk.toString()
+			  }
+			  resolve(responseData)
+			}
+		  )
+		} catch (error) {
+		  reject(error)
+		}
+	  })
+  
+	  return response
+	} catch (error) {
+	  console.error('Error sending request:', error)
+	  return null
+	}
+  }
+
+function RequestBlock( base58cid, requestIdCounter )
+{
+	const root = CID.parse(String(base58cid))
+
+	const request = {
+		id: requestIdCounter,
+		root: root.bytes,
+		selector: new Uint8Array([0xa1, 0x61, 0x2e, 0xa0]),
+		extensions: {},
+		priority: 1,
+		cancel: false,
+		update: false,
+	}
+	//console.log("BinaryRQ????" + Message_Request.toBinary(request));
+	const message = {
+		completeRequestList: true,
+		requests: [request],
+		responses: [],
+		data: [],
+	}
+	const binarymsg = Message.toBinary(message);
+	const buffer = Buffer.from(binarymsg);
+	return encode.single(buffer);
+}
 const processBlocks = async (cid, selector, providerId) => {
 	console.log("Process Blocks");
 };
