@@ -37,22 +37,26 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
-import {GraphSync, unixfsPathSelector, getPeer, SelectorNode } from "@dcdn/graphsync";
-import {newRequest } from "@dcdn/graphsync/dist/src/messages.js";
-import {pipe} from "it-pipe";
-import { sgns as sgnsBroadcast } from "data/fake-data/broadcast.ts";
-import { sgns as sgnsBcast } from "data/fake-data/bcast.ts";
-
-const { crdt: crdtBroadcast } = sgnsBroadcast;
-const { crdt: crdtBcast } = sgnsBcast;
-const { broadcasting } = crdtBroadcast;
-const { pb } = crdtBcast;
+import {
+	GraphSync,
+	unixfsPathSelector,
+	getPeer,
+	SelectorNode,
+} from "@dcdn/graphsync";
+import { newRequest } from "@dcdn/graphsync/dist/src/messages.js";
+import { pipe } from "it-pipe";
+import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
+import { sgns as sgnsBcast } from "data/protobuf/bcast";
 //import protobuf from "protobufjs";
 
 let node = null;
 
 const createNode = async () => {
 	try {
+		const { crdt: crdtBroadcast } = sgnsBroadcast;
+		const { crdt: crdtBcast } = sgnsBcast;
+		const { broadcasting } = crdtBroadcast;
+		const { pb } = crdtBcast;
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
 		//const keyPair = await createEd25519PeerId();
@@ -146,9 +150,7 @@ const createNode = async () => {
 				listen: ["/ip4/0.0.0.0/tcp/42453"],
 			},
 			streamMuxers: [mplex()],
-			transports: [
-				tcp(),
-			],
+			transports: [tcp()],
 			connectionEncryption: [noise()],
 		});
 		//Graphsync
@@ -234,33 +236,37 @@ const createNode = async () => {
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
 
-			try{
-				const decodedTask = broadcasting.BroadcastMessage.decode(message.detail.data);
+			try {
+				const decodedTask = broadcasting.BroadcastMessage.decode(
+					message.detail.data,
+				);
 				//console.log("Decoded Task Object:", decodedTask);
 				//const buffer = decodedTask.data;
 				//const cidString = decodedTask.data.toString('utf-8');
 				//console.log("CID String:::: " + cidString);
-				try{
+				try {
 					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
 					for (const head of cids.heads) {
 						console.log(`Head: ${head.cid}`);
-						console.log("Addresss : " + decodedTask.multiaddress)
+						console.log("Addresss : " + decodedTask.multiaddress);
 						const provider = getPeer(decodedTask.multiaddress);
 						console.log("ID CHECK:::" + provider.id);
 						libp2p2.peerStore.save(provider.id, provider.multiaddrs);
 						//console.log("HAS ID" + libp2p2.peerStore.has(provider.id));
 						//libp2p.peerStore.addressBook.add(provider.id, provider.multiaddrs);
 						const kSelectorMatcher = {
-							"~": { // ExploreInterpretAs
-							  as: "unixfs",
-							  ">": {
-								".": { // Matcher
-								  "[": 0,
-								  "]": 0,
+							"~": {
+								// ExploreInterpretAs
+								as: "unixfs",
+								">": {
+									".": {
+										// Matcher
+										"[": 0,
+										"]": 0,
+									},
 								},
-							  },
 							},
-						  };
+						};
 						//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
 						const request = exchange.request(head.cid, kSelectorMatcher);
 						console.log("REQ: " + request.id);
@@ -268,22 +274,22 @@ const createNode = async () => {
 						console.log("REQ: " + request.selector);
 						//libp2p.dial(provider.id);
 						//request.open(provider.multiaddrs);
-						const stream = await libp2p2.dialProtocol(provider.multiaddrs,"/ipfs/graphsync/2.0.0");
-						 await pipe(
-						 	[newRequest(request.id, request.root, request.selector)],
-						 	stream
-						   );
+						const stream = await libp2p2.dialProtocol(
+							provider.multiaddrs,
+							"/ipfs/graphsync/2.0.0",
+						);
+						await pipe(
+							[newRequest(request.id, request.root, request.selector)],
+							stream,
+						);
 						//libp2p2.dial(provider.multiaddrs);
 						// Save the blocks into the store;
 						await request.drain();
 					}
-				} catch(err)
-				{
+				} catch (err) {
 					console.log("can't decode CIDs:" + err);
 				}
-
-			} catch(err)
-			{
+			} catch (err) {
 				console.log("can'tdecode:");
 			}
 		});
@@ -295,7 +301,9 @@ const createNode = async () => {
 		//);
 
 		setInterval(() => {
-			const peerList = libp2p.services.pubsub.getSubscribers("CRDT.Datastore.TEST.Channel");
+			const peerList = libp2p.services.pubsub.getSubscribers(
+				"CRDT.Datastore.TEST.Channel",
+			);
 			//libp2p.services.pubsub.publish(
 			//	"CRDT.Datastore.TEST.Channel",
 			//	new TextEncoder().encode("banana"),
@@ -310,7 +318,6 @@ const createNode = async () => {
 
 const processBlocks = async (cid, selector, providerId) => {
 	console.log("Process Blocks");
-
 };
 
 export default createNode;
