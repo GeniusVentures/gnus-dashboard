@@ -1,513 +1,456 @@
-/* eslint-disable import/export */
-/* eslint-disable complexity */
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unnecessary-boolean-literal-compare */
-/* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { type Codec, decodeMessage, type DecodeOptions, encodeMessage, message } from 'protons-runtime'
-import { alloc as uint8ArrayAlloc } from 'uint8arrays/alloc'
-import type { Uint8ArrayList } from 'uint8arraylist'
-
-export interface SGTransaction {}
-
-export namespace SGTransaction {
-  export interface DAGStruct {
-    type: string
-    previousHash: Uint8Array
-    sourceAddr: Uint8Array
-    nonce: bigint
-    timestamp: bigint
-    uncleHash: Uint8Array
-    dataHash: Uint8Array
-  }
-
-  export namespace DAGStruct {
-    let _codec: Codec<DAGStruct>
-
-    export const codec = (): Codec<DAGStruct> => {
-      if (_codec == null) {
-        _codec = message<DAGStruct>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.type != null && obj.type !== '')) {
-            w.uint32(10)
-            w.string(obj.type)
-          }
-
-          if ((obj.previousHash != null && obj.previousHash.byteLength > 0)) {
-            w.uint32(18)
-            w.bytes(obj.previousHash)
-          }
-
-          if ((obj.sourceAddr != null && obj.sourceAddr.byteLength > 0)) {
-            w.uint32(26)
-            w.bytes(obj.sourceAddr)
-          }
-
-          if ((obj.nonce != null && obj.nonce !== 0n)) {
-            w.uint32(32)
-            w.uint64(obj.nonce)
-          }
-
-          if ((obj.timestamp != null && obj.timestamp !== 0n)) {
-            w.uint32(40)
-            w.int64(obj.timestamp)
-          }
-
-          if ((obj.uncleHash != null && obj.uncleHash.byteLength > 0)) {
-            w.uint32(50)
-            w.bytes(obj.uncleHash)
-          }
-
-          if ((obj.dataHash != null && obj.dataHash.byteLength > 0)) {
-            w.uint32(58)
-            w.bytes(obj.dataHash)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            type: '',
-            previousHash: uint8ArrayAlloc(0),
-            sourceAddr: uint8ArrayAlloc(0),
-            nonce: 0n,
-            timestamp: 0n,
-            uncleHash: uint8ArrayAlloc(0),
-            dataHash: uint8ArrayAlloc(0)
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.type = reader.string()
-                break
-              }
-              case 2: {
-                obj.previousHash = reader.bytes()
-                break
-              }
-              case 3: {
-                obj.sourceAddr = reader.bytes()
-                break
-              }
-              case 4: {
-                obj.nonce = reader.uint64()
-                break
-              }
-              case 5: {
-                obj.timestamp = reader.int64()
-                break
-              }
-              case 6: {
-                obj.uncleHash = reader.bytes()
-                break
-              }
-              case 7: {
-                obj.dataHash = reader.bytes()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<DAGStruct>): Uint8Array => {
-      return encodeMessage(obj, DAGStruct.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<DAGStruct>): DAGStruct => {
-      return decodeMessage(buf, DAGStruct.codec(), opts)
-    }
-  }
-
-  export interface DAGWrapper {
-    dagStruct?: SGTransaction.DAGStruct
-  }
-
-  export namespace DAGWrapper {
-    let _codec: Codec<DAGWrapper>
-
-    export const codec = (): Codec<DAGWrapper> => {
-      if (_codec == null) {
-        _codec = message<DAGWrapper>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.dagStruct != null) {
-            w.uint32(10)
-            SGTransaction.DAGStruct.codec().encode(obj.dagStruct, w)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.dagStruct = SGTransaction.DAGStruct.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.dagStruct
-                })
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<DAGWrapper>): Uint8Array => {
-      return encodeMessage(obj, DAGWrapper.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<DAGWrapper>): DAGWrapper => {
-      return decodeMessage(buf, DAGWrapper.codec(), opts)
-    }
-  }
-
-  export interface TransferTx {
-    dagStruct?: SGTransaction.DAGStruct
-    tokenId: bigint
-    encryptedAmount: Uint8Array
-    destAddr: Uint8Array
-  }
-
-  export namespace TransferTx {
-    let _codec: Codec<TransferTx>
-
-    export const codec = (): Codec<TransferTx> => {
-      if (_codec == null) {
-        _codec = message<TransferTx>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.dagStruct != null) {
-            w.uint32(10)
-            SGTransaction.DAGStruct.codec().encode(obj.dagStruct, w)
-          }
-
-          if ((obj.tokenId != null && obj.tokenId !== 0n)) {
-            w.uint32(16)
-            w.uint64(obj.tokenId)
-          }
-
-          if ((obj.encryptedAmount != null && obj.encryptedAmount.byteLength > 0)) {
-            w.uint32(26)
-            w.bytes(obj.encryptedAmount)
-          }
-
-          if ((obj.destAddr != null && obj.destAddr.byteLength > 0)) {
-            w.uint32(34)
-            w.bytes(obj.destAddr)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            tokenId: 0n,
-            encryptedAmount: uint8ArrayAlloc(0),
-            destAddr: uint8ArrayAlloc(0)
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.dagStruct = SGTransaction.DAGStruct.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.dagStruct
-                })
-                break
-              }
-              case 2: {
-                obj.tokenId = reader.uint64()
-                break
-              }
-              case 3: {
-                obj.encryptedAmount = reader.bytes()
-                break
-              }
-              case 4: {
-                obj.destAddr = reader.bytes()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<TransferTx>): Uint8Array => {
-      return encodeMessage(obj, TransferTx.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<TransferTx>): TransferTx => {
-      return decodeMessage(buf, TransferTx.codec(), opts)
-    }
-  }
-
-  export interface ProcessingTx {
-    dagStruct?: SGTransaction.DAGStruct
-    mpcMagicKey: bigint
-    offset: bigint
-    jobCid: string
-    subtaskCid: string
-  }
-
-  export namespace ProcessingTx {
-    let _codec: Codec<ProcessingTx>
-
-    export const codec = (): Codec<ProcessingTx> => {
-      if (_codec == null) {
-        _codec = message<ProcessingTx>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.dagStruct != null) {
-            w.uint32(10)
-            SGTransaction.DAGStruct.codec().encode(obj.dagStruct, w)
-          }
-
-          if ((obj.mpcMagicKey != null && obj.mpcMagicKey !== 0n)) {
-            w.uint32(16)
-            w.uint64(obj.mpcMagicKey)
-          }
-
-          if ((obj.offset != null && obj.offset !== 0n)) {
-            w.uint32(24)
-            w.uint64(obj.offset)
-          }
-
-          if ((obj.jobCid != null && obj.jobCid !== '')) {
-            w.uint32(34)
-            w.string(obj.jobCid)
-          }
-
-          if ((obj.subtaskCid != null && obj.subtaskCid !== '')) {
-            w.uint32(42)
-            w.string(obj.subtaskCid)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            mpcMagicKey: 0n,
-            offset: 0n,
-            jobCid: '',
-            subtaskCid: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.dagStruct = SGTransaction.DAGStruct.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.dagStruct
-                })
-                break
-              }
-              case 2: {
-                obj.mpcMagicKey = reader.uint64()
-                break
-              }
-              case 3: {
-                obj.offset = reader.uint64()
-                break
-              }
-              case 4: {
-                obj.jobCid = reader.string()
-                break
-              }
-              case 5: {
-                obj.subtaskCid = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingTx>): Uint8Array => {
-      return encodeMessage(obj, ProcessingTx.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingTx>): ProcessingTx => {
-      return decodeMessage(buf, ProcessingTx.codec(), opts)
-    }
-  }
-
-  export interface MintTx {
-    dagStruct?: SGTransaction.DAGStruct
-    amount: bigint
-  }
-
-  export namespace MintTx {
-    let _codec: Codec<MintTx>
-
-    export const codec = (): Codec<MintTx> => {
-      if (_codec == null) {
-        _codec = message<MintTx>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.dagStruct != null) {
-            w.uint32(10)
-            SGTransaction.DAGStruct.codec().encode(obj.dagStruct, w)
-          }
-
-          if ((obj.amount != null && obj.amount !== 0n)) {
-            w.uint32(16)
-            w.uint64(obj.amount)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            amount: 0n
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.dagStruct = SGTransaction.DAGStruct.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.dagStruct
-                })
-                break
-              }
-              case 2: {
-                obj.amount = reader.uint64()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<MintTx>): Uint8Array => {
-      return encodeMessage(obj, MintTx.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<MintTx>): MintTx => {
-      return decodeMessage(buf, MintTx.codec(), opts)
-    }
-  }
-
-  let _codec: Codec<SGTransaction>
-
-  export const codec = (): Codec<SGTransaction> => {
-    if (_codec == null) {
-      _codec = message<SGTransaction>((obj, w, opts = {}) => {
-        if (opts.lengthDelimited !== false) {
-          w.fork()
-        }
-
-        if (opts.lengthDelimited !== false) {
-          w.ldelim()
-        }
-      }, (reader, length, opts = {}) => {
-        const obj: any = {}
-
-        const end = length == null ? reader.len : reader.pos + length
-
-        while (reader.pos < end) {
-          const tag = reader.uint32()
-
-          switch (tag >>> 3) {
-            default: {
-              reader.skipType(tag & 7)
-              break
-            }
-          }
-        }
-
-        return obj
-      })
-    }
-
-    return _codec
-  }
-
-  export const encode = (obj: Partial<SGTransaction>): Uint8Array => {
-    return encodeMessage(obj, SGTransaction.codec())
-  }
-
-  export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SGTransaction>): SGTransaction => {
-    return decodeMessage(buf, SGTransaction.codec(), opts)
-  }
+// @generated by protobuf-ts 2.9.4
+// @generated from protobuf file "SGTransaction.proto" (package "SGTransaction", syntax proto3)
+// tslint:disable
+import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
+import type { IBinaryWriter } from "@protobuf-ts/runtime";
+import { WireType } from "@protobuf-ts/runtime";
+import type { BinaryReadOptions } from "@protobuf-ts/runtime";
+import type { IBinaryReader } from "@protobuf-ts/runtime";
+import { UnknownFieldHandler } from "@protobuf-ts/runtime";
+import type { PartialMessage } from "@protobuf-ts/runtime";
+import { reflectionMergePartial } from "@protobuf-ts/runtime";
+import { MessageType } from "@protobuf-ts/runtime";
+/**
+ * @generated from protobuf message SGTransaction.DAGStruct
+ */
+export interface DAGStruct {
+    /**
+     * @generated from protobuf field: string type = 1;
+     */
+    type: string; // 
+    /**
+     * @generated from protobuf field: bytes previous_hash = 2;
+     */
+    previousHash: Uint8Array; // 
+    /**
+     * @generated from protobuf field: bytes source_addr = 3;
+     */
+    sourceAddr: Uint8Array; // 
+    /**
+     * @generated from protobuf field: uint64 nonce = 4;
+     */
+    nonce: bigint; // 
+    /**
+     * @generated from protobuf field: int64 timestamp = 5;
+     */
+    timestamp: bigint; // 
+    /**
+     * @generated from protobuf field: bytes uncle_hash = 6;
+     */
+    uncleHash: Uint8Array; // 
+    /**
+     * @generated from protobuf field: bytes data_hash = 7;
+     */
+    dataHash: Uint8Array; // 
 }
+/**
+ * @generated from protobuf message SGTransaction.DAGWrapper
+ */
+export interface DAGWrapper {
+    /**
+     * @generated from protobuf field: SGTransaction.DAGStruct dag_struct = 1;
+     */
+    dagStruct?: DAGStruct; // 
+}
+/**
+ * @generated from protobuf message SGTransaction.TransferTx
+ */
+export interface TransferTx {
+    /**
+     * @generated from protobuf field: SGTransaction.DAGStruct dag_struct = 1;
+     */
+    dagStruct?: DAGStruct; // 
+    /**
+     * @generated from protobuf field: uint64 token_id = 2;
+     */
+    tokenId: bigint; // 
+    /**
+     * @generated from protobuf field: bytes encrypted_amount = 3;
+     */
+    encryptedAmount: Uint8Array; // 
+    /**
+     * @generated from protobuf field: bytes dest_addr = 4;
+     */
+    destAddr: Uint8Array; // 
+}
+/**
+ * @generated from protobuf message SGTransaction.ProcessingTx
+ */
+export interface ProcessingTx {
+    /**
+     * @generated from protobuf field: SGTransaction.DAGStruct dag_struct = 1;
+     */
+    dagStruct?: DAGStruct; // 
+    /**
+     * @generated from protobuf field: uint64 mpc_magic_key = 2;
+     */
+    mpcMagicKey: bigint;
+    /**
+     * @generated from protobuf field: uint64 offset = 3;
+     */
+    offset: bigint;
+    /**
+     * @generated from protobuf field: string job_cid = 4;
+     */
+    jobCid: string; // 
+    /**
+     * @generated from protobuf field: string subtask_cid = 5;
+     */
+    subtaskCid: string; // 
+}
+/**
+ * @generated from protobuf message SGTransaction.MintTx
+ */
+export interface MintTx {
+    /**
+     * @generated from protobuf field: SGTransaction.DAGStruct dag_struct = 1;
+     */
+    dagStruct?: DAGStruct; // 
+    /**
+     * @generated from protobuf field: uint64 amount = 2;
+     */
+    amount: bigint; // 
+}
+// @generated message type with reflection information, may provide speed optimized methods
+class DAGStruct$Type extends MessageType<DAGStruct> {
+    constructor() {
+        super("SGTransaction.DAGStruct", [
+            { no: 1, name: "type", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "previous_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 3, name: "source_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 4, name: "nonce", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 5, name: "timestamp", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 6, name: "uncle_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 7, name: "data_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<DAGStruct>): DAGStruct {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.type = "";
+        message.previousHash = new Uint8Array(0);
+        message.sourceAddr = new Uint8Array(0);
+        message.nonce = 0n;
+        message.timestamp = 0n;
+        message.uncleHash = new Uint8Array(0);
+        message.dataHash = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<DAGStruct>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DAGStruct): DAGStruct {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string type */ 1:
+                    message.type = reader.string();
+                    break;
+                case /* bytes previous_hash */ 2:
+                    message.previousHash = reader.bytes();
+                    break;
+                case /* bytes source_addr */ 3:
+                    message.sourceAddr = reader.bytes();
+                    break;
+                case /* uint64 nonce */ 4:
+                    message.nonce = reader.uint64().toBigInt();
+                    break;
+                case /* int64 timestamp */ 5:
+                    message.timestamp = reader.int64().toBigInt();
+                    break;
+                case /* bytes uncle_hash */ 6:
+                    message.uncleHash = reader.bytes();
+                    break;
+                case /* bytes data_hash */ 7:
+                    message.dataHash = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DAGStruct, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string type = 1; */
+        if (message.type !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.type);
+        /* bytes previous_hash = 2; */
+        if (message.previousHash.length)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.previousHash);
+        /* bytes source_addr = 3; */
+        if (message.sourceAddr.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.sourceAddr);
+        /* uint64 nonce = 4; */
+        if (message.nonce !== 0n)
+            writer.tag(4, WireType.Varint).uint64(message.nonce);
+        /* int64 timestamp = 5; */
+        if (message.timestamp !== 0n)
+            writer.tag(5, WireType.Varint).int64(message.timestamp);
+        /* bytes uncle_hash = 6; */
+        if (message.uncleHash.length)
+            writer.tag(6, WireType.LengthDelimited).bytes(message.uncleHash);
+        /* bytes data_hash = 7; */
+        if (message.dataHash.length)
+            writer.tag(7, WireType.LengthDelimited).bytes(message.dataHash);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.DAGStruct
+ */
+export const DAGStruct = new DAGStruct$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class DAGWrapper$Type extends MessageType<DAGWrapper> {
+    constructor() {
+        super("SGTransaction.DAGWrapper", [
+            { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct }
+        ]);
+    }
+    create(value?: PartialMessage<DAGWrapper>): DAGWrapper {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<DAGWrapper>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: DAGWrapper): DAGWrapper {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGTransaction.DAGStruct dag_struct */ 1:
+                    message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: DAGWrapper, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGTransaction.DAGStruct dag_struct = 1; */
+        if (message.dagStruct)
+            DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.DAGWrapper
+ */
+export const DAGWrapper = new DAGWrapper$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class TransferTx$Type extends MessageType<TransferTx> {
+    constructor() {
+        super("SGTransaction.TransferTx", [
+            { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
+            { no: 2, name: "token_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 3, name: "encrypted_amount", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 4, name: "dest_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<TransferTx>): TransferTx {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.tokenId = 0n;
+        message.encryptedAmount = new Uint8Array(0);
+        message.destAddr = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<TransferTx>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TransferTx): TransferTx {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGTransaction.DAGStruct dag_struct */ 1:
+                    message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
+                    break;
+                case /* uint64 token_id */ 2:
+                    message.tokenId = reader.uint64().toBigInt();
+                    break;
+                case /* bytes encrypted_amount */ 3:
+                    message.encryptedAmount = reader.bytes();
+                    break;
+                case /* bytes dest_addr */ 4:
+                    message.destAddr = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: TransferTx, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGTransaction.DAGStruct dag_struct = 1; */
+        if (message.dagStruct)
+            DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 token_id = 2; */
+        if (message.tokenId !== 0n)
+            writer.tag(2, WireType.Varint).uint64(message.tokenId);
+        /* bytes encrypted_amount = 3; */
+        if (message.encryptedAmount.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.encryptedAmount);
+        /* bytes dest_addr = 4; */
+        if (message.destAddr.length)
+            writer.tag(4, WireType.LengthDelimited).bytes(message.destAddr);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.TransferTx
+ */
+export const TransferTx = new TransferTx$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingTx$Type extends MessageType<ProcessingTx> {
+    constructor() {
+        super("SGTransaction.ProcessingTx", [
+            { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
+            { no: 2, name: "mpc_magic_key", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 3, name: "offset", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 4, name: "job_cid", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "subtask_cid", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingTx>): ProcessingTx {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.mpcMagicKey = 0n;
+        message.offset = 0n;
+        message.jobCid = "";
+        message.subtaskCid = "";
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingTx>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingTx): ProcessingTx {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGTransaction.DAGStruct dag_struct */ 1:
+                    message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
+                    break;
+                case /* uint64 mpc_magic_key */ 2:
+                    message.mpcMagicKey = reader.uint64().toBigInt();
+                    break;
+                case /* uint64 offset */ 3:
+                    message.offset = reader.uint64().toBigInt();
+                    break;
+                case /* string job_cid */ 4:
+                    message.jobCid = reader.string();
+                    break;
+                case /* string subtask_cid */ 5:
+                    message.subtaskCid = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingTx, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGTransaction.DAGStruct dag_struct = 1; */
+        if (message.dagStruct)
+            DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 mpc_magic_key = 2; */
+        if (message.mpcMagicKey !== 0n)
+            writer.tag(2, WireType.Varint).uint64(message.mpcMagicKey);
+        /* uint64 offset = 3; */
+        if (message.offset !== 0n)
+            writer.tag(3, WireType.Varint).uint64(message.offset);
+        /* string job_cid = 4; */
+        if (message.jobCid !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.jobCid);
+        /* string subtask_cid = 5; */
+        if (message.subtaskCid !== "")
+            writer.tag(5, WireType.LengthDelimited).string(message.subtaskCid);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.ProcessingTx
+ */
+export const ProcessingTx = new ProcessingTx$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class MintTx$Type extends MessageType<MintTx> {
+    constructor() {
+        super("SGTransaction.MintTx", [
+            { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
+            { no: 2, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<MintTx>): MintTx {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.amount = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<MintTx>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: MintTx): MintTx {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGTransaction.DAGStruct dag_struct */ 1:
+                    message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
+                    break;
+                case /* uint64 amount */ 2:
+                    message.amount = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: MintTx, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGTransaction.DAGStruct dag_struct = 1; */
+        if (message.dagStruct)
+            DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 amount = 2; */
+        if (message.amount !== 0n)
+            writer.tag(2, WireType.Varint).uint64(message.amount);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.MintTx
+ */
+export const MintTx = new MintTx$Type();

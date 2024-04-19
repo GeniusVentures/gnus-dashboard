@@ -43,15 +43,18 @@ import {
 import { pipe } from "it-pipe";
 import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
 import { sgns as sgnsBcast } from "data/protobuf/bcast";
+import { Delta,Element } from "data/protobuf/delta";
 //import protobuf from "protobufjs";
 import { v4 as uuidv4 } from 'uuid';
 import { CID } from 'multiformats/cid'
 import {Buffer} from "buffer";
-const { Message, Message_Request, Message_Response, Message_Block } = require("/data/protobuf/message");
-import { SGTransaction } from "/data/protobuf/SGTransaction";
+const { Message, Message_Request, Message_Response, Message_Block } = require("data/protobuf/message");
+const { BlockHashData,BlockHeaderData,BlockPayloadData } = require("data/protobuf/SGBlocks");
+const { DAGStruct,DAGWrapper,TransferTx,ProcessingTx,MintTx } = require("data/protobuf/SGTransaction");
 import {encode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
 import {decode as readerDecode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
-import {decode as decodeCbor } from "cborg"
+import {decode as decodeCbor } from "cborg";
+import * as dagPB from '@ipld/dag-pb'
 let node = null;
 
 let requestout = 0;
@@ -60,7 +63,8 @@ const createNode = async () => {
 		const { crdt: crdtBroadcast } = sgnsBroadcast;
 		const { crdt: crdtBcast } = sgnsBcast;
 		const { broadcasting } = crdtBroadcast;
-		const { pb } = crdtBcast;
+		const { pb: pbBcast } = crdtBcast;
+
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
 		//const keyPair = await createEd25519PeerId();
@@ -252,7 +256,7 @@ const createNode = async () => {
 				//const cidString = decodedTask.data.toString('utf-8');
 				//console.log("CID String:::: " + cidString);
 				try {
-					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
+					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
 					let requests = [];
 					for (const head of cids.heads) {
 						if(!requestedCids.includes(String(head.cid)))
@@ -317,7 +321,6 @@ const createNode = async () => {
 function respondHandler(source) {
 	console.log('Incoming message received!')
 	console.log('Stream:', source)
-
 	
 	// Handle the incoming message here
 	// For example, you can listen to the stream for incoming data
@@ -326,22 +329,189 @@ function respondHandler(source) {
 		//console.log("SOURCE:" + source)
 		for await (const chunk of readerDecode()(source)) {
 			const message = Message.fromBinary(chunk.slice());
-			console.log('Decoded message:', message);
+			//console.log('Decoded message:', message);
 			for(const item of message.data)
 			{
 				//console.log(item.prefix.toString());
+				//console.log(item.data);
+				//const ipld = dagPB.decode(item.data)
 				try{
-					const dag = SGTransaction.DAGStruct.decode(item.data)
-					console.log("Daggg:" + dag.type);
-					console.log("Daggg:" + dag.previous_hash);
-					console.log("Daggg:" + dag.source_addr);
-					console.log("Daggg:" + dag.nonce);
-					console.log("Daggg:" + dag.timestamp);
+					const decodedData = dagPB.decode(item.data);
+					// console.log("TESt: " + decodedData);
+					// console.log("TESt: " + decodedData.Data);
+					// console.log("TESt: " + decodedData.Links[0].Hash);
+					// console.log("TESt: " + decodedData.Links[0].Name);
+					// console.log("TESt: " + decodedData.Links[0].Tsize);
+					// try{
+					// 	const block = BlockPayloadData.fromBinary(decodedData.Data);
+					// } catch(e)
+					// {
+					// 	console.log("Payload Fail");
+					// }
+					// try{
+					// 	const block = BlockHeaderData.fromBinary(decodedData.Data);
+					// } catch(e)
+					// {
+					// 	console.log("Header Fail");
+					// }		
+					// try{
+					// 	const dag = SGTransaction.DAGStruct.decode(decodedData.Data)
+					// 	console.log("Daggg type:" + dag.type);
+					// 	console.log("Daggg Prev:" + dag.previous_hash);
+					// 	console.log("Daggg Source:" + dag.source_addr);
+					// 	console.log("Daggg None:" + dag.nonce);
+					// 	console.log("Daggg Timestamp:" + dag.timestamp);
+					// 	console.log("Daggg Uncle:" + dag.uncle_hash);
+					// 	console.log("Daggg Data:" + dag.data_hash);
+					// } catch(e)
+					// {
+					// 	console.log("DAg fail");
+					// }
+
+					try{
+						const delta = Delta.fromBinary(decodedData.Data);
+						
+						for( const elementin of delta.elements)
+						{
+							console.log("Element Key:" + elementin.key);
+							console.log("Element data:" + elementin.id);
+							console.log("Element data:" + elementin.value);
+							// try{
+							// 	const block = BlockPayloadData.fromBinary(elementin.value);
+							// 	console.log("Block? " + block.hash);
+							// 	console.log("Block? " + block.header);
+							// 	console.log("Block? " + block.blockBody);
+							// 	console.log("Block? " + block.header.parentHash);
+							// 	console.log("Block? " + block.header.blockNumber);
+							// 	console.log("Block? " + block.header.stateRoot);
+							// 	console.log("Block? " + block.header.extrinsicsRoot);
+							// 	// console.log("Block? " + block.block_body);
+							// } catch(e)
+							// {
+							// 	console.log("Block Fail")
+							// }
+							try{
+								const block = BlockHeaderData.fromBinary(elementin.value);
+								console.log("BlockHeader? " + block.parentHash);
+								console.log("BlockHeader? " + block.blockNumber);
+								console.log("BlockHeader? " + block.stateRoot);
+								console.log("BlockHeader? " + block.extrinsicsRoot);
+								console.log("BlockHeader? " + block.digest);
+							} catch(e)
+							{
+								console.log("Block Fail")
+							}
+							//  try{
+							// 	const dag = DAGStruct.fromBinary(elementin.value);
+							// 	console.log("Daggg type:" + dag.type);
+							// 	console.log("Daggg Prev:" + dag.previous_hash);
+							// 	console.log("Daggg Source:" + dag.source_addr);
+							// 	console.log("Daggg None:" + dag.nonce);
+							// 	console.log("Daggg Timestamp:" + dag.timestamp);
+							// 	console.log("Daggg Uncle:" + dag.uncle_hash);
+							// 	console.log("Daggg Data:" + dag.data_hash);
+							// } catch(e)
+							// {
+							// 	console.log("DAg fail");
+							// }
+							try{
+								const tx = ProcessingTx.fromBinary(elementin.value);
+								console.log("TX: " + tx.mpc_magic_key);
+								console.log("TX: " + tx.offset);
+								console.log("TX: " + tx.job_cid);
+
+							} catch(e)
+							{
+								console.log("Tx error");
+							}
+							try{
+								const transfer = TransferTx.fromBinary(elementin.value);
+								console.log("Transfer: " + transfer.tokenId);
+								console.log("Transfer: " + transfer.encryptedAmount);
+								console.log("Transfer: " + transfer.destAddr);
+								console.log("Transfer: " + transfer.dagStruct.type);
+							} catch(e)
+							{
+								console.log("Transfer error");
+							}
+							try{
+								const dag = ProcessingTx.fromBinary(elementin.value);
+								console.log("Proc: " + dag.job_cid);
+							} catch(e)
+							{
+								console.log("Proc error");
+							}
+							try{
+								const mint = MintTx.fromBinary(elementin.value);
+								console.log("Mint: " + mint.amount);
+								console.log("Mint:" + mint.dagStruct.type)
+							} catch(e)
+							{
+								console.log("Mint error");
+							}
+							try{
+								const dag = DAGWrapper.fromBinary(elementin.value);
+							} catch(e)
+							{
+								console.log("DragWrapped Fail");
+							}
+						}
+						//console.log("Delta: " + delta.elements[0].key);
+						console.log("Tombstones: " + delta.tombstones[0].key)
+						console.log("Delta: " + delta.priority);
+					} catch(e)
+					{
+						console.log("Delta Error" + e);
+					}
+
+
 				} catch(e)
 				{
-					console.log("woww:" + e);
+					console.log("DAGERROR : " + e);
 				}
 
+				// const textdecoder = new TextDecoder();
+				// const decodedString = textdecoder.decode(ipld.data);
+				// console.log("IPLD:" + decodedString);
+				// console.log("Decoded String: " + decodedString);
+				// try{
+					
+				// 	const block = BlockPayloadData.fromBinary(item.data);
+				// 	console.log("Payload:  " + block)
+				// 	// const dag = SGTransaction.DAGStruct.decode(item.data)
+				// 	// console.log("Daggg:" + dag.type);
+				// 	// console.log("Daggg:" + dag.previous_hash);
+				// 	// console.log("Daggg:" + dag.source_addr);
+				// 	// console.log("Daggg:" + dag.nonce);
+				// 	// console.log("Daggg:" + dag.timestamp);
+				// } catch(e)
+				// {
+				// 	console.log("FailPayload:");
+				// }
+				// try{
+				// 	const block = BlockHeaderData.fromBinary(item.data);
+				// 	console.log("Header:  " + block)
+				// 	// const dag = SGTransaction.DAGStruct.decode(item.data)
+				// 	// console.log("Daggg:" + dag.type);
+				// 	// console.log("Daggg:" + dag.previous_hash);
+				// 	// console.log("Daggg:" + dag.source_addr);
+				// 	// console.log("Daggg:" + dag.nonce);
+				// 	// console.log("Daggg:" + dag.timestamp);
+				// } catch(e)
+				// {
+				// 	console.log("FailHeader:");
+				// }
+				// try{
+				// 	const dag = SGTransaction.DAGStruct.decode(item.data)
+				// 	console.log("Daggg:" + dag.type);
+				// 	console.log("Daggg:" + dag.previous_hash);
+				// 	console.log("Daggg:" + dag.source_addr);
+				// 	console.log("Daggg:" + dag.nonce);
+				// 	console.log("Daggg:" + dag.timestamp);
+				// } catch(e)
+				// {
+				// 	console.log("Faildag:");
+				// }
 			}
         }        
     })()

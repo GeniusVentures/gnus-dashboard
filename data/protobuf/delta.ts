@@ -1,330 +1,174 @@
-/* eslint-disable import/export */
-/* eslint-disable complexity */
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unnecessary-boolean-literal-compare */
-/* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { type Codec, CodeError, decodeMessage, type DecodeOptions, encodeMessage, message } from 'protons-runtime'
-import { alloc as uint8ArrayAlloc } from 'uint8arrays/alloc'
-import type { Uint8ArrayList } from 'uint8arraylist'
-
-export interface sgns {}
-
-export namespace sgns {
-  export interface crdt {}
-
-  export namespace crdt {
-    export interface pb {}
-
-    export namespace pb {
-      export interface Delta {
-        elements: sgns.crdt.pb.Element[]
-        tombstones: sgns.crdt.pb.Element[]
-        priority: bigint
-      }
-
-      export namespace Delta {
-        let _codec: Codec<Delta>
-
-        export const codec = (): Codec<Delta> => {
-          if (_codec == null) {
-            _codec = message<Delta>((obj, w, opts = {}) => {
-              if (opts.lengthDelimited !== false) {
-                w.fork()
-              }
-
-              if (obj.elements != null) {
-                for (const value of obj.elements) {
-                  w.uint32(10)
-                  sgns.crdt.pb.Element.codec().encode(value, w)
-                }
-              }
-
-              if (obj.tombstones != null) {
-                for (const value of obj.tombstones) {
-                  w.uint32(18)
-                  sgns.crdt.pb.Element.codec().encode(value, w)
-                }
-              }
-
-              if ((obj.priority != null && obj.priority !== BigInt(0))) {
-                w.uint32(24)
-                w.uint64(obj.priority)
-              }
-
-              if (opts.lengthDelimited !== false) {
-                w.ldelim()
-              }
-            }, (reader, length, opts = {}) => {
-              const obj: any = {
-                elements: [],
-                tombstones: [],
-                priority: BigInt(0)
-              }
-
-              const end = length == null ? reader.len : reader.pos + length
-
-              while (reader.pos < end) {
-                const tag = reader.uint32()
-
-                switch (tag >>> 3) {
-                  case 1: {
-                    if (opts.limits?.elements != null && obj.elements.length === opts.limits.elements) {
-                      throw new CodeError('decode error - map field "elements" had too many elements', 'ERR_MAX_LENGTH')
-                    }
-
-                    obj.elements.push(sgns.crdt.pb.Element.codec().decode(reader, reader.uint32(), {
-                      limits: opts.limits?.elements$
-                    }))
-                    break
-                  }
-                  case 2: {
-                    if (opts.limits?.tombstones != null && obj.tombstones.length === opts.limits.tombstones) {
-                      throw new CodeError('decode error - map field "tombstones" had too many elements', 'ERR_MAX_LENGTH')
-                    }
-
-                    obj.tombstones.push(sgns.crdt.pb.Element.codec().decode(reader, reader.uint32(), {
-                      limits: opts.limits?.tombstones$
-                    }))
-                    break
-                  }
-                  case 3: {
-                    obj.priority = reader.uint64()
-                    break
-                  }
-                  default: {
-                    reader.skipType(tag & 7)
-                    break
-                  }
-                }
-              }
-
-              return obj
-            })
-          }
-
-          return _codec
-        }
-
-        export const encode = (obj: Partial<Delta>): Uint8Array => {
-          return encodeMessage(obj, Delta.codec())
-        }
-
-        export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<Delta>): Delta => {
-          return decodeMessage(buf, Delta.codec(), opts)
-        }
-      }
-
-      export interface Element {
-        key: string
-        id: string
-        value: Uint8Array
-      }
-
-      export namespace Element {
-        let _codec: Codec<Element>
-
-        export const codec = (): Codec<Element> => {
-          if (_codec == null) {
-            _codec = message<Element>((obj, w, opts = {}) => {
-              if (opts.lengthDelimited !== false) {
-                w.fork()
-              }
-
-              if ((obj.key != null && obj.key !== '')) {
-                w.uint32(10)
-                w.string(obj.key)
-              }
-
-              if ((obj.id != null && obj.id !== '')) {
-                w.uint32(18)
-                w.string(obj.id)
-              }
-
-              if ((obj.value != null && obj.value.byteLength > 0)) {
-                w.uint32(26)
-                w.bytes(obj.value)
-              }
-
-              if (opts.lengthDelimited !== false) {
-                w.ldelim()
-              }
-            }, (reader, length, opts = {}) => {
-              const obj: any = {
-                key: '',
-                id: '',
-                value: uint8ArrayAlloc(0)
-              }
-
-              const end = length == null ? reader.len : reader.pos + length
-
-              while (reader.pos < end) {
-                const tag = reader.uint32()
-
-                switch (tag >>> 3) {
-                  case 1: {
-                    obj.key = reader.string()
-                    break
-                  }
-                  case 2: {
-                    obj.id = reader.string()
-                    break
-                  }
-                  case 3: {
-                    obj.value = reader.bytes()
-                    break
-                  }
-                  default: {
-                    reader.skipType(tag & 7)
-                    break
-                  }
-                }
-              }
-
-              return obj
-            })
-          }
-
-          return _codec
-        }
-
-        export const encode = (obj: Partial<Element>): Uint8Array => {
-          return encodeMessage(obj, Element.codec())
-        }
-
-        export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<Element>): Element => {
-          return decodeMessage(buf, Element.codec(), opts)
-        }
-      }
-
-      let _codec: Codec<pb>
-
-      export const codec = (): Codec<pb> => {
-        if (_codec == null) {
-          _codec = message<pb>((obj, w, opts = {}) => {
-            if (opts.lengthDelimited !== false) {
-              w.fork()
-            }
-
-            if (opts.lengthDelimited !== false) {
-              w.ldelim()
-            }
-          }, (reader, length, opts = {}) => {
-            const obj: any = {}
-
-            const end = length == null ? reader.len : reader.pos + length
-
-            while (reader.pos < end) {
-              const tag = reader.uint32()
-
-              switch (tag >>> 3) {
-                default: {
-                  reader.skipType(tag & 7)
-                  break
-                }
-              }
-            }
-
-            return obj
-          })
-        }
-
-        return _codec
-      }
-
-      export const encode = (obj: Partial<pb>): Uint8Array => {
-        return encodeMessage(obj, pb.codec())
-      }
-
-      export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<pb>): pb => {
-        return decodeMessage(buf, pb.codec(), opts)
-      }
-    }
-
-    let _codec: Codec<crdt>
-
-    export const codec = (): Codec<crdt> => {
-      if (_codec == null) {
-        _codec = message<crdt>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<crdt>): Uint8Array => {
-      return encodeMessage(obj, crdt.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<crdt>): crdt => {
-      return decodeMessage(buf, crdt.codec(), opts)
-    }
-  }
-
-  let _codec: Codec<sgns>
-
-  export const codec = (): Codec<sgns> => {
-    if (_codec == null) {
-      _codec = message<sgns>((obj, w, opts = {}) => {
-        if (opts.lengthDelimited !== false) {
-          w.fork()
-        }
-
-        if (opts.lengthDelimited !== false) {
-          w.ldelim()
-        }
-      }, (reader, length, opts = {}) => {
-        const obj: any = {}
-
-        const end = length == null ? reader.len : reader.pos + length
-
-        while (reader.pos < end) {
-          const tag = reader.uint32()
-
-          switch (tag >>> 3) {
-            default: {
-              reader.skipType(tag & 7)
-              break
-            }
-          }
-        }
-
-        return obj
-      })
-    }
-
-    return _codec
-  }
-
-  export const encode = (obj: Partial<sgns>): Uint8Array => {
-    return encodeMessage(obj, sgns.codec())
-  }
-
-  export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<sgns>): sgns => {
-    return decodeMessage(buf, sgns.codec(), opts)
-  }
+// @generated by protobuf-ts 2.9.4
+// @generated from protobuf file "delta.proto" (package "sgns.crdt.pb", syntax proto3)
+// tslint:disable
+import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
+import type { IBinaryWriter } from "@protobuf-ts/runtime";
+import { WireType } from "@protobuf-ts/runtime";
+import type { BinaryReadOptions } from "@protobuf-ts/runtime";
+import type { IBinaryReader } from "@protobuf-ts/runtime";
+import { UnknownFieldHandler } from "@protobuf-ts/runtime";
+import type { PartialMessage } from "@protobuf-ts/runtime";
+import { reflectionMergePartial } from "@protobuf-ts/runtime";
+import { MessageType } from "@protobuf-ts/runtime";
+/**
+ * @generated from protobuf message sgns.crdt.pb.Delta
+ */
+export interface Delta {
+    /**
+     * @generated from protobuf field: repeated sgns.crdt.pb.Element elements = 1;
+     */
+    elements: Element[];
+    /**
+     * @generated from protobuf field: repeated sgns.crdt.pb.Element tombstones = 2;
+     */
+    tombstones: Element[];
+    /**
+     * @generated from protobuf field: uint64 priority = 3;
+     */
+    priority: bigint;
 }
+/**
+ * @generated from protobuf message sgns.crdt.pb.Element
+ */
+export interface Element {
+    /**
+     * key+id must form a unique identifier
+     *
+     * @generated from protobuf field: string key = 1;
+     */
+    key: string;
+    /**
+     * @generated from protobuf field: string id = 2;
+     */
+    id: string;
+    /**
+     * @generated from protobuf field: bytes value = 3;
+     */
+    value: Uint8Array;
+}
+// @generated message type with reflection information, may provide speed optimized methods
+class Delta$Type extends MessageType<Delta> {
+    constructor() {
+        super("sgns.crdt.pb.Delta", [
+            { no: 1, name: "elements", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Element },
+            { no: 2, name: "tombstones", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => Element },
+            { no: 3, name: "priority", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<Delta>): Delta {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.elements = [];
+        message.tombstones = [];
+        message.priority = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<Delta>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Delta): Delta {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated sgns.crdt.pb.Element elements */ 1:
+                    message.elements.push(Element.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* repeated sgns.crdt.pb.Element tombstones */ 2:
+                    message.tombstones.push(Element.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* uint64 priority */ 3:
+                    message.priority = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Delta, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated sgns.crdt.pb.Element elements = 1; */
+        for (let i = 0; i < message.elements.length; i++)
+            Element.internalBinaryWrite(message.elements[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* repeated sgns.crdt.pb.Element tombstones = 2; */
+        for (let i = 0; i < message.tombstones.length; i++)
+            Element.internalBinaryWrite(message.tombstones[i], writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 priority = 3; */
+        if (message.priority !== 0n)
+            writer.tag(3, WireType.Varint).uint64(message.priority);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message sgns.crdt.pb.Delta
+ */
+export const Delta = new Delta$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class Element$Type extends MessageType<Element> {
+    constructor() {
+        super("sgns.crdt.pb.Element", [
+            { no: 1, name: "key", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "value", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<Element>): Element {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.key = "";
+        message.id = "";
+        message.value = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<Element>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Element): Element {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string key */ 1:
+                    message.key = reader.string();
+                    break;
+                case /* string id */ 2:
+                    message.id = reader.string();
+                    break;
+                case /* bytes value */ 3:
+                    message.value = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Element, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string key = 1; */
+        if (message.key !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.key);
+        /* string id = 2; */
+        if (message.id !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.id);
+        /* bytes value = 3; */
+        if (message.value.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.value);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message sgns.crdt.pb.Element
+ */
+export const Element = new Element$Type();
