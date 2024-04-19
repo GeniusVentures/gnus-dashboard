@@ -376,94 +376,106 @@ function respondHandler(source) {
 							console.log("Element Key:" + elementin.key);
 							console.log("Element data:" + elementin.id);
 							console.log("Element data:" + elementin.value);
-							// try{
-							// 	const block = BlockPayloadData.fromBinary(elementin.value);
-							// 	console.log("Block? " + block.hash);
-							// 	console.log("Block? " + block.header);
-							// 	console.log("Block? " + block.blockBody);
-							// 	console.log("Block? " + block.header.parentHash);
-							// 	console.log("Block? " + block.header.blockNumber);
-							// 	console.log("Block? " + block.header.stateRoot);
-							// 	console.log("Block? " + block.header.extrinsicsRoot);
-							// 	// console.log("Block? " + block.block_body);
-							// } catch(e)
-							// {
-							// 	console.log("Block Fail")
-							// }
+							//Transfer
 							if(elementin.key.includes("transfer"))
 							{
 								console.log("Transfer");
+								try{
+									const transfer = TransferTx.fromBinary(elementin.value);
+									console.log("Transfer:" + transfer.tokenId);
+									console.log("Transfer:" + transfer.encryptedAmount);
+									console.log("Transfer:" + transfer.destAddr);
+									console.log("Transfer:" + transfer.dagStruct.type);
+									console.log("Transfer:" + transfer.dagStruct.previousHash);
+									console.log("Transfer:" + transfer.dagStruct.sourceAddr);
+									console.log("Transfer:" + transfer.dagStruct.nonce);
+									console.log("Transfer:" + transfer.dagStruct.timestamp);
+									console.log("Transfer:" + transfer.dagStruct.uncleHash);
+									console.log("Transfer:" + transfer.dagStruct.dataHash);
+								} catch(e)
+								{
+									console.log("Transfer error");
+								}
 							}
+							//Mint
 							if(elementin.key.includes("mint"))
 							{
 								console.log("Mint");
+								try{
+									const mint = MintTx.fromBinary(elementin.value);
+									console.log("Mint: " + mint.amount);
+									console.log("Mint:" + mint.dagStruct.previousHash);
+									console.log("Mint:" + mint.dagStruct.sourceAddr);
+									console.log("Mint:" + mint.dagStruct.nonce);
+									console.log("Mint:" + mint.dagStruct.timestamp);
+									console.log("Mint:" + mint.dagStruct.uncleHash);
+									console.log("Mint:" + mint.dagStruct.dataHash);
+								} catch(e)
+								{
+									console.log("Mint error");
+								}
 							}
+							//Blockchain
 							if(elementin.key.includes("blockchain"))
 							{
 								console.log("Blockchain");
 								if(elementin.key.includes("tx"))
 								{
 									console.log("blockchain tx");
+									try{
+										const block = BlockPayloadData.fromBinary(elementin.value);
+										console.log("Block TX" + block.hash);
+										console.log("Block TX" + block.header);
+										console.log("Block TX" + block.blockBody);
+										console.log("Block TX" + block.header.parentHash);
+										console.log("Block TX" + block.header.blockNumber);
+										console.log("Block TX" + block.header.stateRoot);
+										console.log("Block TX" + block.header.extrinsicsRoot);
+										console.log("Block TX" + block.header.digest);
+										// console.log("Block? " + block.block_body);
+									} catch(e)
+									{
+										console.log("Block TX Fail")
+									}
+								}
+								else{
+									try{
+										const block = BlockHeaderData.fromBinary(elementin.value);
+										console.log("BlockHeader" + block.parentHash);
+										console.log("BlockHeader" + block.blockNumber);
+										console.log("BlockHeader" + block.stateRoot);
+										console.log("BlockHeader" + block.extrinsicsRoot);
+										console.log("BlockHeader" + block.digest);
+									} catch(e)
+									{
+										console.log("Block Fail")
+									}
 								}
 
 							}
-
-							try{
-								const block = BlockHeaderData.fromBinary(elementin.value);
-								console.log("BlockHeader? " + block.parentHash);
-								console.log("BlockHeader? " + block.blockNumber);
-								console.log("BlockHeader? " + block.stateRoot);
-								console.log("BlockHeader? " + block.extrinsicsRoot);
-								console.log("BlockHeader? " + block.digest);
-							} catch(e)
+							//Processing
+							if(elementin.key.includes("processing"))
 							{
-								console.log("Block Fail")
-							}
-							try{
-								const tx = ProcessingTx.fromBinary(elementin.value);
-								console.log("TX: " + tx.mpc_magic_key);
-								console.log("TX: " + tx.offset);
-								console.log("TX: " + tx.job_cid);
-
-							} catch(e)
-							{
-								console.log("Tx error");
-							}
-							try{
-								const transfer = TransferTx.fromBinary(elementin.value);
-								console.log("Transfer: " + transfer.tokenId);
-								console.log("Transfer: " + transfer.encryptedAmount);
-								console.log("Transfer: " + transfer.destAddr);
-								console.log("Transfer: " + transfer.dagStruct.type);
-							} catch(e)
-							{
-								console.log("Transfer error");
-							}
-							try{
-								const dag = ProcessingTx.fromBinary(elementin.value);
-								console.log("Proc: " + dag.job_cid);
-							} catch(e)
-							{
-								console.log("Proc error");
-							}
-							try{
-								const mint = MintTx.fromBinary(elementin.value);
-								console.log("Mint: " + mint.amount);
-								console.log("Mint:" + mint.dagStruct.type)
-							} catch(e)
-							{
-								console.log("Mint error");
-							}
-							try{
-								const dag = DAGWrapper.fromBinary(elementin.value);
-							} catch(e)
-							{
-								console.log("DragWrapped Fail");
+								try{
+									const processing = ProcessingTx.fromBinary(elementin.value);
+									console.log("Proc:" + processing.mpcMagicKey);
+									console.log("Proc:" + processing.offset);
+									console.log("Proc:" + processing.jobCid);
+									console.log("Proc:" + processing.subtaskCid);
+									console.log("Proc:" + processing.dagStruct.previousHash)
+									console.log("Proc:" + processing.dagStruct.sourceAddr)
+									console.log("Proc:" + processing.dagStruct.nonce)
+									console.log("Proc:" + processing.dagStruct.timestamp)
+									console.log("Proc:" + processing.dagStruct.uncleHash)
+									console.log("Proc:" + processing.dagStruct.dataHash)
+								} catch(e)
+								{
+									console.log("Proc error");
+								}
 							}
 						}
 						//console.log("Delta: " + delta.elements[0].key);
-						console.log("Tombstones: " + delta.tombstones[0].key)
-						console.log("Delta: " + delta.priority);
+						//console.log("Delta: " + delta.priority);
 					} catch(e)
 					{
 						console.log("Delta Error" + e);
