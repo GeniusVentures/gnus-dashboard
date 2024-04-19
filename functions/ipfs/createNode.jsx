@@ -38,30 +38,23 @@ import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
 import {
-	GraphSync,
-	unixfsPathSelector,
-	getPeer,
-	SelectorNode,
+	getPeer
 } from "@dcdn/graphsync";
-import { newRequest } from "@dcdn/graphsync/dist/src/messages.js";
 import { pipe } from "it-pipe";
 import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
 import { sgns as sgnsBcast } from "data/protobuf/bcast";
 //import protobuf from "protobufjs";
-import { v4 as uuidv4 } from "uuid";
-import { CID } from "multiformats/cid";
-import { Buffer } from "buffer";
-const {
-	Message,
-	Message_Request,
-	Message_Response,
-	Message_Block,
-} = require("/data/protobuf/message");
+import { v4 as uuidv4 } from 'uuid';
+import { CID } from 'multiformats/cid'
+import {Buffer} from "buffer";
+const { Message, Message_Request, Message_Response, Message_Block } = require("/data/protobuf/message");
 import { SGTransaction } from "/data/protobuf/SGTransaction";
-import { encode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
-
+import {encode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
+import {decode as readerDecode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
+import {decode as decodeCbor } from "cborg"
 let node = null;
 
+let requestout = 0;
 const createNode = async () => {
 	try {
 		const { crdt: crdtBroadcast } = sgnsBroadcast;
@@ -122,7 +115,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/52453"],
+				listen: ["/ip4/0.0.0.0/tcp/52453"],
 			},
 			transports: [
 				tcp(),
@@ -148,6 +141,10 @@ const createNode = async () => {
 				identify: identify(),
 				keychain: keychain(KeychainInit),
 				ping: ping(),
+				// ping: ping([
+				// 	"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
+				// 	"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
+				// ]),
 			},
 		});
 		const keyPair = await createEd25519PeerId();
@@ -155,7 +152,7 @@ const createNode = async () => {
 		const libp2p2 = await create({
 			peerId: peerid2,
 			addresses: {
-				listen: ["/ip4/0.0.0.0/tcp/57924"],
+				listen: ["/ip4/0.0.0.0/tcp/42453"],
 			},
 			streamMuxers: [mplex()],
 			transports: [tcp()],
@@ -168,10 +165,44 @@ const createNode = async () => {
 
 		libp2p.addEventListener("connection:open", async (e) => {
 			console.log("New connection opened:", e);
+
+			//const peerInfo = libp2p.peerStore.get(e.peerId);
+
+			// if (peerInfo) {
+			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+			// 	if (connection) {
+			// 		console.log("Peer ID:", e.peerId);
+			// 		console.log("Local peer ID:", libp2p.peerId);
+
+			// 		// Fetch additional details from the connection object
+			// 		const stat = await connection.getStats();
+			// 		console.log("Protocol:", stat.protocol);
+			// 		console.log("Latency:", stat.latency);
+			// 		console.log("Bytes sent:", stat.muxer.bytesSent);
+			// 		console.log("Bytes received:", stat.muxer.bytesReceived);
+			// 		console.log("Stream count:", stat.muxer.streams);
+			// 	}
+			// }
 		});
 
 		libp2p.addEventListener("connection:close", async (e) => {
 			console.log("Connection closed:", e);
+
+			//const peerInfo = libp2p.peerStore.get(e.peerId);
+
+			// if (peerInfo) {
+			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+			// 	if (connection) {
+			// 		console.log("Peer ID:", e.peerId);
+			// 		console.log("Local peer ID:", libp2p.peerId);
+
+			// 		// Fetch additional details from the connection object
+			// 		const stat = await connection.getStats();
+			// 		console.log("Reason:", stat.stat.status);
+			// 		console.log("Closed by:", stat.stat.by);
+			// 		console.log("Duration:", stat.stat.duration);
+			// 	}
+			// }
 		});
 
 		libp2p.addEventListener("peer:discovery", (e) => {
@@ -189,14 +220,29 @@ const createNode = async () => {
 			console.log("Peer ID:", e.peerId);
 		});
 
+		libp2p.addEventListener("peer:connect:error", (e) => {
+			console.log("Error connecting to peer:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect:abort", (e) => {
+			console.log("Connection attempt to peer aborted:", e);
+			console.log("Peer ID:", e.peerId);
+		});
+
+		libp2p.addEventListener("peer:connect:timeout", (e) => {
+			console.log("Connection attempt to peer timed out:", e);
+			console.log("Peer ID:", e.peerId);
+		});
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
 		const requestedCids = [];
+		
 		libp2p.services.pubsub.addEventListener("message", async (message) => {
 			// console.log(
 			// 	`${message.detail.topic}:`,
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
-
+			console.log("Messsssssssssssssage");
 			try {
 				const decodedTask = broadcasting.BroadcastMessage.decode(
 					message.detail.data,
@@ -207,60 +253,37 @@ const createNode = async () => {
 				//console.log("CID String:::: " + cidString);
 				try {
 					const cids = pb.CRDTBroadcast.decode(decodedTask.data);
+					let requests = [];
 					for (const head of cids.heads) {
-						if (!requestedCids.includes(String(head.cid))) {
+						if(!requestedCids.includes(String(head.cid)))
+						{
+							requestout = 1;
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
 							console.log("Addresss : " + decodedTask.multiaddress);
 							const provider = getPeer(decodedTask.multiaddress);
 							console.log("ID CHECK:::" + provider.id);
 							libp2p2.peerStore.merge(provider.id, {
-								multiaddrs: provider.multiaddrs,
+								multiaddrs: provider.multiaddrs
 							});
-							//console.log("HAS ID" + libp2p2.peerStore.has(provider.id));
-							//libp2p.peerStore.addressBook.add(provider.id, provider.multiaddrs);
+							requests.push(MakeRequest(head.cid,requestIdCounter));
+							requestIdCounter++;
+							requestedCids.push(head.cid);
 
-							//const [cid, selector] = unixfsPathSelector("bafyreiakhbtbs4tducqx5tcw36kdwodl6fdg43wnqaxmm64acckxhakeua/Cat.jpg");
-							//const request = exchange.request(head.cid, kSelectorMatcher);
-
-							//libp2p.dial(provider.id);
-							//request.open(provider.multiaddrs);
-
+						}
+						if(requests.length > 0)
+						{
+							const provider = getPeer(decodedTask.multiaddress);
 							const stream = await libp2p2.dialProtocol(
 								provider.id,
 								"/ipfs/graphsync/2.0.0",
 							);
-							// await pipe(
-							// 	[newRequest(request.id, request.root, request.selector)],
-							// 	stream,
-							// );
-
 							await pipe(
-								[RequestBlock(head.cid, requestIdCounter)],
-								stream,
-								respondHandler,
+								[MakeGSMessage(requests)],
+								stream,respondHandler
 							);
-							// sendRequestAndReceiveResponse(libp2p2, provider, head, requestIdCounter)
-							// 	.then(response => {
-							// 		console.log('Received response:', response)
-							// 	})
-							// 	.catch(error => {
-							// 		console.error('Error:', error)
-							// 	})
-							// sendRequestAndReceiveResponse(libp2p2, provider, head, requestIdCounter)
-							// .then(response => {
-							// 	console.log('Received response:', response)
-							//   })
-							//   .catch(error => {
-							// 	console.error('Error:', error)
-							//   })
-							//await stream.close();
-							requestIdCounter++;
-							requestedCids.push(head.cid);
-							//libp2p2.dial(provider.multiaddrs);
-							// Save the blocks into the store;
-							//await request.drain();
 						}
+
 					}
 				} catch (err) {
 					console.log("can't decode CIDs:" + err);
@@ -292,75 +315,40 @@ const createNode = async () => {
 	}
 };
 function respondHandler(source) {
-	console.log("Incoming message received!");
-	console.log("Stream:", source);
+	console.log('Incoming message received!')
+	console.log('Stream:', source)
 
+	
 	// Handle the incoming message here
 	// For example, you can listen to the stream for incoming data
-	(async () => {
-		let binaryData = [];
-		for await (const chunk of source) {
-			console.log("Received chunk:", chunk);
-			const uint8Array = new Uint8Array(chunk.bufs[0]);
-			//console.log("UINT8" + uint8Array);
-			const message = Message.fromBinary(chunk.bufs[0]);
+    ;(async () => {
+		let uint8Decode = new Uint8Array();
+		//console.log("SOURCE:" + source)
+		for await (const chunk of readerDecode()(source)) {
+			const message = Message.fromBinary(chunk.slice());
+			console.log('Decoded message:', message);
+			for(const item of message.data)
+			{
+				//console.log(item.prefix.toString());
+				try{
+					const dag = SGTransaction.DAGStruct.decode(item.data)
+					console.log("Daggg:" + dag.type);
+					console.log("Daggg:" + dag.previous_hash);
+					console.log("Daggg:" + dag.source_addr);
+					console.log("Daggg:" + dag.nonce);
+					console.log("Daggg:" + dag.timestamp);
+				} catch(e)
+				{
+					console.log("woww:" + e);
+				}
 
-			console.log("Decoded message:", message);
-			const dag = SGTransaction.DAGStruct.decode(message.data[0].data);
-			console.log("Dag" + dag.type);
-			//const bloakarray = new Uint8Array(message.data[0]);
-			//const messageblock = Message_Block.fromBinary(bloakarray);
-			//console.log("message block" + messageblock.data)
-			//console.log('Decoded block' + messageblock.prefix);
-			//console.log('Decoded block' + bloakarray);
-			//binaryData.push(chunk.bufs[0]); // Assuming you want the first buffer in each chunk
-		}
-		// Concatenate all received buffers into a single Uint8Array
-		//const binaryMessage = Buffer.concat(binaryData);
-
-		// Deserialize the binary message into a message object
-
-		// Now you can use the 'message' object for further processing
-	})();
-}
-async function sendRequestAndReceiveResponse(
-	libp2p2,
-	provider,
-	head,
-	requestIdCounter,
-) {
-	try {
-		const stream = await libp2p2.dialProtocol(
-			provider.id,
-			"/ipfs/graphsync/2.0.0",
-		);
-
-		const requestData = RequestBlock(head.cid, requestIdCounter);
-
-		const response = await new Promise((resolve, reject) => {
-			try {
-				pipe([requestData], stream, async function* (source) {
-					console.log("Response");
-					let responseData = "";
-					for await (const chunk of source) {
-						responseData += chunk.toString();
-					}
-					resolve(responseData);
-				});
-			} catch (error) {
-				reject(error);
 			}
-		});
-
-		return response;
-	} catch (error) {
-		console.error("Error sending request:", error);
-		return null;
-	}
-}
-
-function RequestBlock(base58cid, requestIdCounter) {
-	const root = CID.parse(String(base58cid));
+        }        
+    })()
+  }
+function MakeRequest( base58cid, requestIdCounter )
+{
+	const root = CID.parse(String(base58cid))
 
 	const request = {
 		id: requestIdCounter,
@@ -370,18 +358,28 @@ function RequestBlock(base58cid, requestIdCounter) {
 		priority: 1,
 		cancel: false,
 		update: false,
-	};
-	//console.log("BinaryRQ????" + Message_Request.toBinary(request));
+	}
+	return request;
+}
+
+function MakeGSMessage(requests)
+{
 	const message = {
 		completeRequestList: true,
-		requests: [request],
+		requests: requests,
 		responses: [],
 		data: [],
-	};
+	}
 	const binarymsg = Message.toBinary(message);
+
 	const buffer = Buffer.from(binarymsg);
-	return encode.single(buffer);
+
+	const decodeTest = Message.fromBinary(binarymsg);
+
+	return encode.single(buffer);	
 }
+
+
 const processBlocks = async (cid, selector, providerId) => {
 	console.log("Process Blocks");
 };
