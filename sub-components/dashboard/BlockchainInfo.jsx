@@ -1,15 +1,12 @@
 import { Card, Col, Row } from "react-bootstrap";
 import BlockExplorerPreview from "sub-components/tables/BlockExplorerPreview";
 import TransactionsPreview from "sub-components/tables/TransactionsPreview";
-import fakeBlocks from "data/protobuf/blocks";
-import fakeTransactions from "data/protobuf/transactions";
 
 const { Fragment, useState, useEffect, useRef } = require("react");
 
 const BlockchainInfo = () => {
 	const [blockData, setBlockData] = useState([]);
 	const [transData, setTransData] = useState([]);
-	console.log(transData);
 	const [blockchainInfo, setBlockchainInfo] = useState({
 		height: "15,400,118",
 		transactions: "1134369",
@@ -19,75 +16,76 @@ const BlockchainInfo = () => {
 	const [blockHeight, setBlockHeight] = useState(3708);
 	const heightRef = useRef(3709);
 	const transactionRef = useRef(16169);
-	const createTransactions = () => {
-		const random = Math.random().toString()[5];
-		console.log(random);
-		const typeDistribution = [
-			"Transfer",
-			"Processing",
-			"Transfer",
-			"Transfer",
-			"Processing",
-		];
-		const type = typeDistribution[random % typeDistribution.length];
-		const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
-		const value = `${(Math.random() * 10).toFixed(3)} GNUS`;
-		const time = new Date().toISOString();
 
-		// Create a new transaction object
-		const newTransaction = {
-			txHash,
-			type,
-			value,
-			time,
-			height: heightRef.current,
-		};
+	// const createTransactions = () => {
+	// 	const random = Math.random().toString()[5];
+	// 	console.log(random);
+	// 	const typeDistribution = [
+	// 		"Transfer",
+	// 		"Processing",
+	// 		"Transfer",
+	// 		"Transfer",
+	// 		"Processing",
+	// 	];
+	// 	const type = typeDistribution[random % typeDistribution.length];
+	// 	const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
+	// 	const value = `${(Math.random() * 10).toFixed(3)} GNUS`;
+	// 	const time = new Date().toISOString();
 
-		setTransactions((prevTransactions) => prevTransactions + 1);
-		setTransData((prevTransData) => [...prevTransData, newTransaction]);
-	};
+	// 	// Create a new transaction object
+	// 	const newTransaction = {
+	// 		txHash,
+	// 		type,
+	// 		value,
+	// 		time,
+	// 		height: heightRef.current,
+	// 	};
 
-	const createBlocks = () => {
-		console.log("hello");
-		const txs = `${(Math.random() * 10).toFixed(0)}`;
-		const time = new Date().toISOString();
+	// 	setTransactions((prevTransactions) => prevTransactions + 1);
+	// 	setTransData((prevTransData) => [...prevTransData, newTransaction]);
+	// };
 
-		// Add a new test data entry to the array
-		let newBlock = {
-			block: heightRef.current,
-			proposer: "GNUS.AI",
-			txs,
-			time,
-		};
+	// const createBlocks = () => {
+	// 	console.log("hello");
+	// 	const txs = `${(Math.random() * 10).toFixed(0)}`;
+	// 	const time = new Date().toISOString();
 
-		// Update the transData state by creating a new array with the new transaction
-		setBlockData((prevBlockData) => [...prevBlockData, newBlock]);
-		setBlockHeight((prevBlockHeight) => prevBlockHeight + 1);
-		heightRef.current = heightRef.current + 1;
-	};
+	// 	// Add a new test data entry to the array
+	// 	let newBlock = {
+	// 		block: heightRef.current,
+	// 		proposer: "GNUS.AI",
+	// 		txs,
+	// 		time,
+	// 	};
 
-	const newTransactions = () => {
-		setTimeout(() => {
-			setInterval(() => {
-				createTransactions();
-			}, 2150);
-		}, 2000);
-	};
+	// 	// Update the transData state by creating a new array with the new transaction
+	// 	setBlockData((prevBlockData) => [...prevBlockData, newBlock]);
+	// 	setBlockHeight((prevBlockHeight) => prevBlockHeight + 1);
+	// 	heightRef.current = heightRef.current + 1;
+	// };
 
-	const newBlocks = () => {
-		setTimeout(() => {
-			setInterval(() => {
-				createBlocks();
-			}, 3350);
-		}, 2000);
-	};
+	// const newTransactions = () => {
+	// 	setTimeout(() => {
+	// 		setInterval(() => {
+	// 			createTransactions();
+	// 		}, 2150);
+	// 	}, 2000);
+	// };
 
-	useEffect(() => {
-		setBlockData(fakeBlocks);
-		setTransData(fakeTransactions);
-		// newTransactions();
-		// newBlocks();
-	}, []);
+	// const newBlocks = () => {
+	// 	setTimeout(() => {
+	// 		setInterval(() => {
+	// 			createBlocks();
+	// 		}, 3350);
+	// 	}, 2000);
+	// };
+
+	// useEffect(() => {
+	// 	setBlockData(fakeBlocks);
+	// 	setTransData(fakeTransactions);
+	// 	// newTransactions();
+	// 	// newBlocks();
+	// }, []);
 
 	return (
 		<Fragment>

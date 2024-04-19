@@ -1,7 +1,11 @@
 import createNode from "functions/ipfs/createNode";
 
 const startLibp2p = async (req, res) => {
-  createNode();
+	const data = await createNode().catch((err) => {
+		console.log(err);
+		res.status(500).json({ error: err.message });
+	});
+	res.status(200).json(data);
 };
 
 export default startLibp2p;
