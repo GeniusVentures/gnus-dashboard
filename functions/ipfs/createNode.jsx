@@ -390,6 +390,24 @@ function respondHandler(source) {
 							// {
 							// 	console.log("Block Fail")
 							// }
+							if(elementin.key.includes("transfer"))
+							{
+								console.log("Transfer");
+							}
+							if(elementin.key.includes("mint"))
+							{
+								console.log("Mint");
+							}
+							if(elementin.key.includes("blockchain"))
+							{
+								console.log("Blockchain");
+								if(elementin.key.includes("tx"))
+								{
+									console.log("blockchain tx");
+								}
+
+							}
+
 							try{
 								const block = BlockHeaderData.fromBinary(elementin.value);
 								console.log("BlockHeader? " + block.parentHash);
@@ -401,19 +419,6 @@ function respondHandler(source) {
 							{
 								console.log("Block Fail")
 							}
-							//  try{
-							// 	const dag = DAGStruct.fromBinary(elementin.value);
-							// 	console.log("Daggg type:" + dag.type);
-							// 	console.log("Daggg Prev:" + dag.previous_hash);
-							// 	console.log("Daggg Source:" + dag.source_addr);
-							// 	console.log("Daggg None:" + dag.nonce);
-							// 	console.log("Daggg Timestamp:" + dag.timestamp);
-							// 	console.log("Daggg Uncle:" + dag.uncle_hash);
-							// 	console.log("Daggg Data:" + dag.data_hash);
-							// } catch(e)
-							// {
-							// 	console.log("DAg fail");
-							// }
 							try{
 								const tx = ProcessingTx.fromBinary(elementin.value);
 								console.log("TX: " + tx.mpc_magic_key);
