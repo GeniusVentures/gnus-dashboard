@@ -13,7 +13,7 @@ const useIPFS = () => {
 			setInterval(() => {
 				getTransactionData();
 				getBlockchainData();
-			}, 3000);
+			}, 2000);
 		}, 3000);
 	}, []);
 
@@ -32,14 +32,6 @@ const useIPFS = () => {
 			});
 	};
 
-	const getCurrentData = () => {};
-
-	const blockSearch = () => {};
-
-	const transSearch = () => {};
-
-	const walletSearch = () => {};
-
 	const getBlockchainData = () => {
 		setBlockchainData(blockchainInfo);
 	};
@@ -48,7 +40,19 @@ const useIPFS = () => {
 		setTransactionData(transactionInfo);
 	};
 
-	return { blockchainData, transactionData };
+	const blockSearch = () => {};
+
+	const transSearch = () => {};
+
+	const walletSearch = () => {};
+
+	return {
+		blockchainData,
+		transactionData,
+		blockSearch,
+		transSearch,
+		walletSearch,
+	};
 };
 
 export default useIPFS;

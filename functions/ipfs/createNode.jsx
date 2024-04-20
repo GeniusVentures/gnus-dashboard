@@ -37,24 +37,41 @@ import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { logger } from "@libp2p/logger";
-import {
-	getPeer
-} from "@dcdn/graphsync";
+import { getPeer } from "@dcdn/graphsync";
 import { pipe } from "it-pipe";
 import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
 import { sgns as sgnsBcast } from "data/protobuf/bcast";
-import { Delta,Element } from "data/protobuf/delta";
+import { Delta, Element } from "data/protobuf/delta";
 //import protobuf from "protobufjs";
-import { v4 as uuidv4 } from 'uuid';
-import { CID } from 'multiformats/cid'
-import {Buffer} from "buffer";
-const { Message, Message_Request, Message_Response, Message_Block } = require("data/protobuf/message");
-const { BlockHashData,BlockHeaderData,BlockPayloadData } = require("data/protobuf/SGBlocks");
-const { DAGStruct,DAGWrapper,TransferTx,ProcessingTx,MintTx } = require("data/protobuf/SGTransaction");
-import {encode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
-import {decode as readerDecode} from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
-import {decode as decodeCbor } from "cborg";
-import * as dagPB from '@ipld/dag-pb'
+import { v4 as uuidv4 } from "uuid";
+import { CID } from "multiformats/cid";
+import { Buffer } from "buffer";
+const {
+	Message,
+	Message_Request,
+	Message_Response,
+	Message_Block,
+} = require("data/protobuf/message");
+const {
+	BlockHashData,
+	BlockHeaderData,
+	BlockPayloadData,
+} = require("data/protobuf/SGBlocks");
+const {
+	DAGStruct,
+	DAGWrapper,
+	TransferTx,
+	ProcessingTx,
+	MintTx,
+} = require("data/protobuf/SGTransaction");
+import { encode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
+import { decode as readerDecode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
+import { decode as decodeCbor } from "cborg";
+import * as dagPB from "@ipld/dag-pb";
+import transferMsg from "functions/messages/transfer";
+import mintMsg from "functions/messages/mint";
+import processingMsg from "functions/messages/processing";
+import blockMsg from "functions/messages/block";
 let node = null;
 
 let requestout = 0;
@@ -119,7 +136,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/0.0.0.0/tcp/52453"],
+				listen: ["/ip4/10.14.0.2/tcp/58375"],
 			},
 			transports: [
 				tcp(),
@@ -240,7 +257,7 @@ const createNode = async () => {
 		});
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
 		const requestedCids = [];
-		
+
 		libp2p.services.pubsub.addEventListener("message", async (message) => {
 			// console.log(
 			// 	`${message.detail.topic}:`,
@@ -259,8 +276,7 @@ const createNode = async () => {
 					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
 					let requests = [];
 					for (const head of cids.heads) {
-						if(!requestedCids.includes(String(head.cid)))
-						{
+						if (!requestedCids.includes(String(head.cid))) {
 							requestout = 1;
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
@@ -268,26 +284,20 @@ const createNode = async () => {
 							const provider = getPeer(decodedTask.multiaddress);
 							console.log("ID CHECK:::" + provider.id);
 							libp2p2.peerStore.merge(provider.id, {
-								multiaddrs: provider.multiaddrs
+								multiaddrs: provider.multiaddrs,
 							});
-							requests.push(MakeRequest(head.cid,requestIdCounter));
+							requests.push(MakeRequest(head.cid, requestIdCounter));
 							requestIdCounter++;
 							requestedCids.push(head.cid);
-
 						}
-						if(requests.length > 0)
-						{
+						if (requests.length > 0) {
 							const provider = getPeer(decodedTask.multiaddress);
 							const stream = await libp2p2.dialProtocol(
 								provider.id,
 								"/ipfs/graphsync/2.0.0",
 							);
-							await pipe(
-								[MakeGSMessage(requests)],
-								stream,respondHandler
-							);
+							await pipe([MakeGSMessage(requests)], stream, respondHandler);
 						}
-
 					}
 				} catch (err) {
 					console.log("can't decode CIDs:" + err);
@@ -319,23 +329,22 @@ const createNode = async () => {
 	}
 };
 function respondHandler(source) {
-	console.log('Incoming message received!')
-	console.log('Stream:', source)
-	
+	console.log("Incoming message received!");
+	console.log("Stream:", source);
+
 	// Handle the incoming message here
 	// For example, you can listen to the stream for incoming data
-    ;(async () => {
+	(async () => {
 		let uint8Decode = new Uint8Array();
 		//console.log("SOURCE:" + source)
 		for await (const chunk of readerDecode()(source)) {
 			const message = Message.fromBinary(chunk.slice());
 			//console.log('Decoded message:', message);
-			for(const item of message.data)
-			{
+			for (const item of message.data) {
 				//console.log(item.prefix.toString());
 				//console.log(item.data);
 				//const ipld = dagPB.decode(item.data)
-				try{
+				try {
 					const decodedData = dagPB.decode(item.data);
 					// console.log("TESt: " + decodedData);
 					// console.log("TESt: " + decodedData.Data);
@@ -353,7 +362,7 @@ function respondHandler(source) {
 					// } catch(e)
 					// {
 					// 	console.log("Header Fail");
-					// }		
+					// }
 					// try{
 					// 	const dag = SGTransaction.DAGStruct.decode(decodedData.Data)
 					// 	console.log("Daggg type:" + dag.type);
@@ -368,19 +377,17 @@ function respondHandler(source) {
 					// 	console.log("DAg fail");
 					// }
 
-					try{
+					try {
 						const delta = Delta.fromBinary(decodedData.Data);
-						
-						for( const elementin of delta.elements)
-						{
+
+						for (const elementin of delta.elements) {
 							console.log("Element Key:" + elementin.key);
 							console.log("Element data:" + elementin.id);
 							console.log("Element data:" + elementin.value);
 							//Transfer
-							if(elementin.key.includes("transfer"))
-							{
+							if (elementin.key.includes("transfer")) {
 								console.log("Transfer");
-								try{
+								try {
 									const transfer = TransferTx.fromBinary(elementin.value);
 									console.log("Transfer:" + transfer.tokenId);
 									console.log("Transfer:" + transfer.encryptedAmount);
@@ -392,16 +399,15 @@ function respondHandler(source) {
 									console.log("Transfer:" + transfer.dagStruct.timestamp);
 									console.log("Transfer:" + transfer.dagStruct.uncleHash);
 									console.log("Transfer:" + transfer.dagStruct.dataHash);
-								} catch(e)
-								{
-									console.log("Transfer error");
+									transferMsg(transfer);
+								} catch (e) {
+									console.log("Transfer error: " + e.message);
 								}
 							}
 							//Mint
-							if(elementin.key.includes("mint"))
-							{
+							if (elementin.key.includes("mint")) {
 								console.log("Mint");
-								try{
+								try {
 									const mint = MintTx.fromBinary(elementin.value);
 									console.log("Mint: " + mint.amount);
 									console.log("Mint:" + mint.dagStruct.previousHash);
@@ -410,19 +416,17 @@ function respondHandler(source) {
 									console.log("Mint:" + mint.dagStruct.timestamp);
 									console.log("Mint:" + mint.dagStruct.uncleHash);
 									console.log("Mint:" + mint.dagStruct.dataHash);
-								} catch(e)
-								{
-									console.log("Mint error");
+									mintMsg(mint);
+								} catch (e) {
+									console.log("Mint error: " + e.message);
 								}
 							}
 							//Blockchain
-							if(elementin.key.includes("blockchain"))
-							{
+							if (elementin.key.includes("blockchain")) {
 								console.log("Blockchain");
-								if(elementin.key.includes("tx"))
-								{
+								if (elementin.key.includes("tx")) {
 									console.log("blockchain tx");
-									try{
+									try {
 										const block = BlockPayloadData.fromBinary(elementin.value);
 										console.log("Block TX" + block.hash);
 										console.log("Block TX" + block.header);
@@ -433,57 +437,50 @@ function respondHandler(source) {
 										console.log("Block TX" + block.header.extrinsicsRoot);
 										console.log("Block TX" + block.header.digest);
 										// console.log("Block? " + block.block_body);
-									} catch(e)
-									{
-										console.log("Block TX Fail")
+										blockMsg(block);
+									} catch (e) {
+										console.log("Block TX Fail: " + e.message);
 									}
-								}
-								else{
-									try{
+								} else {
+									try {
 										const block = BlockHeaderData.fromBinary(elementin.value);
 										console.log("BlockHeader" + block.parentHash);
 										console.log("BlockHeader" + block.blockNumber);
 										console.log("BlockHeader" + block.stateRoot);
 										console.log("BlockHeader" + block.extrinsicsRoot);
 										console.log("BlockHeader" + block.digest);
-									} catch(e)
-									{
-										console.log("Block Fail")
+										blockMsg(block);
+									} catch (e) {
+										console.log("Block Fail: " + e.message);
 									}
 								}
-
 							}
 							//Processing
-							if(elementin.key.includes("processing"))
-							{
-								try{
+							if (elementin.key.includes("processing")) {
+								try {
 									const processing = ProcessingTx.fromBinary(elementin.value);
 									console.log("Proc:" + processing.mpcMagicKey);
 									console.log("Proc:" + processing.offset);
 									console.log("Proc:" + processing.jobCid);
 									console.log("Proc:" + processing.subtaskCid);
-									console.log("Proc:" + processing.dagStruct.previousHash)
-									console.log("Proc:" + processing.dagStruct.sourceAddr)
-									console.log("Proc:" + processing.dagStruct.nonce)
-									console.log("Proc:" + processing.dagStruct.timestamp)
-									console.log("Proc:" + processing.dagStruct.uncleHash)
-									console.log("Proc:" + processing.dagStruct.dataHash)
-								} catch(e)
-								{
+									console.log("Proc:" + processing.dagStruct.previousHash);
+									console.log("Proc:" + processing.dagStruct.sourceAddr);
+									console.log("Proc:" + processing.dagStruct.nonce);
+									console.log("Proc:" + processing.dagStruct.timestamp);
+									console.log("Proc:" + processing.dagStruct.uncleHash);
+									console.log("Proc:" + processing.dagStruct.dataHash);
+									processingMsg(processing);
+								} catch (e) {
 									console.log("Proc error");
 								}
 							}
 						}
 						//console.log("Delta: " + delta.elements[0].key);
 						//console.log("Delta: " + delta.priority);
-					} catch(e)
-					{
+					} catch (e) {
 						console.log("Delta Error" + e);
 					}
-
-
-				} catch(e)
-				{
+				} catch (e) {
 					console.log("DAGERROR : " + e);
 				}
 
@@ -492,7 +489,7 @@ function respondHandler(source) {
 				// console.log("IPLD:" + decodedString);
 				// console.log("Decoded String: " + decodedString);
 				// try{
-					
+
 				// 	const block = BlockPayloadData.fromBinary(item.data);
 				// 	console.log("Payload:  " + block)
 				// 	// const dag = SGTransaction.DAGStruct.decode(item.data)
@@ -530,12 +527,11 @@ function respondHandler(source) {
 				// 	console.log("Faildag:");
 				// }
 			}
-        }        
-    })()
-  }
-function MakeRequest( base58cid, requestIdCounter )
-{
-	const root = CID.parse(String(base58cid))
+		}
+	})();
+}
+function MakeRequest(base58cid, requestIdCounter) {
+	const root = CID.parse(String(base58cid));
 
 	const request = {
 		id: requestIdCounter,
@@ -545,27 +541,25 @@ function MakeRequest( base58cid, requestIdCounter )
 		priority: 1,
 		cancel: false,
 		update: false,
-	}
+	};
 	return request;
 }
 
-function MakeGSMessage(requests)
-{
+function MakeGSMessage(requests) {
 	const message = {
 		completeRequestList: true,
 		requests: requests,
 		responses: [],
 		data: [],
-	}
+	};
 	const binarymsg = Message.toBinary(message);
 
 	const buffer = Buffer.from(binarymsg);
 
 	const decodeTest = Message.fromBinary(binarymsg);
 
-	return encode.single(buffer);	
+	return encode.single(buffer);
 }
-
 
 const processBlocks = async (cid, selector, providerId) => {
 	console.log("Process Blocks");
