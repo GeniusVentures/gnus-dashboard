@@ -31,7 +31,7 @@ const TransactionsPreview = () => {
 								</tr>
 							</thead>
 							<tbody ref={parent}>
-								{transactionInfo.map((item, index) => {
+								{transactionInfo.slice(0, 9).map((item, index) => {
 									return (
 										<tr className="text-center" key={index}>
 											<td className="text-primary">

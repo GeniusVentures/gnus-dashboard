@@ -29,7 +29,7 @@ const BlockExplorerPreview = () => {
 								</tr>
 							</thead>
 							<tbody ref={parent}>
-								{blockchainInfo.map((item, index) => {
+								{blockchainInfo.slice(0, 9).map((item, index) => {
 									return (
 										<tr className="text-center" key={index}>
 											<td className="text-primary">
