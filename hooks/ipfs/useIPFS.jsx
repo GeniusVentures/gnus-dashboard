@@ -12,8 +12,8 @@ const useIPFS = () => {
 		startNode();
 		setTimeout(() => {
 			setInterval(() => {
-				// getTransactionData();
-				// getBlockchainData();
+				getTransactionData();
+				getBlockchainData();
 			}, 2000);
 		}, 3000);
 	}, []);

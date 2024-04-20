@@ -1,15 +1,5 @@
-let blockchainData = [];
+export let blockchainData = [];
 
-const blockchainInfo = () => {
-	try {
-		const updateBCD = (data) => {
-			blockchainData = data;
-		};
-
-		return { updateBCD, blockchainData };
-	} catch (err) {
-		console.log(err);
-	}
+export const updateBCD = (data) => {
+	blockchainData = data;
 };
-
-export default blockchainInfo;
