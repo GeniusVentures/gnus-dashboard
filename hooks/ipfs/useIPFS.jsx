@@ -36,7 +36,6 @@ const useIPFS = () => {
 		axios
 			.get("/api/networkData/getBlocksPrev")
 			.then((blockchainData) => {
-				console.log(blockchainData.data);
 				setBlockchainInfo(blockchainData.data);
 			})
 			.catch((error) => {
@@ -48,7 +47,6 @@ const useIPFS = () => {
 		axios
 			.get("/api/networkData/getTransPrev")
 			.then((transactionData) => {
-				console.log(transactionData.data);
 				setTransactionInfo(transactionData.data);
 			})
 			.catch((error) => {

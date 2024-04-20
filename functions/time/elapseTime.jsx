@@ -10,7 +10,6 @@ const elapsedTime = (bts) => {
 	const daysPassed = Math.floor(timeDifferenceSec / 86400);
 
 	if (daysPassed == 0 && hoursPassed == 0 && minutesPassed == 0) {
-		console.log(parseInt(secondsPassed));
 		if (parseInt(secondsPassed) <= 1) {
 			return `${secondsPassed} second `;
 		} else {
