@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
 
 const TransactionsPreview = () => {
+	console.log(useIPFSContext());
 	const { transactionInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const [modal, setModal] = useState(false);

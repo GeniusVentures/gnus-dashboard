@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
 
 const BlockExplorerPreview = () => {
+	console.log(useIPFSContext());
 	const { blockchainInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const router = useRouter();

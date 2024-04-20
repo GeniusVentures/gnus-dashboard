@@ -18,18 +18,17 @@ const useIPFS = () => {
 	}, []);
 
 	const startNode = () => {
-		axios
-			.get("/api/libp2p/startLibp2p")
-			.then((response) => {
-				setBlockchainData(response.data.blockchainInfo);
-				setTransactionData(response.data.transactionInfo);
-			})
-			.catch((error) => {
-				// console.error(error);
-				// setTimeout(() => {
-				// 	startNode();
-				// }, 1000);
-			});
+		axios.get("/api/libp2p/startLibp2p");
+		// .then((response) => {
+		// 	setBlockchainInfo(response.data.blockchainInfo);
+		// 	setTransactionInfo(response.data.transactionInfo);
+		// })
+		// .catch((error) => {
+		// console.error(error);
+		// setTimeout(() => {
+		// 	startNode();
+		// }, 1000);
+		// });
 	};
 
 	const getBlockchainData = () => {
