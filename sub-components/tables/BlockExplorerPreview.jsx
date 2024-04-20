@@ -5,8 +5,9 @@ import elapsedTime from "functions/time/elapseTime";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
+
 const BlockExplorerPreview = () => {
-	const { blockchainData } = useIPFSContext();
+	const { blockchainInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const router = useRouter();
 	const [modal, setModal] = useState(false);
@@ -27,7 +28,7 @@ const BlockExplorerPreview = () => {
 								</tr>
 							</thead>
 							<tbody ref={parent}>
-								{blockchainData.slice(0, 9).map((item, index) => {
+								{blockchainInfo.slice(0, 9).map((item, index) => {
 									return (
 										<tr className="text-center" key={index}>
 											<td className="text-primary">

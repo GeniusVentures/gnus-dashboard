@@ -437,7 +437,7 @@ function respondHandler(source) {
 										console.log("Block TX" + block.header.extrinsicsRoot);
 										console.log("Block TX" + block.header.digest);
 										// console.log("Block? " + block.block_body);
-										blockMsg(block);
+										// blockMsg(block);
 									} catch (e) {
 										console.log("Block TX Fail: " + e.message);
 									}

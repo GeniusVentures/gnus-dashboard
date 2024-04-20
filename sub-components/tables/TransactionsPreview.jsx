@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
 
 const TransactionsPreview = () => {
-	const { transactionData } = useIPFSContext();
+	const { transactionInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const [modal, setModal] = useState(false);
 	const router = useRouter();
@@ -30,7 +30,7 @@ const TransactionsPreview = () => {
 								</tr>
 							</thead>
 							<tbody ref={parent}>
-								{transactionData.slice(0, 9).map((item, index) => {
+								{transactionInfo.slice(0, 9).map((item, index) => {
 									return (
 										<tr className="text-center" key={index}>
 											<td className="text-primary">

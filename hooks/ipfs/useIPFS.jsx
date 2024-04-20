@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import blockchainInfo from "data/prepared/blockchainInfo";
-import transactionInfo from "data/prepared/transactionInfo";
+import { blockchainData } from "data/prepared/blockchainInfo";
+import { transactionData } from "data/prepared/transactionInfo";
 
 const useIPFS = () => {
-	const [blockchainData, setBlockchainData] = useState([]);
-	const [transactionData, setTransactionData] = useState([]);
+	const [blockchainInfo, setBlockchainInfo] = useState([]);
+	const [transactionInfo, setTransactionInfo] = useState([]);
 
 	useEffect(() => {
 		startNode();
@@ -33,11 +33,11 @@ const useIPFS = () => {
 	};
 
 	const getBlockchainData = () => {
-		setBlockchainData(blockchainInfo);
+		setBlockchainInfo(blockchainData);
 	};
 
 	const getTransactionData = () => {
-		setTransactionData(transactionInfo);
+		setTransactionInfo(transactionData);
 	};
 
 	const blockSearch = () => {};
@@ -47,8 +47,8 @@ const useIPFS = () => {
 	const walletSearch = () => {};
 
 	return {
-		blockchainData,
-		transactionData,
+		blockchainInfo,
+		transactionInfo,
 		blockSearch,
 		transSearch,
 		walletSearch,
