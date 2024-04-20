@@ -7,7 +7,7 @@ const blockMsg = (block, key) => {
 		// Get current time in milliseconds
 		const currentTimeMillis = Date.now();
 		// Get the last three digits from performance.now() for microsecond precision
-		const microsecondPart = performance.now().toFixed(3).split(".")[1];
+		const microsecondPart = performance.now().toFixed(4).split(".")[1];
 		// Combine milliseconds and microseconds
 		const timestamp = `${currentTimeMillis}${microsecondPart}`;
 		if (!keys.includes(key)) {
