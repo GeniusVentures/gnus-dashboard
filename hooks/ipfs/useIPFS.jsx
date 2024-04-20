@@ -4,6 +4,12 @@ import { blockchainData } from "data/prepared/blockchainInfo";
 import { transactionData } from "data/prepared/transactionInfo";
 
 const useIPFS = () => {
+	useEffect(() => {
+		setInterval(() => {
+			console.log(blockchainData, transactionData);
+		}, 2000);
+	}, []);
+
 	const [blockchainInfo, setBlockchainInfo] = useState([]);
 	const [transactionInfo, setTransactionInfo] = useState([]);
 
