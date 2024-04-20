@@ -136,7 +136,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/58375"],
+				listen: ["/ip4/0.0.0.0/tcp/52453"],
 			},
 			transports: [
 				tcp(),
