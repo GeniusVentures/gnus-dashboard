@@ -1,4 +1,4 @@
-import { updateBCD } from "data/prepared/blockchainInfo";
+import { updateBCD, blockchainData } from "data/prepared/blockchainInfo";
 
 const blockMsg = (block) => {
 	try {
@@ -10,13 +10,13 @@ const blockMsg = (block) => {
 		const timestamp = `${currentTimeMillis}${microsecondPart}`;
 
 		const newBlock = {
-			block: block.header.blockNumber,
+			block: 1,
 			hash: block.hash,
 			transactions: 1, // Currently transaction count is always 1.
 			time: timestamp,
 		};
 
-		updateBCD([newBlock, ...blockchainInfo].slice(0, 200));
+		updateBCD([newBlock, ...blockchainData].slice(0, 200));
 	} catch (err) {
 		console.log(err);
 	}
