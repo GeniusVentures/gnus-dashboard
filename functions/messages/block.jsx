@@ -1,6 +1,8 @@
 import { updateBCD, blockchainData } from "data/prepared/blockchainInfo";
 
-const blockMsg = (block) => {
+let keys = [];
+
+const blockMsg = (block, key) => {
 	try {
 		// Get current time in milliseconds
 		const currentTimeMillis = Date.now();
@@ -10,13 +12,14 @@ const blockMsg = (block) => {
 		const timestamp = `${currentTimeMillis}${microsecondPart}`;
 
 		const newBlock = {
-			block: 1,
+			block: key.split("/")[2],
 			hash: String.fromCharCode(...block.parentHash),
 			transactions: 1, // Currently transaction count is always 1.
 			time: timestamp,
 		};
 
 		updateBCD([newBlock, ...blockchainData].slice(0, 200));
+		keys.push(key);
 	} catch (err) {
 		console.log(err);
 	}

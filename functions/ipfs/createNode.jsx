@@ -399,7 +399,7 @@ function respondHandler(source) {
 									console.log("Transfer:" + transfer.dagStruct.timestamp);
 									console.log("Transfer:" + transfer.dagStruct.uncleHash);
 									console.log("Transfer:" + transfer.dagStruct.dataHash);
-									transferMsg(transfer);
+									transferMsg(transfer, elementin.key);
 								} catch (e) {
 									console.log("Transfer error: " + e.message);
 								}
@@ -416,7 +416,7 @@ function respondHandler(source) {
 									console.log("Mint:" + mint.dagStruct.timestamp);
 									console.log("Mint:" + mint.dagStruct.uncleHash);
 									console.log("Mint:" + mint.dagStruct.dataHash);
-									mintMsg(mint);
+									mintMsg(mint, elementin.key);
 								} catch (e) {
 									console.log("Mint error: " + e.message);
 								}
@@ -437,7 +437,7 @@ function respondHandler(source) {
 										console.log("Block TX" + block.header.extrinsicsRoot);
 										console.log("Block TX" + block.header.digest);
 										// console.log("Block? " + block.block_body);
-										// blockMsg(block);
+										// blockMsg(block, elementin.key);
 									} catch (e) {
 										console.log("Block TX Fail: " + e.message);
 									}
@@ -449,7 +449,7 @@ function respondHandler(source) {
 										console.log("BlockHeader" + block.stateRoot);
 										console.log("BlockHeader" + block.extrinsicsRoot);
 										console.log("BlockHeader" + block.digest);
-										blockMsg(block);
+										blockMsg(block, elementin.key);
 									} catch (e) {
 										console.log("Block Fail: " + e.message);
 									}
@@ -469,7 +469,7 @@ function respondHandler(source) {
 									console.log("Proc:" + processing.dagStruct.timestamp);
 									console.log("Proc:" + processing.dagStruct.uncleHash);
 									console.log("Proc:" + processing.dagStruct.dataHash);
-									processingMsg(processing);
+									processingMsg(processing, elementin.key);
 								} catch (e) {
 									console.log("Proc error");
 								}

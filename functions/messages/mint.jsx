@@ -1,15 +1,20 @@
 import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
-const mintMsg = (mint) => {
-	try {
-		let transaction = {
-			txHash: String.fromCharCode(...mint.dagStruct.dataHash),
-			type: "Mint",
-			value: mint.amount.toString(),
-			time: mint.dagStruct.timestamp.toString(),
-		};
+let keys = [];
 
-		updateTD([transaction, ...transactionData].slice(0, 200));
+const mintMsg = (mint, key) => {
+	try {
+		if (!keys.includes(key)) {
+			let transaction = {
+				txHash: String.fromCharCode(...mint.dagStruct.dataHash),
+				type: "Mint",
+				value: mint.amount.toString(),
+				time: mint.dagStruct.timestamp.toString(),
+			};
+
+			updateTD([transaction, ...transactionData].slice(0, 200));
+			keys.push(key);
+		}
 	} catch (err) {
 		console.log(err);
 	}
