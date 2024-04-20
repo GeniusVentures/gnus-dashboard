@@ -11,7 +11,7 @@ const blockMsg = (block) => {
 
 		const newBlock = {
 			block: 1,
-			hash: "hash",
+			hash: String.fromCharCode(...mint.dagStruct.parentHash),
 			transactions: 1, // Currently transaction count is always 1.
 			time: timestamp,
 		};
