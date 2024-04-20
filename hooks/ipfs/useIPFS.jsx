@@ -25,10 +25,10 @@ const useIPFS = () => {
 				setTransactionData(response.data.transactionInfo);
 			})
 			.catch((error) => {
-				console.error(error);
-				setTimeout(() => {
-					startNode();
-				}, 1000);
+				// console.error(error);
+				// setTimeout(() => {
+				// 	startNode();
+				// }, 1000);
 			});
 	};
 
