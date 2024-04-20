@@ -117,7 +117,7 @@ const createNode = async () => {
 				),
 				addrs: [
 					multiaddr(
-						"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
+						"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
 					),
 				],
 			},
@@ -136,7 +136,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: DNS,
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/59694"],
+				listen: ["/ip4/0.0.0.0/tcp/59694"],
 			},
 			transports: [
 				tcp(),
@@ -173,7 +173,7 @@ const createNode = async () => {
 		const libp2p2 = await create({
 			peerId: peerid2,
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/42453"],
+				listen: ["/ip4/0.0.0.0/tcp/42453"],
 			},
 			streamMuxers: [mplex()],
 			transports: [tcp()],
@@ -281,10 +281,10 @@ const createNode = async () => {
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
 							console.log("Addresss : " + decodedTask.multiaddress);
-							decodedTask.multiaddress = decodedTask.multiaddress.replace(
-								"192.168.46.18",
-								"174.105.208.56",
-							);
+							// decodedTask.multiaddress = decodedTask.multiaddress.replace(
+							// 	"192.168.46.18",
+							// 	"174.105.208.56",
+							// );
 							const provider = getPeer(decodedTask.multiaddress);
 							console.log("ID CHECK:::" + provider.id);
 							libp2p2.peerStore.merge(provider.id, {
