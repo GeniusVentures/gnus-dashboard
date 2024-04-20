@@ -15,7 +15,11 @@ const blockMsg = (block, key) => {
 				time: timestamp,
 			};
 
-			updateBCD([newBlock, ...blockchainData].slice(0, 200));
+			updateBCD(
+				[newBlock, ...blockchainData]
+					.sort((a, b) => b.block - a.block)
+					.slice(0, 200),
+			);
 			keys.push(key);
 		}
 	} catch (err) {

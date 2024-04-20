@@ -5,7 +5,7 @@ let keys = [];
 const transferMsg = (transfer, key) => {
 	if (!keys.includes(key)) {
 		let transaction = {
-			txHash: transfer.dagStruct.previousHash.toString(), //previous hash until we have actual hash
+			txHash: String.fromCharCode(...transfer.dagStruct.previousHash), //previous hash until we have actual hash
 			type: "Transfer",
 			value: transfer.amount.toString(),
 			time: transfer.dagStruct.timestamp.toString(),
