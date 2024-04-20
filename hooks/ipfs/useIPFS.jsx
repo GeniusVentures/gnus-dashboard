@@ -33,10 +33,12 @@ const useIPFS = () => {
 	};
 
 	const getBlockchainData = () => {
+		console.log(blockchainData);
 		setBlockchainInfo(blockchainData);
 	};
 
 	const getTransactionData = () => {
+		console.log(transactionData);
 		setTransactionInfo(transactionData);
 	};
 
