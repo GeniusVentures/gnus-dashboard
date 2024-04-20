@@ -1,10 +1,14 @@
 let transactionData = [];
 
 const transactionInfo = () => {
-	const updateTD = (data) => {
-		transactionData = data;
-	};
-	return { transactionData, updateTD };
+	try {
+		const updateTD = (data) => {
+			transactionData = data;
+		};
+		return { transactionData, updateTD };
+	} catch (err) {
+		console.log(err);
+	}
 };
 
 export default transactionInfo;

@@ -4,6 +4,7 @@ import { blockchainData } from "data/prepared/blockchainInfo";
 import { transactionData } from "data/prepared/transactionInfo";
 
 const useIPFS = () => {
+	console.log(blockchainData, transactionData);
 	const [blockchainInfo, setBlockchainInfo] = useState([]);
 	const [transactionInfo, setTransactionInfo] = useState([]);
 
@@ -11,8 +12,8 @@ const useIPFS = () => {
 		startNode();
 		setTimeout(() => {
 			setInterval(() => {
-				getTransactionData();
-				getBlockchainData();
+				// getTransactionData();
+				// getBlockchainData();
 			}, 2000);
 		}, 3000);
 	}, []);
