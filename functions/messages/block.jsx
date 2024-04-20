@@ -12,7 +12,7 @@ const blockMsg = (block, key) => {
 		const timestamp = `${currentTimeMillis}${microsecondPart}`;
 
 		const newBlock = {
-			block: key.split("/")[2],
+			block: key.split("/")[3],
 			hash: String.fromCharCode(...block.parentHash),
 			transactions: 1, // Currently transaction count is always 1.
 			time: timestamp,
