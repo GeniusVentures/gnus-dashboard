@@ -1,7 +1,7 @@
 const elapsedTime = (bts) => {
 	console.log(bts);
 	const timestamp = bts;
-	const timestampDate = new Date(timestamp);
+	const timestampDate = new Date(parseInt(timestamp) / 1000);
 	const currentDate = new Date();
 	const timeDifferenceMs = currentDate - timestampDate;
 	const timeDifferenceSec = timeDifferenceMs / 1000;
