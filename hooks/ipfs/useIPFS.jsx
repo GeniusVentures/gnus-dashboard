@@ -4,19 +4,20 @@ import { blockchainData } from "data/prepared/blockchainInfo";
 import { transactionData } from "data/prepared/transactionInfo";
 
 const useIPFS = () => {
-	console.log(blockchainData, transactionData);
 	const [blockchainInfo, setBlockchainInfo] = useState([]);
 	const [transactionInfo, setTransactionInfo] = useState([]);
 
 	useEffect(() => {
 		startNode();
-		setTimeout(() => {
-			setInterval(() => {
-				getTransactionData();
-				getBlockchainData();
-			}, 2000);
-		}, 3000);
 	}, []);
+
+	useEffect(() => {
+		getBlockchainData();
+	}, [blockchainData]);
+
+	useEffect(() => {
+		getTransactionData();
+	}, [transactionData]);
 
 	const startNode = () => {
 		axios.get("/api/libp2p/startLibp2p");
