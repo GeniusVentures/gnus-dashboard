@@ -1,29 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { blockchainData } from "data/prepared/blockchainInfo";
-import { transactionData } from "data/prepared/transactionInfo";
 
 const useIPFS = () => {
-	useEffect(() => {
-		setInterval(() => {
-			console.log(blockchainData, transactionData);
-		}, 2000);
-	}, []);
-
 	const [blockchainInfo, setBlockchainInfo] = useState([]);
 	const [transactionInfo, setTransactionInfo] = useState([]);
 
 	useEffect(() => {
 		startNode();
 	}, []);
-
-	useEffect(() => {
-		getBlockchainData();
-	}, [blockchainData]);
-
-	useEffect(() => {
-		getTransactionData();
-	}, [transactionData]);
 
 	const startNode = () => {
 		axios.get("/api/libp2p/startLibp2p");
@@ -40,13 +24,25 @@ const useIPFS = () => {
 	};
 
 	const getBlockchainData = () => {
-		console.log(blockchainData);
-		setBlockchainInfo(blockchainData);
+		axios
+			.get("/api/networkData/getBlocksPrev")
+			.then((blockchainData) => {
+				setBlockchainInfo(blockchainData);
+			})
+			.catch((error) => {
+				console.error(error);
+			});
 	};
 
 	const getTransactionData = () => {
-		console.log(transactionData);
-		setTransactionInfo(transactionData);
+		axios
+			.get("/api/networkData/getTransPrev")
+			.then((transactionData) => {
+				setTransactionInfo(transactionData);
+			})
+			.catch((error) => {
+				console.error(error);
+			});
 	};
 
 	const blockSearch = () => {};
