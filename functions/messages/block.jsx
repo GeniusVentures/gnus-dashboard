@@ -1,4 +1,4 @@
-import blockchainInfo from "data/prepared/blockchainInfo";
+import { updateBCD } from "data/prepared/blockchainInfo";
 
 const blockMsg = (block) => {
 	//I haven't done anything with there being an if else statement with the blocks yet
@@ -9,6 +9,7 @@ const blockMsg = (block) => {
 		time: block.header.timestamp,
 	};
 
+<<<<<<< Updated upstream
 	//blockchainInfo = [newBlock, ...blockchainInfo].slice(0, 200);
 	blockchainInfo.unshift(newBlock);
 
@@ -16,6 +17,9 @@ const blockMsg = (block) => {
 	if (blockchainInfo.length > 200) {
 	blockchainInfo.pop();
 	}
+=======
+	updateBCD([newBlock, ...blockchainInfo].slice(0, 200));
+>>>>>>> Stashed changes
 };
 
 export default blockMsg;

@@ -1,4 +1,4 @@
-import transactionInfo from "data/prepared/transactionInfo";
+import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
 const mintMsg = (mint) => {
 	let transaction = {
@@ -8,6 +8,7 @@ const mintMsg = (mint) => {
 		time: mint.dagStruct.timestamp,
 	};
 
+<<<<<<< Updated upstream
 	//transactionInfo = [transaction, ...transactionInfo].slice(0, 200);
 	transactionInfo.unshift(transaction);
 
@@ -15,6 +16,9 @@ const mintMsg = (mint) => {
 	if (transactionInfo.length > 200) {
 		transactionInfo.pop();
 	}
+=======
+	updateTD([transaction, ...transactionData].slice(0, 200));
+>>>>>>> Stashed changes
 };
 
 export default mintMsg;

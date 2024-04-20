@@ -5,7 +5,7 @@ import elapsedTime from "functions/time/elapseTime";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
-const BlockExplorerPreview = ({ blockData }) => {
+const BlockExplorerPreview = () => {
 	const { blockchainData } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const router = useRouter();
