@@ -5,8 +5,8 @@ const mintMsg = (mint) => {
 		let transaction = {
 			txHash: String.fromCharCode(...mint.dagStruct.dataHash),
 			type: "Mint",
-			value: mint.amount,
-			time: mint.dagStruct.timestamp,
+			value: mint.amount.toString(),
+			time: mint.dagStruct.timestamp.toString(),
 		};
 
 		updateTD([transaction, ...transactionData].slice(0, 200));

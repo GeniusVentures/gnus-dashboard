@@ -11,7 +11,7 @@ const blockMsg = (block) => {
 
 		const newBlock = {
 			block: 1,
-			hash: block.hash,
+			hash: block.hash.toString(),
 			transactions: 1, // Currently transaction count is always 1.
 			time: timestamp,
 		};

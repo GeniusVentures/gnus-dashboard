@@ -2,10 +2,10 @@ import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
 const transferMsg = (transfer) => {
 	let transaction = {
-		txHash: transfer.dagStruct.previousHash, //previous hash until we have actual hash
+		txHash: transfer.dagStruct.previousHash.toString(), //previous hash until we have actual hash
 		type: "Transfer",
-		value: transfer.amount,
-		time: transfer.dagStruct.timestamp,
+		value: transfer.amount.toString(),
+		time: transfer.dagStruct.timestamp.toString(),
 	};
 
 	updateTD([transaction, ...transactionData].slice(0, 200));
