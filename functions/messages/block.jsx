@@ -10,16 +10,17 @@ const blockMsg = (block, key) => {
 		const microsecondPart = performance.now().toFixed(3).split(".")[1];
 		// Combine milliseconds and microseconds
 		const timestamp = `${currentTimeMillis}${microsecondPart}`;
+		if (!keys.includes(key)) {
+			const newBlock = {
+				block: key.split("/")[3],
+				hash: String.fromCharCode(...block.parentHash),
+				transactions: 1, // Currently transaction count is always 1.
+				time: timestamp,
+			};
 
-		const newBlock = {
-			block: key.split("/")[3],
-			hash: String.fromCharCode(...block.parentHash),
-			transactions: 1, // Currently transaction count is always 1.
-			time: timestamp,
-		};
-
-		updateBCD([newBlock, ...blockchainData].slice(0, 200));
-		keys.push(key);
+			updateBCD([newBlock, ...blockchainData].slice(0, 200));
+			keys.push(key);
+		}
 	} catch (err) {
 		console.log(err);
 	}
