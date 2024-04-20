@@ -9,6 +9,15 @@ const useIPFS = () => {
 		startNode();
 	}, []);
 
+	useEffect(() => {
+		setTimeout(() => {
+			setInterval(() => {
+				getBlockchainData();
+				getTransactionData();
+			}, 2000);
+		}, 3000);
+	}, []);
+
 	const startNode = () => {
 		axios.get("/api/libp2p/startLibp2p");
 		// .then((response) => {
@@ -27,6 +36,7 @@ const useIPFS = () => {
 		axios
 			.get("/api/networkData/getBlocksPrev")
 			.then((blockchainData) => {
+				console.log(blockchainData);
 				setBlockchainInfo(blockchainData);
 			})
 			.catch((error) => {
@@ -38,6 +48,7 @@ const useIPFS = () => {
 		axios
 			.get("/api/networkData/getTransPrev")
 			.then((transactionData) => {
+				console.log(transactionData);
 				setTransactionInfo(transactionData);
 			})
 			.catch((error) => {
