@@ -263,7 +263,28 @@ const createNode = async () => {
 			// 	`${message.detail.topic}:`,
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
-			console.log("Messsssssssssssssage");
+			const multiaddr = message.detail.from;
+			const peerstoreres = libp2p.peerStore.get(multiaddr);	
+			const addresses = (await peerstoreres).addresses;
+			let ipv4Address = "";
+			for (const addr of addresses) {
+				if (addr.multiaddr.toString().includes("/ip4/")) {
+				  ipv4Address = addr.multiaddr.toString();
+				  break;
+				}
+			  }
+			  console.log("Source multiaddress:", ipv4Address);
+			const ipv4Regex = /\/ip4\/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/;
+			const match = ipv4Address.match(ipv4Regex);
+			let extractedIPv4 = "";
+			if (match) {
+				extractedIPv4 = match[1]; // Extracted IPv4 address
+				console.log("Extracted IPv4 address:", extractedIPv4);
+			} else {
+				console.log("No IPv4 address found in the multiaddress:", ipv4Address);
+			}
+			//console.log("Peerstore result: " + (await peerstoreres).addresses.at(0).multiaddr);
+			console.log("Source multiaddress:", extractedIPv4);
 			try {
 				const decodedTask = broadcasting.BroadcastMessage.decode(
 					message.detail.data,
@@ -276,7 +297,7 @@ const createNode = async () => {
 					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
 					let requests = [];
 					for (const head of cids.heads) {
-						if (!requestedCids.includes(String(head.cid))) {
+						if (!requestedCids.includes(String(head.cid)) && extractedIPv4.length > 0) {
 							requestout = 1;
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
@@ -285,7 +306,8 @@ const createNode = async () => {
 							// 	"192.168.46.18",
 							// 	"174.105.208.56",
 							// );
-							const provider = getPeer(decodedTask.multiaddress);
+							const replacedAddr = decodedTask.multiaddress.replace("[IP]",extractedIPv4);
+							const provider = getPeer(replacedAddr);
 							console.log("ID CHECK:::" + provider.id);
 							libp2p2.peerStore.merge(provider.id, {
 								multiaddrs: provider.multiaddrs,
@@ -295,7 +317,8 @@ const createNode = async () => {
 							requestedCids.push(head.cid);
 						}
 						if (requests.length > 0) {
-							const provider = getPeer(decodedTask.multiaddress);
+							const replacedAddr = decodedTask.multiaddress.replace("[IP]",extractedIPv4);
+							const provider = getPeer(replacedAddr);
 							const stream = await libp2p2.dialProtocol(
 								provider.id,
 								"/ipfs/graphsync/2.0.0",
@@ -385,24 +408,24 @@ function respondHandler(source) {
 						const delta = Delta.fromBinary(decodedData.Data);
 
 						for (const elementin of delta.elements) {
-							console.log("Element Key:" + elementin.key);
-							console.log("Element data:" + elementin.id);
-							console.log("Element data:" + elementin.value);
+							// console.log("Element Key:" + elementin.key);
+							// console.log("Element data:" + elementin.id);
+							// console.log("Element data:" + elementin.value);
 							//Transfer
 							if (elementin.key.includes("transfer")) {
 								console.log("Transfer");
 								try {
 									const transfer = TransferTx.fromBinary(elementin.value);
-									console.log("Transfer:" + transfer.tokenId);
-									console.log("Transfer:" + transfer.encryptedAmount);
-									console.log("Transfer:" + transfer.destAddr);
-									console.log("Transfer:" + transfer.dagStruct.type);
-									console.log("Transfer:" + transfer.dagStruct.previousHash);
-									console.log("Transfer:" + transfer.dagStruct.sourceAddr);
-									console.log("Transfer:" + transfer.dagStruct.nonce);
-									console.log("Transfer:" + transfer.dagStruct.timestamp);
-									console.log("Transfer:" + transfer.dagStruct.uncleHash);
-									console.log("Transfer:" + transfer.dagStruct.dataHash);
+									// console.log("Transfer:" + transfer.tokenId);
+									// console.log("Transfer:" + transfer.encryptedAmount);
+									// console.log("Transfer:" + transfer.destAddr);
+									// console.log("Transfer:" + transfer.dagStruct.type);
+									// console.log("Transfer:" + transfer.dagStruct.previousHash);
+									// console.log("Transfer:" + transfer.dagStruct.sourceAddr);
+									// console.log("Transfer:" + transfer.dagStruct.nonce);
+									// console.log("Transfer:" + transfer.dagStruct.timestamp);
+									// console.log("Transfer:" + transfer.dagStruct.uncleHash);
+									// console.log("Transfer:" + transfer.dagStruct.dataHash);
 									transferMsg(transfer, elementin.key);
 								} catch (e) {
 									console.log("Transfer error: " + e.message);
@@ -413,13 +436,13 @@ function respondHandler(source) {
 								console.log("Mint");
 								try {
 									const mint = MintTx.fromBinary(elementin.value);
-									console.log("Mint: " + mint.amount);
-									console.log("Mint:" + mint.dagStruct.previousHash);
-									console.log("Mint:" + mint.dagStruct.sourceAddr);
-									console.log("Mint:" + mint.dagStruct.nonce);
-									console.log("Mint:" + mint.dagStruct.timestamp);
-									console.log("Mint:" + mint.dagStruct.uncleHash);
-									console.log("Mint:" + mint.dagStruct.dataHash);
+									// console.log("Mint: " + mint.amount);
+									// console.log("Mint:" + mint.dagStruct.previousHash);
+									// console.log("Mint:" + mint.dagStruct.sourceAddr);
+									// console.log("Mint:" + mint.dagStruct.nonce);
+									// console.log("Mint:" + mint.dagStruct.timestamp);
+									// console.log("Mint:" + mint.dagStruct.uncleHash);
+									// console.log("Mint:" + mint.dagStruct.dataHash);
 									mintMsg(mint, elementin.key);
 								} catch (e) {
 									console.log("Mint error: " + e.message);
@@ -432,14 +455,14 @@ function respondHandler(source) {
 									console.log("blockchain tx");
 									try {
 										const block = BlockPayloadData.fromBinary(elementin.value);
-										console.log("Block TX" + block.hash);
-										console.log("Block TX" + block.header);
-										console.log("Block TX" + block.blockBody);
-										console.log("Block TX" + block.header.parentHash);
-										console.log("Block TX" + block.header.blockNumber);
-										console.log("Block TX" + block.header.stateRoot);
-										console.log("Block TX" + block.header.extrinsicsRoot);
-										console.log("Block TX" + block.header.digest);
+										// console.log("Block TX" + block.hash);
+										// console.log("Block TX" + block.header);
+										// console.log("Block TX" + block.blockBody);
+										// console.log("Block TX" + block.header.parentHash);
+										// console.log("Block TX" + block.header.blockNumber);
+										// console.log("Block TX" + block.header.stateRoot);
+										// console.log("Block TX" + block.header.extrinsicsRoot);
+										// console.log("Block TX" + block.header.digest);
 										// console.log("Block? " + block.block_body);
 										// blockMsg(block, elementin.key);
 									} catch (e) {
@@ -448,11 +471,11 @@ function respondHandler(source) {
 								} else {
 									try {
 										const block = BlockHeaderData.fromBinary(elementin.value);
-										console.log("BlockHeader" + block.parentHash);
-										console.log("BlockHeader" + block.blockNumber);
-										console.log("BlockHeader" + block.stateRoot);
-										console.log("BlockHeader" + block.extrinsicsRoot);
-										console.log("BlockHeader" + block.digest);
+										// console.log("BlockHeader" + block.parentHash);
+										// console.log("BlockHeader" + block.blockNumber);
+										// console.log("BlockHeader" + block.stateRoot);
+										// console.log("BlockHeader" + block.extrinsicsRoot);
+										// console.log("BlockHeader" + block.digest);
 										blockMsg(block, elementin.key);
 									} catch (e) {
 										console.log("Block Fail: " + e.message);
@@ -463,16 +486,16 @@ function respondHandler(source) {
 							if (elementin.key.includes("processing")) {
 								try {
 									const processing = ProcessingTx.fromBinary(elementin.value);
-									console.log("Proc:" + processing.mpcMagicKey);
-									console.log("Proc:" + processing.offset);
-									console.log("Proc:" + processing.jobCid);
-									console.log("Proc:" + processing.subtaskCid);
-									console.log("Proc:" + processing.dagStruct.previousHash);
-									console.log("Proc:" + processing.dagStruct.sourceAddr);
-									console.log("Proc:" + processing.dagStruct.nonce);
-									console.log("Proc:" + processing.dagStruct.timestamp);
-									console.log("Proc:" + processing.dagStruct.uncleHash);
-									console.log("Proc:" + processing.dagStruct.dataHash);
+									// console.log("Proc:" + processing.mpcMagicKey);
+									// console.log("Proc:" + processing.offset);
+									// console.log("Proc:" + processing.jobCid);
+									// console.log("Proc:" + processing.subtaskCid);
+									// console.log("Proc:" + processing.dagStruct.previousHash);
+									// console.log("Proc:" + processing.dagStruct.sourceAddr);
+									// console.log("Proc:" + processing.dagStruct.nonce);
+									// console.log("Proc:" + processing.dagStruct.timestamp);
+									// console.log("Proc:" + processing.dagStruct.uncleHash);
+									// console.log("Proc:" + processing.dagStruct.dataHash);
 									processingMsg(processing, elementin.key);
 								} catch (e) {
 									console.log("Proc error");
