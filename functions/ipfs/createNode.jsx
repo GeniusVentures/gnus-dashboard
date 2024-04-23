@@ -510,49 +510,6 @@ function respondHandler(source) {
 				} catch (e) {
 					console.log("DAGERROR : " + e);
 				}
-
-				// const textdecoder = new TextDecoder();
-				// const decodedString = textdecoder.decode(ipld.data);
-				// console.log("IPLD:" + decodedString);
-				// console.log("Decoded String: " + decodedString);
-				// try{
-
-				// 	const block = BlockPayloadData.fromBinary(item.data);
-				// 	console.log("Payload:  " + block)
-				// 	// const dag = SGTransaction.DAGStruct.decode(item.data)
-				// 	// console.log("Daggg:" + dag.type);
-				// 	// console.log("Daggg:" + dag.previous_hash);
-				// 	// console.log("Daggg:" + dag.source_addr);
-				// 	// console.log("Daggg:" + dag.nonce);
-				// 	// console.log("Daggg:" + dag.timestamp);
-				// } catch(e)
-				// {
-				// 	console.log("FailPayload:");
-				// }
-				// try{
-				// 	const block = BlockHeaderData.fromBinary(item.data);
-				// 	console.log("Header:  " + block)
-				// 	// const dag = SGTransaction.DAGStruct.decode(item.data)
-				// 	// console.log("Daggg:" + dag.type);
-				// 	// console.log("Daggg:" + dag.previous_hash);
-				// 	// console.log("Daggg:" + dag.source_addr);
-				// 	// console.log("Daggg:" + dag.nonce);
-				// 	// console.log("Daggg:" + dag.timestamp);
-				// } catch(e)
-				// {
-				// 	console.log("FailHeader:");
-				// }
-				// try{
-				// 	const dag = SGTransaction.DAGStruct.decode(item.data)
-				// 	console.log("Daggg:" + dag.type);
-				// 	console.log("Daggg:" + dag.previous_hash);
-				// 	console.log("Daggg:" + dag.source_addr);
-				// 	console.log("Daggg:" + dag.nonce);
-				// 	console.log("Daggg:" + dag.timestamp);
-				// } catch(e)
-				// {
-				// 	console.log("Faildag:");
-				// }
 			}
 		}
 	})();
