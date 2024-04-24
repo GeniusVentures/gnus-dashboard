@@ -1,11 +1,12 @@
 import "../styles/theme.scss";
+import React from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import DefaultLayout from "../layouts/DefaultLayout";
 import { NextSeo } from "next-seo";
 import { Provider } from "react-redux";
 import { store } from "../store/store";
-import { IPFSWrapper } from "context/ipfs/IPFSContext";
+import { IPFSWrapper } from "../context/ipfs/IPFSContext";
 
 function GNUSDashboard({ Component, pageProps }) {
 	const router = useRouter();

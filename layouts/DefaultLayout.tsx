@@ -1,6 +1,6 @@
-import { Fragment, useEffect } from "react";
-import NavbarDefault from "../layouts/navbars/NavbarDefault";
-import Footer from "layouts/footers/Footer";
+import React, { Fragment, useEffect } from "react";
+import NavbarDefault from "./navbars/NavbarDefault";
+import Footer from "./footers/Footer";
 import { Image } from "react-bootstrap";
 
 const DefaultLayout = (props) => {

@@ -7,13 +7,13 @@ import { gossipsub } from "@chainsafe/libp2p-gossipsub";
 import { bootstrap } from "@libp2p/bootstrap";
 import { identify } from "@libp2p/identify";
 import { kadDHT } from "@libp2p/kad-dht";
-import { keychain, KeychainInit } from "@libp2p/keychain";
+import { keychain } from "@libp2p/keychain";
 import { mplex } from "@libp2p/mplex";
 import { ping } from "@libp2p/ping";
 import { webSockets } from "@libp2p/websockets";
 import { ipnsSelector } from "ipns/selector";
 import { ipnsValidator } from "ipns/validator";
-import { bootstrapConfig } from "data/ipfs/bootstrapConfig";
+import { bootstrapConfig } from "../../data/ipfs/bootstrapConfig";
 import { createLibp2p as create } from "libp2p";
 import { MemoryBlockstore } from "blockstore-core";
 import { MemoryDatastore } from "datastore-core";
@@ -24,7 +24,7 @@ import {
 	createEd25519PeerId,
 	createFromPrivKey,
 } from "@libp2p/peer-id-factory";
-import { DNS } from "@multiformats/dns";
+import { dns } from "@multiformats/dns";
 import { plaintext } from "@libp2p/plaintext";
 import {
 	generateKeyPair,
@@ -36,12 +36,11 @@ import {
 import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
-import { logger } from "@libp2p/logger";
 import { getPeer } from "@dcdn/graphsync";
 import { pipe } from "it-pipe";
-import { sgns as sgnsBroadcast } from "data/protobuf/broadcast";
-import { sgns as sgnsBcast } from "data/protobuf/bcast";
-import { Delta, Element } from "data/protobuf/delta";
+import { sgns as sgnsBroadcast } from "../../data/protobuf/broadcast";
+import { sgns as sgnsBcast } from "../../data/protobuf/bcast";
+import { Delta, Element } from "../../data/protobuf/delta";
 //import protobuf from "protobufjs";
 import { v4 as uuidv4 } from "uuid";
 import { CID } from "multiformats/cid";
@@ -68,10 +67,10 @@ import { encode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src
 import { decode as readerDecode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
 import { decode as decodeCbor } from "cborg";
 import * as dagPB from "@ipld/dag-pb";
-import transferMsg from "functions/messages/transfer";
-import mintMsg from "functions/messages/mint";
-import processingMsg from "functions/messages/processing";
-import blockMsg from "functions/messages/block";
+import transferMsg from "../../functions/messages/transfer";
+import mintMsg from "../../functions/messages/mint";
+import processingMsg from "../../functions/messages/processing";
+import blockMsg from "../../functions/messages/block";
 let node = null;
 
 let requestout = 0;
@@ -134,7 +133,7 @@ const createNode = async () => {
 		};
 		const libp2p = await create({
 			peerId: myEd25519PeerId,
-			dns: DNS,
+			dns: dns(),
 			addresses: {
 				listen: ["/ip4/0.0.0.0/tcp/59694"],
 			},
@@ -160,7 +159,7 @@ const createNode = async () => {
 				// 	},
 				// }),
 				identify: identify(),
-				keychain: keychain(KeychainInit),
+				keychain: keychain(),
 				ping: ping(),
 				// ping: ping([
 				// 	"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
@@ -228,33 +227,16 @@ const createNode = async () => {
 
 		libp2p.addEventListener("peer:discovery", (e) => {
 			console.log("New peer discovered:", e);
-			console.log("Peer ID:", e.peerId);
 		});
 
 		libp2p.addEventListener("peer:connect", (e) => {
 			console.log("Peer connected:", e);
-			console.log("Peer ID:", e.peerId);
 		});
 
 		libp2p.addEventListener("peer:disconnect", (e) => {
 			console.log("Peer disconnected:", e);
-			console.log("Peer ID:", e.peerId);
 		});
 
-		libp2p.addEventListener("peer:connect:error", (e) => {
-			console.log("Error connecting to peer:", e);
-			console.log("Peer ID:", e.peerId);
-		});
-
-		libp2p.addEventListener("peer:connect:abort", (e) => {
-			console.log("Connection attempt to peer aborted:", e);
-			console.log("Peer ID:", e.peerId);
-		});
-
-		libp2p.addEventListener("peer:connect:timeout", (e) => {
-			console.log("Connection attempt to peer timed out:", e);
-			console.log("Peer ID:", e.peerId);
-		});
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
 		const requestedCids = [];
 
