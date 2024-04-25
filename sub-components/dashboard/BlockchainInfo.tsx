@@ -1,8 +1,7 @@
 import { Card, Col, Row } from "react-bootstrap";
 import BlockExplorerPreview from "sub-components/tables/BlockExplorerPreview";
 import TransactionsPreview from "sub-components/tables/TransactionsPreview";
-
-const { Fragment, useState, useEffect, useRef } = require("react");
+import React, { Fragment, useState, useEffect, useRef } from "react";
 
 const BlockchainInfo = () => {
 	const [blockData, setBlockData] = useState([]);
@@ -149,10 +148,10 @@ const BlockchainInfo = () => {
 			</Row>
 			<Row className="justify-content-center ps-0 m-0">
 				<Col xs={12} sm={12} md={12} lg={6} xl={6} className="mb-4 ps-0">
-					<BlockExplorerPreview blockData={blockData.reverse().slice(0, 9)} />
+					<BlockExplorerPreview />
 				</Col>
 				<Col xs={12} sm={12} md={12} lg={6} xl={6} className="mb-4">
-					<TransactionsPreview transData={transData.reverse().slice(0, 9)} />
+					<TransactionsPreview />
 				</Col>
 			</Row>
 		</Fragment>

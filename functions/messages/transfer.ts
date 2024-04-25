@@ -1,8 +1,8 @@
 import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
-let keys = [];
+let keys: string[] = [];
 
-const transferMsg = (transfer, key) => {
+const transferMsg = (transfer: any, key: string) => {
 	if (!keys.includes(key)) {
 		let transaction = {
 			txHash: String.fromCharCode(...transfer.dagStruct.dataHash), //previous hash until we have actual hash

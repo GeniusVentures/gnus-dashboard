@@ -1,7 +1,7 @@
-const elapsedTime = (bts) => {
+const elapsedTime = (bts: string) => {
 	const timestamp = bts;
-	const timestampDate = new Date(parseInt(timestamp) / 10000);
-	const currentDate = new Date();
+	const timestampDate: any = new Date(parseInt(timestamp) / 10000);
+	const currentDate: any = new Date();
 	const timeDifferenceMs = currentDate - timestampDate;
 	const timeDifferenceSec = timeDifferenceMs / 1000;
 	const secondsPassed = Math.floor(timeDifferenceSec % 60);
@@ -10,7 +10,7 @@ const elapsedTime = (bts) => {
 	const daysPassed = Math.floor(timeDifferenceSec / 86400);
 
 	if (daysPassed == 0 && hoursPassed == 0 && minutesPassed == 0) {
-		if (parseInt(secondsPassed) <= 1) {
+		if (secondsPassed <= 1) {
 			return `${secondsPassed} second `;
 		} else {
 			return `${secondsPassed} seconds `;

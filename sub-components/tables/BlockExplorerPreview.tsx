@@ -7,11 +7,10 @@ import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
 
 const BlockExplorerPreview = () => {
-	console.log(useIPFSContext());
 	const { blockchainInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
 	const router = useRouter();
-	const [modal, setModal] = useState(false);
+	const [modal, setModal] = useState<boolean>(false);
 
 	return (
 		<Fragment>
@@ -29,31 +28,41 @@ const BlockExplorerPreview = () => {
 								</tr>
 							</thead>
 							<tbody ref={parent}>
-								{blockchainInfo.slice(0, 9).map((item, index) => {
-									return (
-										<tr className="text-center" key={index}>
-											<td className="text-primary">
-												<Link
-													className="text-primary"
-													href={`/block/${item.block}`}>
-													<u>{item.block}</u>
-												</Link>
-											</td>
-											<td className="text-primary">{item.hash}</td>
-											<td className="text-primary">{item.txs}</td>
-											<td className="text-primary text-nowrap">
-												{elapsedTime(item.time)} ago
-											</td>
-										</tr>
-									);
-								})}
+								{blockchainInfo.slice(0, 9).map(
+									(
+										item: {
+											block: string;
+											hash: string;
+											txs: string;
+											time: string;
+										},
+										index: string,
+									) => {
+										return (
+											<tr className="text-center" key={index}>
+												<td className="text-primary">
+													<Link
+														className="text-primary"
+														href={`/block/${item.block}`}>
+														<u>{item.block}</u>
+													</Link>
+												</td>
+												<td className="text-primary">{item.hash}</td>
+												<td className="text-primary">{item.txs}</td>
+												<td className="text-primary text-nowrap">
+													{elapsedTime(item.time)} ago
+												</td>
+											</tr>
+										);
+									},
+								)}
 							</tbody>
 						</Table>
 					</Card>
 				</Card.Body>
 				<Card.Footer
 					className="p-2"
-					type="button"
+					as="button"
 					onClick={() => {
 						setModal(true);
 					}}>

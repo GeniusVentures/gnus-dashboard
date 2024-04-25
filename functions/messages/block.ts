@@ -1,9 +1,9 @@
 import { updateBCD, blockchainData } from "data/prepared/blockchainInfo";
 
-let keys = [];
+let keys: string[] = [];
 
-const blockMsg = (block, key) => {
-	if(key.split("/")[3] == 0) return;
+const blockMsg = (block: any, key: string) => {
+	if (key.split("/")[3] === "0") return;
 	try {
 		const currentTimeMillis = Date.now();
 		const microsecondPart = performance.now().toFixed(4).split(".")[1];

@@ -2,16 +2,15 @@ import { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { Card, Row } from "react-bootstrap";
 import BlockTransactions from "sub-components/tables/BlockTransactions";
-import transactions from "data/protobuf/transactions";
 
-const Blocks = () => {
+const Address = () => {
 	const router = useRouter();
 	const { address } = router.query;
-	const [addressInfo, setAddressInfo] = useState({
+	const [addressInfo, setAddressInfo]: any = useState({
 		balance: "19.795279",
 		time: "Test",
 		hash: "0xavs615gv1a6d5fv1a65v1afd57gsd6v54as65v1",
-		transactions: transactions,
+		transactions: {},
 	});
 	const [gnusUSD, setGNUSUsd] = useState("102.54");
 	const [gnusUsdValue, setGnusUsdValue] = useState(null);
@@ -71,4 +70,4 @@ const Blocks = () => {
 		</Fragment>
 	);
 };
-export default Blocks;
+export default Address;

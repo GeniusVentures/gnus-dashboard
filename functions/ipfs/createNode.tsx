@@ -238,9 +238,9 @@ const createNode = async () => {
 		});
 
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
-		const requestedCids = [];
+		const requestedCids: [] = [];
 
-		libp2p.services.pubsub.addEventListener("message", async (message) => {
+		libp2p.services.pubsub.addEventListener("message", async (message: any) => {
 			// console.log(
 			// 	`${message.detail.topic}:`,
 			// 	new TextDecoder().decode(message.detail.data),
@@ -277,7 +277,7 @@ const createNode = async () => {
 				//console.log("CID String:::: " + cidString);
 				try {
 					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
-					let requests = [];
+					let requests: string[] = [];
 					for (const head of cids.heads) {
 						if (!requestedCids.includes(String(head.cid)) && extractedIPv4.length > 0) {
 							requestout = 1;
@@ -337,7 +337,7 @@ const createNode = async () => {
 		console.log(err);
 	}
 };
-function respondHandler(source) {
+function respondHandler(source: any) {
 	console.log("Incoming message received!");
 	console.log("Stream:", source);
 
@@ -496,10 +496,10 @@ function respondHandler(source) {
 		}
 	})();
 }
-function MakeRequest(base58cid, requestIdCounter) {
+function MakeRequest(base58cid: Uint8Array, requestIdCounter: number) {
 	const root = CID.parse(String(base58cid));
 
-	const request = {
+	const request: any = {
 		id: requestIdCounter,
 		root: root.bytes,
 		selector: new Uint8Array([0xa1, 0x61, 0x2e, 0xa0]),

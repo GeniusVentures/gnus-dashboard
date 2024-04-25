@@ -7,10 +7,9 @@ import Link from "next/link";
 import { useIPFSContext } from "context/ipfs/IPFSContext";
 
 const TransactionsPreview = () => {
-	console.log(useIPFSContext());
 	const { transactionInfo } = useIPFSContext();
 	const [parent] = useAutoAnimate();
-	const [modal, setModal] = useState(false);
+	const [modal, setModal] = useState<boolean>(false);
 	const router = useRouter();
 
 	return (
@@ -59,7 +58,7 @@ const TransactionsPreview = () => {
 				</Card.Body>
 				<Card.Footer
 					className="p-2"
-					type="button"
+					typeof="button"
 					onClick={() => {
 						setModal(true);
 					}}>

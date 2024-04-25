@@ -1,8 +1,8 @@
 import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
-let keys = [];
+let keys: string[] = [];
 
-const mintMsg = (mint, key) => {
+const mintMsg = (mint: any, key: string) => {
 	try {
 		if (!keys.includes(key)) {
 			let transaction = {
