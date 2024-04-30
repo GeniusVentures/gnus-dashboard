@@ -149,15 +149,9 @@ const createNode = async () => {
 			//peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
-				// dht: kadDHT({
-				// 	clientMode: true,
-				// 	validators: {
-				// 		ipns: ipnsValidator,
-				// 	},
-				// 	selectors: {
-				// 		ipns: ipnsSelector,
-				// 	},
-				// }),
+				dht: kadDHT({
+					findProviders: //key goes here I'm pretty sure
+				}),
 				identify: identify(),
 				keychain: keychain(),
 				ping: ping(),
