@@ -6,7 +6,7 @@ import { yamux } from "@chainsafe/libp2p-yamux";
 import { gossipsub } from "@chainsafe/libp2p-gossipsub";
 import { bootstrap } from "@libp2p/bootstrap";
 import { identify } from "@libp2p/identify";
-import { kadDHT } from "@libp2p/kad-dht";
+import { kadDHT, MessageType, QueryEvent, DHTProgressEvents, SendQueryEvent, removePrivateAddressesMapper  } from "@libp2p/kad-dht";
 import { keychain } from "@libp2p/keychain";
 import { mplex } from "@libp2p/mplex";
 import { ping } from "@libp2p/ping";
@@ -71,6 +71,9 @@ import transferMsg from "../../functions/messages/transfer";
 import mintMsg from "../../functions/messages/mint";
 import processingMsg from "../../functions/messages/processing";
 import blockMsg from "../../functions/messages/block";
+import { sha256 } from 'multiformats/hashes/sha2';
+
+
 let node = null;
 
 let requestout = 0;
@@ -110,16 +113,16 @@ const createNode = async () => {
 			// 	),
 			// 	addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
 			// },
-			{
-				id: peerIdFromString(
-					"12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
-				),
-				addrs: [
-					multiaddr(
-						"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
-					),
-				],
-			},
+			// {
+			// 	id: peerIdFromString(
+			// 		"12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
+			// 	),
+			// 	addrs: [
+			// 		multiaddr(
+			// 			"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
+			// 		),
+			// 	],
+			// },
 			// {
 			// 	id: peerIdFromString(
 			// 		"12D3KooWSyvmzbSVzDVKEZSeCbt4pQ8cWMWT4wESSaUGvir4FzPF",
@@ -144,13 +147,15 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [plaintext()],
-			streamMuxers: [yamux()],
-			//peerDiscovery: [bootstrap(bootstrapConfig)],
+			connectionEncryption: [plaintext(),noise()],
+			streamMuxers: [yamux(),mplex()],
+			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
 				dht: kadDHT({
-					findProviders: //key goes here I'm pretty sure
+					//findProviders: //key goes here I'm pretty sure
+					protocol: '/ipfs/kad/1.0.0',
+				
 				}),
 				identify: identify(),
 				keychain: keychain(),
@@ -177,62 +182,64 @@ const createNode = async () => {
 
 		console.log("line74: " + libp2p.getMultiaddrs()[0]);
 
-		libp2p.addEventListener("connection:open", async (e) => {
-			console.log("New connection opened:", e);
+		// libp2p.addEventListener("connection:open", async (e) => {
+		// 	console.log("New connection opened:", e);
 
-			//const peerInfo = libp2p.peerStore.get(e.peerId);
+		// 	//const peerInfo = libp2p.peerStore.get(e.peerId);
 
-			// if (peerInfo) {
-			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
-			// 	if (connection) {
-			// 		console.log("Peer ID:", e.peerId);
-			// 		console.log("Local peer ID:", libp2p.peerId);
+		// 	// if (peerInfo) {
+		// 	// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+		// 	// 	if (connection) {
+		// 	// 		console.log("Peer ID:", e.peerId);
+		// 	// 		console.log("Local peer ID:", libp2p.peerId);
 
-			// 		// Fetch additional details from the connection object
-			// 		const stat = await connection.getStats();
-			// 		console.log("Protocol:", stat.protocol);
-			// 		console.log("Latency:", stat.latency);
-			// 		console.log("Bytes sent:", stat.muxer.bytesSent);
-			// 		console.log("Bytes received:", stat.muxer.bytesReceived);
-			// 		console.log("Stream count:", stat.muxer.streams);
-			// 	}
-			// }
-		});
+		// 	// 		// Fetch additional details from the connection object
+		// 	// 		const stat = await connection.getStats();
+		// 	// 		console.log("Protocol:", stat.protocol);
+		// 	// 		console.log("Latency:", stat.latency);
+		// 	// 		console.log("Bytes sent:", stat.muxer.bytesSent);
+		// 	// 		console.log("Bytes received:", stat.muxer.bytesReceived);
+		// 	// 		console.log("Stream count:", stat.muxer.streams);
+		// 	// 	}
+		// 	// }
+		// });
 
-		libp2p.addEventListener("connection:close", async (e) => {
-			console.log("Connection closed:", e);
+		// libp2p.addEventListener("connection:close", async (e) => {
+		// 	console.log("Connection closed:", e);
 
-			//const peerInfo = libp2p.peerStore.get(e.peerId);
+		// 	//const peerInfo = libp2p.peerStore.get(e.peerId);
 
-			// if (peerInfo) {
-			// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
-			// 	if (connection) {
-			// 		console.log("Peer ID:", e.peerId);
-			// 		console.log("Local peer ID:", libp2p.peerId);
+		// 	// if (peerInfo) {
+		// 	// 	const connection = peerInfo.connections[0]; // Assuming the first connection is the one we are interested in
+		// 	// 	if (connection) {
+		// 	// 		console.log("Peer ID:", e.peerId);
+		// 	// 		console.log("Local peer ID:", libp2p.peerId);
 
-			// 		// Fetch additional details from the connection object
-			// 		const stat = await connection.getStats();
-			// 		console.log("Reason:", stat.stat.status);
-			// 		console.log("Closed by:", stat.stat.by);
-			// 		console.log("Duration:", stat.stat.duration);
-			// 	}
-			// }
-		});
+		// 	// 		// Fetch additional details from the connection object
+		// 	// 		const stat = await connection.getStats();
+		// 	// 		console.log("Reason:", stat.stat.status);
+		// 	// 		console.log("Closed by:", stat.stat.by);
+		// 	// 		console.log("Duration:", stat.stat.duration);
+		// 	// 	}
+		// 	// }
+		// });
 
-		libp2p.addEventListener("peer:discovery", (e) => {
-			console.log("New peer discovered:", e);
-		});
+		// libp2p.addEventListener("peer:discovery", (e) => {
+		// 	console.log("New peer discovered:", e);
+		// });
 
-		libp2p.addEventListener("peer:connect", (e) => {
-			console.log("Peer connected:", e);
-		});
+		// libp2p.addEventListener("peer:connect", (e) => {
+		// 	console.log("Peer connected:", e);
+		// });
 
-		libp2p.addEventListener("peer:disconnect", (e) => {
-			console.log("Peer disconnected:", e);
-		});
+		// libp2p.addEventListener("peer:disconnect", (e) => {
+		// 	console.log("Peer disconnected:", e);
+		// });
 
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
 		const requestedCids: [] = [];
+
+		// Subscribe to query events
 
 		libp2p.services.pubsub.addEventListener("message", async (message: any) => {
 			// console.log(
@@ -315,6 +322,25 @@ const createNode = async () => {
 		//	"CRDT.Datastore.TEST.Channel",
 		//	new TextEncoder().encode("banana"),
 		//);
+		const input = new TextEncoder().encode("SuperGenius");
+		const digest = await sha256.digest(input);
+		
+		const cidtofind = CID.createV1(0x55,digest);
+		//const cidtofind = CID.parse("QmSnuWmxptJZdLJpKRarxBMS2Ju2oANVrgbr2xWbie9b2D");
+		console.log("Cid to find:" + cidtofind.toString());
+		const provider = await libp2p.contentRouting.findProviders(cidtofind);
+		//const provide = await libp2p.contentRouting.provide(cidtofind);
+
+		// console.log("Providers Event:" + provider);
+		(async () => {
+			for await (const event of provider) {
+			  console.log("Providers Event:", event);
+			  // Handle the event here
+			}
+		  })();
+		// libp2p.addEventListener("kad-dht:query:send-query", (e) => {
+		// 	console.log("New Query:", e);
+		// });
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers(
@@ -324,13 +350,15 @@ const createNode = async () => {
 			//	"CRDT.Datastore.TEST.Channel",
 			//	new TextEncoder().encode("banana"),
 			//);
-			console.log(blockstore.getAll());
-			console.log(peerList);
+			//checkDHT(provider);
+			//console.log(blockstore.getAll());
+			//console.log(peerList);
 		}, 3000);
 	} catch (err) {
 		console.log(err);
 	}
 };
+
 function respondHandler(source: any) {
 	console.log("Incoming message received!");
 	console.log("Stream:", source);
