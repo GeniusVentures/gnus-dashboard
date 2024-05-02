@@ -155,7 +155,7 @@ const createNode = async () => {
 				dht: kadDHT({
 					//findProviders: //key goes here I'm pretty sure
 					protocol: '/ipfs/kad/1.0.0',
-				
+					clientMode: true,
 				}),
 				identify: identify(),
 				keychain: keychain(),
@@ -322,30 +322,60 @@ const createNode = async () => {
 		//	"CRDT.Datastore.TEST.Channel",
 		//	new TextEncoder().encode("banana"),
 		//);
-		const input = new TextEncoder().encode("SuperGenius");
-		const digest = await sha256.digest(input);
+		//const input = new TextEncoder().encode("SuperGenius");
+		//const digest = await sha256.digest(input);
 		
-		const cidtofind = CID.createV1(0x55,digest);
+		//const cidtofind = CID.createV0(digest);
 		//const cidtofind = CID.parse("QmSnuWmxptJZdLJpKRarxBMS2Ju2oANVrgbr2xWbie9b2D");
+		const cidtofind = CID.parse("QmeTbk3jEuY9Yyfcmum87v1qd8aFFeqcWfpYqt65bSQGEZ");
 		console.log("Cid to find:" + cidtofind.toString());
-		const provider = await libp2p.contentRouting.findProviders(cidtofind);
-		//const provide = await libp2p.contentRouting.provide(cidtofind);
-
-		// console.log("Providers Event:" + provider);
-		(async () => {
-			for await (const event of provider) {
-			  console.log("Providers Event:", event);
-			  // Handle the event here
-			}
-		  })();
-		// libp2p.addEventListener("kad-dht:query:send-query", (e) => {
-		// 	console.log("New Query:", e);
-		// });
+		
+		const provider = libp2p.services.dht.findProviders(cidtofind);
+		
+		for await(const event of provider)
+		{
+			//console.log("Providers Event:::" + event.name);
+			switch (event.name) {
+				case 'SEND_QUERY':
+				  // Handle SendQueryEvent
+				  break;
+				case 'PEER_RESPONSE':
+				  // Handle PeerResponseEvent
+				  break;
+				case 'FINAL_PEER':
+				  // Handle FinalPeerEvent
+				  //console.log("Final Peer:::" + event.from);
+				  break;
+				case 'QUERY_ERROR':
+				  // Handle QueryErrorEvent
+				  //console.log("Query Error:::" + event.error);
+				  break;
+				case 'PROVIDER':
+				  // Handle ProviderEvent
+				  console.log("Provider Given:" + event.providers[0].id);
+				  break;
+				case 'VALUE':
+				  // Handle ValueEvent
+				  //console.log("Value Event? " + event.from);
+				  break;
+				case 'ADD_PEER':
+				  // Handle AddPeerEvent
+				  break;
+				case 'DIAL_PEER':
+				  // Handle DialPeerEvent
+				  break;
+				default:
+				  // Handle unknown event
+				  console.log("Unknown Event");
+				  break;
+			  }
+		}
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers(
 				"CRDT.Datastore.TEST.Channel",
 			);
+
 			//libp2p.services.pubsub.publish(
 			//	"CRDT.Datastore.TEST.Channel",
 			//	new TextEncoder().encode("banana"),
@@ -358,6 +388,8 @@ const createNode = async () => {
 		console.log(err);
 	}
 };
+
+
 
 function respondHandler(source: any) {
 	console.log("Incoming message received!");
