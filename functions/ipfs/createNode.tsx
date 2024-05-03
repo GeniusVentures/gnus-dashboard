@@ -6,7 +6,14 @@ import { yamux } from "@chainsafe/libp2p-yamux";
 import { gossipsub } from "@chainsafe/libp2p-gossipsub";
 import { bootstrap } from "@libp2p/bootstrap";
 import { identify } from "@libp2p/identify";
-import { kadDHT, MessageType, QueryEvent, DHTProgressEvents, SendQueryEvent, removePrivateAddressesMapper  } from "@libp2p/kad-dht";
+import {
+	kadDHT,
+	MessageType,
+	QueryEvent,
+	DHTProgressEvents,
+	SendQueryEvent,
+	removePrivateAddressesMapper,
+} from "@libp2p/kad-dht";
 import { keychain } from "@libp2p/keychain";
 import { mplex } from "@libp2p/mplex";
 import { ping } from "@libp2p/ping";
@@ -71,8 +78,7 @@ import transferMsg from "../../functions/messages/transfer";
 import mintMsg from "../../functions/messages/mint";
 import processingMsg from "../../functions/messages/processing";
 import blockMsg from "../../functions/messages/block";
-import { sha256 } from 'multiformats/hashes/sha2';
-
+import { sha256 } from "multiformats/hashes/sha2";
 
 let node = null;
 
@@ -138,7 +144,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: dns(),
 			addresses: {
-				listen: ["/ip4/0.0.0.0/tcp/59694"],
+				listen: ["/ip4/10.14.0.2/tcp/64085"],
 			},
 			transports: [
 				tcp(),
@@ -147,14 +153,14 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [plaintext(),noise()],
-			streamMuxers: [yamux(),mplex()],
+			connectionEncryption: [plaintext(), noise()],
+			streamMuxers: [yamux(), mplex()],
 			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
 				dht: kadDHT({
 					//findProviders: //key goes here I'm pretty sure
-					protocol: '/ipfs/kad/1.0.0',
+					protocol: "/ipfs/kad/1.0.0",
 					clientMode: true,
 				}),
 				identify: identify(),
@@ -247,16 +253,16 @@ const createNode = async () => {
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
 			const multiaddr = message.detail.from;
-			const peerstoreres = libp2p.peerStore.get(multiaddr);	
+			const peerstoreres = libp2p.peerStore.get(multiaddr);
 			const addresses = (await peerstoreres).addresses;
 			let ipv4Address = "";
 			for (const addr of addresses) {
 				if (addr.multiaddr.toString().includes("/ip4/")) {
-				  ipv4Address = addr.multiaddr.toString();
-				  break;
+					ipv4Address = addr.multiaddr.toString();
+					break;
 				}
-			  }
-			  console.log("Source multiaddress:", ipv4Address);
+			}
+			console.log("Source multiaddress:", ipv4Address);
 			const ipv4Regex = /\/ip4\/([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/;
 			const match = ipv4Address.match(ipv4Regex);
 			let extractedIPv4 = "";
@@ -280,7 +286,10 @@ const createNode = async () => {
 					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
 					let requests: string[] = [];
 					for (const head of cids.heads) {
-						if (!requestedCids.includes(String(head.cid)) && extractedIPv4.length > 0) {
+						if (
+							!requestedCids.includes(String(head.cid)) &&
+							extractedIPv4.length > 0
+						) {
 							requestout = 1;
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
@@ -289,7 +298,10 @@ const createNode = async () => {
 							// 	"192.168.46.18",
 							// 	"174.105.208.56",
 							// );
-							const replacedAddr = decodedTask.multiaddress.replace("[IP]",extractedIPv4);
+							const replacedAddr = decodedTask.multiaddress.replace(
+								"[IP]",
+								extractedIPv4,
+							);
 							const provider = getPeer(replacedAddr);
 							console.log("ID CHECK:::" + provider.id);
 							libp2p2.peerStore.merge(provider.id, {
@@ -300,7 +312,10 @@ const createNode = async () => {
 							requestedCids.push(head.cid);
 						}
 						if (requests.length > 0) {
-							const replacedAddr = decodedTask.multiaddress.replace("[IP]",extractedIPv4);
+							const replacedAddr = decodedTask.multiaddress.replace(
+								"[IP]",
+								extractedIPv4,
+							);
 							const provider = getPeer(replacedAddr);
 							const stream = await libp2p2.dialProtocol(
 								provider.id,
@@ -324,51 +339,57 @@ const createNode = async () => {
 		//);
 		//const input = new TextEncoder().encode("SuperGenius");
 		//const digest = await sha256.digest(input);
-		
+
 		//const cidtofind = CID.createV0(digest);
 		//const cidtofind = CID.parse("QmSnuWmxptJZdLJpKRarxBMS2Ju2oANVrgbr2xWbie9b2D");
-		const cidtofind = CID.parse("QmeTbk3jEuY9Yyfcmum87v1qd8aFFeqcWfpYqt65bSQGEZ");
+		const cidtofind = CID.parse(
+			"QmeTbk3jEuY9Yyfcmum87v1qd8aFFeqcWfpYqt65bSQGEZ",
+		);
 		console.log("Cid to find:" + cidtofind.toString());
-		
+
 		const provider = libp2p.services.dht.findProviders(cidtofind);
-		
-		for await(const event of provider)
-		{
+
+		for await (const event of provider) {
 			//console.log("Providers Event:::" + event.name);
 			switch (event.name) {
-				case 'SEND_QUERY':
-				  // Handle SendQueryEvent
-				  break;
-				case 'PEER_RESPONSE':
-				  // Handle PeerResponseEvent
-				  break;
-				case 'FINAL_PEER':
-				  // Handle FinalPeerEvent
-				  //console.log("Final Peer:::" + event.from);
-				  break;
-				case 'QUERY_ERROR':
-				  // Handle QueryErrorEvent
-				  //console.log("Query Error:::" + event.error);
-				  break;
-				case 'PROVIDER':
-				  // Handle ProviderEvent
-				  console.log("Provider Given:" + event.providers[0].id);
-				  break;
-				case 'VALUE':
-				  // Handle ValueEvent
-				  //console.log("Value Event? " + event.from);
-				  break;
-				case 'ADD_PEER':
-				  // Handle AddPeerEvent
-				  break;
-				case 'DIAL_PEER':
-				  // Handle DialPeerEvent
-				  break;
+				case "SEND_QUERY":
+					// Handle SendQueryEvent
+					break;
+				case "PEER_RESPONSE":
+					// Handle PeerResponseEvent
+					break;
+				case "FINAL_PEER":
+					// Handle FinalPeerEvent
+					//console.log("Final Peer:::" + event.from);
+					break;
+				case "QUERY_ERROR":
+					// Handle QueryErrorEvent
+					//console.log("Query Error:::" + event.error);
+					break;
+				case "PROVIDER":
+					// Handle ProviderEvent
+					console.log(
+						"Provider Given:" +
+							event.providers[0].id +
+							"Multiaddr" +
+							event.providers[0].multiaddrs,
+					);
+					break;
+				case "VALUE":
+					// Handle ValueEvent
+					//console.log("Value Event? " + event.from);
+					break;
+				case "ADD_PEER":
+					// Handle AddPeerEvent
+					break;
+				case "DIAL_PEER":
+					// Handle DialPeerEvent
+					break;
 				default:
-				  // Handle unknown event
-				  console.log("Unknown Event");
-				  break;
-			  }
+					// Handle unknown event
+					console.log("Unknown Event");
+					break;
+			}
 		}
 
 		setInterval(() => {
@@ -388,8 +409,6 @@ const createNode = async () => {
 		console.log(err);
 	}
 };
-
-
 
 function respondHandler(source: any) {
 	console.log("Incoming message received!");

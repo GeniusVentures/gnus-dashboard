@@ -17,7 +17,7 @@ const NavbarDefault = () => {
 				expanded={expandedMenu}
 				expand="lg"
 				style={{
-					backgroundColor: "#0c1959b3",
+					backgroundColor: "white",
 					position: "fixed",
 					top: 0,
 					left: 0,
@@ -29,10 +29,18 @@ const NavbarDefault = () => {
 					<Navbar.Brand as={Link} href="/">
 						<Image
 							alt="GNUS.AI Logo"
-							width="175"
-							className="my-n7"
-							src="../../images/logo/gnus-logo.png"
+							height="50"
+							src="../../images/logo/gnus-icon.png"
 						/>
+						<span
+							className="ms-1 display-5 align-bottom"
+							style={{
+								fontFamily: "HKModularBold",
+								color: "#2a2b31",
+								letterSpacing: "-0.06rem",
+							}}>
+							GNUS.AI
+						</span>
 					</Navbar.Brand>
 
 					<Navbar.Toggle aria-controls="basic-navbar-nav" className="bg-white">
@@ -46,7 +54,7 @@ const NavbarDefault = () => {
 								if (item.children === undefined) {
 									return (
 										<Nav.Link
-											className="text-white"
+											className="nladj text-primary"
 											key={index}
 											as={Link}
 											href={item.link}>

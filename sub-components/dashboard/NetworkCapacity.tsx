@@ -8,20 +8,20 @@ const NetworkCapacity = () => {
 
 	return (
 		<Fragment>
-			<Row className="">
+			<Row className="gap-3">
 				<h2
 					className="display-7 text-white"
 					style={{ fontFamily: "HKModularBold" }}>
 					Network Capacity
 				</h2>
 			</Row>
-			<Row className="">
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+			<Row className="d-flex justify-content-center gap-3">
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -40,12 +40,12 @@ const NetworkCapacity = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -64,12 +64,12 @@ const NetworkCapacity = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -88,12 +88,12 @@ const NetworkCapacity = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -112,12 +112,12 @@ const NetworkCapacity = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -136,12 +136,12 @@ const NetworkCapacity = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={2} lg={2} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100" style={{ backdropFilter: "blur(5px)" }}>
+				<Col style={{ maxWidth: "300px", minWidth: "150px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>

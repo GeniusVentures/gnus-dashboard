@@ -93,25 +93,27 @@ const BlockchainInfo = () => {
 				style={{ fontFamily: "HKModularBold" }}>
 				Blockchain Information
 			</h2>
-			<Row className="justify-content-center px-0">
-				<Col xl={4} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+			<Row className="justify-content-center px-0 gap-5 mb-5">
+				<Col>
+					<Card
+						style={{ minWidth: "200px" }}
+						className="h-100 w-100 bg-gradient-gnus">
 						<Card.Body className="text-white">
 							<h4 className="text-white fs-4">Height</h4>
 							<p className="mb-0 display-4">{blockHeight.toLocaleString()}</p>
 						</Card.Body>
 					</Card>
 				</Col>
-				<Col xl={4} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+				<Col>
+					<Card className="h-100 w-100 bg-gradient-gnus">
 						<Card.Body className="text-white">
 							<h4 className="text-white fs-4">Transactions</h4>
 							<p className="mb-0 display-4">{transactions.toLocaleString()}</p>
 						</Card.Body>
 					</Card>
 				</Col>
-				<Col xl={4} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+				<Col>
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">
 							<h4 className="text-white fs-4">Tokens</h4>
 							<p className="mb-0 display-4">
@@ -146,11 +148,11 @@ const BlockchainInfo = () => {
           </Card>
         </Col> */}
 			</Row>
-			<Row className="justify-content-center ps-0 m-0">
-				<Col xs={12} sm={12} md={12} lg={6} xl={6} className="mb-4 ps-0">
+			<Row className="justify-content-center ps-0 m-0 gap-5">
+				<Col className="mb-4 ps-0">
 					<BlockExplorerPreview />
 				</Col>
-				<Col xs={12} sm={12} md={12} lg={6} xl={6} className="mb-4">
+				<Col className="mb-4">
 					<TransactionsPreview />
 				</Col>
 			</Row>

@@ -14,17 +14,19 @@ const BlockExplorerPreview = () => {
 
 	return (
 		<Fragment>
-			<Card style={{ backdropFilter: "blur(5px)" }}>
+			<Card className="bg-gradient-gnus">
 				<h3 className="text-white text-center mt-3 fs-4">Recent Blocks</h3>
 				<Card.Body className="pt-1">
-					<Card className="bg-white table-responsive">
+					<Card
+						style={{ backgroundColor: "#3A3C43", color: "white" }}
+						className="table-responsive bg-primary">
 						<Table className="mb-0">
 							<thead className="">
-								<tr className="text-center bg-none">
-									<th className="text-primary bg-none">Block</th>
-									<th className="text-primary bg-none">Hash</th>
-									<th className="text-primary bg-none">Transactions</th>
-									<th className="text-primary bg-none">Time</th>
+								<tr className="text-center">
+									<th className="text-primary">Block</th>
+									<th className="text-primary">Hash</th>
+									<th className="text-primary">Transactions</th>
+									<th className="text-primary">Time</th>
 								</tr>
 							</thead>
 							<tbody ref={parent}>
@@ -61,8 +63,8 @@ const BlockExplorerPreview = () => {
 					</Card>
 				</Card.Body>
 				<Card.Footer
-					className="p-2"
-					as="button"
+					style={{ cursor: "pointer" }}
+					className="p-2 bg-gradient-gnus"
 					onClick={() => {
 						setModal(true);
 					}}>

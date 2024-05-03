@@ -14,19 +14,21 @@ const TransactionsPreview = () => {
 
 	return (
 		<Fragment>
-			<Card style={{ backdropFilter: "blur(5px)" }}>
+			<Card className="bg-gradient-gnus">
 				<h3 className="text-white text-center mt-3 fs-4">
 					Recent Transactions
 				</h3>
 				<Card.Body className="pt-1">
-					<Card className="bg-white table-responsive text-nowrap">
+					<Card
+						style={{ background: "#2A2B31", color: "white" }}
+						className="bg-white table-responsive text-nowrap">
 						<Table className="mb-0">
 							<thead className="">
-								<tr className="text-center bg-none">
-									<th className="text-primary bg-none">TX Hash</th>
-									<th className="text-primary bg-none">Type</th>
-									<th className="text-primary bg-none">Value</th>
-									<th className="text-primary bg-none">Time</th>
+								<tr className="text-center">
+									<th className="text-primary">TX Hash</th>
+									<th className="text-primary">Type</th>
+									<th className="text-primary">Value</th>
+									<th className="text-primary">Time</th>
 								</tr>
 							</thead>
 							<tbody ref={parent}>
@@ -57,8 +59,8 @@ const TransactionsPreview = () => {
 					</Card>
 				</Card.Body>
 				<Card.Footer
-					className="p-2"
-					typeof="button"
+					style={{ cursor: "pointer" }}
+					className="p-2 bg-gradient-gnus curser-pointer"
 					onClick={() => {
 						setModal(true);
 					}}>

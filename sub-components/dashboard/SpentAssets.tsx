@@ -15,13 +15,13 @@ const SpentAssets = () => {
 					Spent Assets
 				</h2>
 			</Row>
-			<Row className="">
-				<Col xl={3} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+			<Row className="d-flex justify-content-center gap-3">
+				<Col style={{ maxWidth: "400px", minWidth: "300px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -40,12 +40,12 @@ const SpentAssets = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={3} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+				<Col style={{ maxWidth: "400px", minWidth: "300px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -64,12 +64,12 @@ const SpentAssets = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={3} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+				<Col style={{ maxWidth: "400px", minWidth: "300px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>
@@ -88,12 +88,12 @@ const SpentAssets = () => {
 						</Card.Footer>
 					</Card>
 				</Col>
-				<Col xl={3} lg={3} md={4} sm={6} xs={12} className="mb-4">
-					<Card className="h-100 blur">
+				<Col style={{ maxWidth: "400px", minWidth: "300px" }} className="mb-4">
+					<Card className="h-100 bg-gradient-gnus">
 						<Card.Body className="text-white">test</Card.Body>
 						<Card.Footer
-							className="p-0"
-							as={"button"}
+							style={{ cursor: "pointer" }}
+							className="p-0 bg-gradient-gnus text-center"
 							onClick={(e) => {
 								setModal(true);
 							}}>

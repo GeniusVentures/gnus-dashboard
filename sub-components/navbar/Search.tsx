@@ -51,7 +51,7 @@ const SearchBar = () => {
 		<Col style={{ width: width }} className="mx-auto mb-2 mb-lg-0">
 			<Form
 				onSubmit={search}
-				className="mt-3 mt-lg-0 d-flex align-items-center">
+				className="mt-3 mt-lg-0 d-flex align-items-center text-white">
 				<span
 					typeof="button"
 					onClick={search}
@@ -65,7 +65,8 @@ const SearchBar = () => {
 					}}
 					type="Search"
 					id="formSearch"
-					className="ps-6 pe-0 fs-5 my-1 pe-2"
+					style={{ background: "#2A2B31", color: "white" }}
+					className="ps-6 pe-0 fs-5 my-1 pe-2 text-white"
 					placeholder="Block Number, TX Hash, Wallet Address..."
 				/>
 			</Form>
