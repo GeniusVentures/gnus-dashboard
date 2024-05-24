@@ -53,6 +53,49 @@ export interface DAGWrapper {
     dagStruct?: DAGStruct; // 
 }
 /**
+ * @generated from protobuf message SGTransaction.TransferUTXOInput
+ */
+export interface TransferUTXOInput {
+    /**
+     * @generated from protobuf field: bytes tx_id_hash = 1;
+     */
+    txIdHash: Uint8Array; // 
+    /**
+     * @generated from protobuf field: uint32 output_index = 2;
+     */
+    outputIndex: number;
+    /**
+     * @generated from protobuf field: bytes signature = 3;
+     */
+    signature: Uint8Array;
+}
+/**
+ * @generated from protobuf message SGTransaction.TransferOutput
+ */
+export interface TransferOutput {
+    /**
+     * @generated from protobuf field: bytes encrypted_amount = 1;
+     */
+    encryptedAmount: Uint8Array; // 
+    /**
+     * @generated from protobuf field: bytes dest_addr = 2;
+     */
+    destAddr: Uint8Array; // 
+}
+/**
+ * @generated from protobuf message SGTransaction.UTXOTxParams
+ */
+export interface UTXOTxParams {
+    /**
+     * @generated from protobuf field: repeated SGTransaction.TransferUTXOInput inputs = 1;
+     */
+    inputs: TransferUTXOInput[]; // 
+    /**
+     * @generated from protobuf field: repeated SGTransaction.TransferOutput outputs = 2;
+     */
+    outputs: TransferOutput[]; // 
+}
+/**
  * @generated from protobuf message SGTransaction.TransferTx
  */
 export interface TransferTx {
@@ -65,13 +108,9 @@ export interface TransferTx {
      */
     tokenId: bigint; // 
     /**
-     * @generated from protobuf field: bytes encrypted_amount = 3;
+     * @generated from protobuf field: SGTransaction.UTXOTxParams utxo_params = 3;
      */
-    encryptedAmount: Uint8Array; // 
-    /**
-     * @generated from protobuf field: bytes dest_addr = 4;
-     */
-    destAddr: Uint8Array; // 
+    utxoParams?: UTXOTxParams;
 }
 /**
  * @generated from protobuf message SGTransaction.ProcessingTx
@@ -110,6 +149,31 @@ export interface MintTx {
      * @generated from protobuf field: uint64 amount = 2;
      */
     amount: bigint; // 
+}
+/**
+ * @generated from protobuf message SGTransaction.EscrowTx
+ */
+export interface EscrowTx {
+    /**
+     * @generated from protobuf field: SGTransaction.DAGStruct dag_struct = 1;
+     */
+    dagStruct?: DAGStruct; // 
+    /**
+     * @generated from protobuf field: SGTransaction.UTXOTxParams utxo_params = 2;
+     */
+    utxoParams?: UTXOTxParams;
+    /**
+     * @generated from protobuf field: uint64 num_chunks = 3;
+     */
+    numChunks: bigint;
+    /**
+     * @generated from protobuf field: bytes dev_addr = 4;
+     */
+    devAddr: Uint8Array; // 
+    /**
+     * @generated from protobuf field: float dev_cut = 5;
+     */
+    devCut: number; // 
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class DAGStruct$Type extends MessageType<DAGStruct> {
@@ -253,20 +317,190 @@ class DAGWrapper$Type extends MessageType<DAGWrapper> {
  */
 export const DAGWrapper = new DAGWrapper$Type();
 // @generated message type with reflection information, may provide speed optimized methods
+class TransferUTXOInput$Type extends MessageType<TransferUTXOInput> {
+    constructor() {
+        super("SGTransaction.TransferUTXOInput", [
+            { no: 1, name: "tx_id_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 2, name: "output_index", kind: "scalar", T: 13 /*ScalarType.UINT32*/ },
+            { no: 3, name: "signature", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<TransferUTXOInput>): TransferUTXOInput {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.txIdHash = new Uint8Array(0);
+        message.outputIndex = 0;
+        message.signature = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<TransferUTXOInput>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TransferUTXOInput): TransferUTXOInput {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bytes tx_id_hash */ 1:
+                    message.txIdHash = reader.bytes();
+                    break;
+                case /* uint32 output_index */ 2:
+                    message.outputIndex = reader.uint32();
+                    break;
+                case /* bytes signature */ 3:
+                    message.signature = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: TransferUTXOInput, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bytes tx_id_hash = 1; */
+        if (message.txIdHash.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.txIdHash);
+        /* uint32 output_index = 2; */
+        if (message.outputIndex !== 0)
+            writer.tag(2, WireType.Varint).uint32(message.outputIndex);
+        /* bytes signature = 3; */
+        if (message.signature.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.signature);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.TransferUTXOInput
+ */
+export const TransferUTXOInput = new TransferUTXOInput$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class TransferOutput$Type extends MessageType<TransferOutput> {
+    constructor() {
+        super("SGTransaction.TransferOutput", [
+            { no: 1, name: "encrypted_amount", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 2, name: "dest_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<TransferOutput>): TransferOutput {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.encryptedAmount = new Uint8Array(0);
+        message.destAddr = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<TransferOutput>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TransferOutput): TransferOutput {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bytes encrypted_amount */ 1:
+                    message.encryptedAmount = reader.bytes();
+                    break;
+                case /* bytes dest_addr */ 2:
+                    message.destAddr = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: TransferOutput, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bytes encrypted_amount = 1; */
+        if (message.encryptedAmount.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.encryptedAmount);
+        /* bytes dest_addr = 2; */
+        if (message.destAddr.length)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.destAddr);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.TransferOutput
+ */
+export const TransferOutput = new TransferOutput$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class UTXOTxParams$Type extends MessageType<UTXOTxParams> {
+    constructor() {
+        super("SGTransaction.UTXOTxParams", [
+            { no: 1, name: "inputs", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => TransferUTXOInput },
+            { no: 2, name: "outputs", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => TransferOutput }
+        ]);
+    }
+    create(value?: PartialMessage<UTXOTxParams>): UTXOTxParams {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.inputs = [];
+        message.outputs = [];
+        if (value !== undefined)
+            reflectionMergePartial<UTXOTxParams>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: UTXOTxParams): UTXOTxParams {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated SGTransaction.TransferUTXOInput inputs */ 1:
+                    message.inputs.push(TransferUTXOInput.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* repeated SGTransaction.TransferOutput outputs */ 2:
+                    message.outputs.push(TransferOutput.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: UTXOTxParams, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated SGTransaction.TransferUTXOInput inputs = 1; */
+        for (let i = 0; i < message.inputs.length; i++)
+            TransferUTXOInput.internalBinaryWrite(message.inputs[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* repeated SGTransaction.TransferOutput outputs = 2; */
+        for (let i = 0; i < message.outputs.length; i++)
+            TransferOutput.internalBinaryWrite(message.outputs[i], writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.UTXOTxParams
+ */
+export const UTXOTxParams = new UTXOTxParams$Type();
+// @generated message type with reflection information, may provide speed optimized methods
 class TransferTx$Type extends MessageType<TransferTx> {
     constructor() {
         super("SGTransaction.TransferTx", [
             { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
             { no: 2, name: "token_id", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
-            { no: 3, name: "encrypted_amount", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
-            { no: 4, name: "dest_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+            { no: 3, name: "utxo_params", kind: "message", T: () => UTXOTxParams }
         ]);
     }
     create(value?: PartialMessage<TransferTx>): TransferTx {
         const message = globalThis.Object.create((this.messagePrototype!));
         message.tokenId = 0n;
-        message.encryptedAmount = new Uint8Array(0);
-        message.destAddr = new Uint8Array(0);
         if (value !== undefined)
             reflectionMergePartial<TransferTx>(this, message, value);
         return message;
@@ -282,11 +516,8 @@ class TransferTx$Type extends MessageType<TransferTx> {
                 case /* uint64 token_id */ 2:
                     message.tokenId = reader.uint64().toBigInt();
                     break;
-                case /* bytes encrypted_amount */ 3:
-                    message.encryptedAmount = reader.bytes();
-                    break;
-                case /* bytes dest_addr */ 4:
-                    message.destAddr = reader.bytes();
+                case /* SGTransaction.UTXOTxParams utxo_params */ 3:
+                    message.utxoParams = UTXOTxParams.internalBinaryRead(reader, reader.uint32(), options, message.utxoParams);
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -306,12 +537,9 @@ class TransferTx$Type extends MessageType<TransferTx> {
         /* uint64 token_id = 2; */
         if (message.tokenId !== 0n)
             writer.tag(2, WireType.Varint).uint64(message.tokenId);
-        /* bytes encrypted_amount = 3; */
-        if (message.encryptedAmount.length)
-            writer.tag(3, WireType.LengthDelimited).bytes(message.encryptedAmount);
-        /* bytes dest_addr = 4; */
-        if (message.destAddr.length)
-            writer.tag(4, WireType.LengthDelimited).bytes(message.destAddr);
+        /* SGTransaction.UTXOTxParams utxo_params = 3; */
+        if (message.utxoParams)
+            UTXOTxParams.internalBinaryWrite(message.utxoParams, writer.tag(3, WireType.LengthDelimited).fork(), options).join();
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -454,3 +682,80 @@ class MintTx$Type extends MessageType<MintTx> {
  * @generated MessageType for protobuf message SGTransaction.MintTx
  */
 export const MintTx = new MintTx$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class EscrowTx$Type extends MessageType<EscrowTx> {
+    constructor() {
+        super("SGTransaction.EscrowTx", [
+            { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
+            { no: 2, name: "utxo_params", kind: "message", T: () => UTXOTxParams },
+            { no: 3, name: "num_chunks", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 4, name: "dev_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 5, name: "dev_cut", kind: "scalar", T: 2 /*ScalarType.FLOAT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<EscrowTx>): EscrowTx {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.numChunks = 0n;
+        message.devAddr = new Uint8Array(0);
+        message.devCut = 0;
+        if (value !== undefined)
+            reflectionMergePartial<EscrowTx>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: EscrowTx): EscrowTx {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGTransaction.DAGStruct dag_struct */ 1:
+                    message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
+                    break;
+                case /* SGTransaction.UTXOTxParams utxo_params */ 2:
+                    message.utxoParams = UTXOTxParams.internalBinaryRead(reader, reader.uint32(), options, message.utxoParams);
+                    break;
+                case /* uint64 num_chunks */ 3:
+                    message.numChunks = reader.uint64().toBigInt();
+                    break;
+                case /* bytes dev_addr */ 4:
+                    message.devAddr = reader.bytes();
+                    break;
+                case /* float dev_cut */ 5:
+                    message.devCut = reader.float();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: EscrowTx, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGTransaction.DAGStruct dag_struct = 1; */
+        if (message.dagStruct)
+            DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* SGTransaction.UTXOTxParams utxo_params = 2; */
+        if (message.utxoParams)
+            UTXOTxParams.internalBinaryWrite(message.utxoParams, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        /* uint64 num_chunks = 3; */
+        if (message.numChunks !== 0n)
+            writer.tag(3, WireType.Varint).uint64(message.numChunks);
+        /* bytes dev_addr = 4; */
+        if (message.devAddr.length)
+            writer.tag(4, WireType.LengthDelimited).bytes(message.devAddr);
+        /* float dev_cut = 5; */
+        if (message.devCut !== 0)
+            writer.tag(5, WireType.Bit32).float(message.devCut);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGTransaction.EscrowTx
+ */
+export const EscrowTx = new EscrowTx$Type();
