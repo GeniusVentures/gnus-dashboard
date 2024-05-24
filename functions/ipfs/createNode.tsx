@@ -575,7 +575,7 @@ function respondHandler(source: any) {
 								try {
 									const escrow = EscrowTx.fromBinary(elementin.value);
 									console.log("Escrow Chunks:" + escrow.numChunks);
-									console.log("Escrow Dev_address:" + escrow.devAddr);
+									console.log("Escrow Dev_address:" + escrow.devAddr.map(byte => String.fromCharCode(byte)).join(''));
 									console.log("Escrow Dev_cut:" + escrow.devCut);
 									for (const transferout of escrow.utxoParams.outputs)
 										{
