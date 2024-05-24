@@ -69,6 +69,10 @@ const {
 	TransferTx,
 	ProcessingTx,
 	MintTx,
+	EscrowTx,
+	UTXOTxParams,
+	TransferOutput,
+	TransferUTXOInput,
 } = require("data/protobuf/SGTransaction");
 import { encode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/encode";
 import { decode as readerDecode } from "@dcdn/graphsync/node_modules/it-length-prefixed/dist/src/decode";
@@ -119,16 +123,16 @@ const createNode = async () => {
 			// 	),
 			// 	addrs: [multiaddr("/ip4/192.168.46.18/tcp/22453/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q")],
 			// },
-			// {
-			// 	id: peerIdFromString(
-			// 		"12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
-			// 	),
-			// 	addrs: [
-			// 		multiaddr(
-			// 			"/ip4/192.168.46.18/tcp/40002/p2p/12D3KooWCWg6MYQH27jt6BtWFUauDUKd3CEdNwYTt8RkXfwqBAAh",
-			// 		),
-			// 	],
-			// },
+			 {
+			 	id: peerIdFromString(
+			 		"12D3KooWQ1iBcVaxGvWJafeHNb4bhFSGtqeBusHKzahuL63drVps",
+			 	),
+			 	addrs: [
+			 		multiaddr(
+			 			"/ip4/192.168.46.116/tcp/40002/p2p/12D3KooWQ1iBcVaxGvWJafeHNb4bhFSGtqeBusHKzahuL63drVps",
+			 		),
+			 	],
+			 },
 			// {
 			// 	id: peerIdFromString(
 			// 		"12D3KooWSyvmzbSVzDVKEZSeCbt4pQ8cWMWT4wESSaUGvir4FzPF",
@@ -144,7 +148,7 @@ const createNode = async () => {
 			peerId: myEd25519PeerId,
 			dns: dns(),
 			addresses: {
-				listen: ["/ip4/10.14.0.2/tcp/64085"],
+				listen: ["/ip4/0.0.0.0/tcp/64085"],
 			},
 			transports: [
 				tcp(),
@@ -153,19 +157,19 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [plaintext(), noise()],
-			streamMuxers: [yamux(), mplex()],
-			peerDiscovery: [bootstrap(bootstrapConfig)],
+			connectionEncryption: [plaintext()],
+			streamMuxers: [yamux()],
+			//peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
-				dht: kadDHT({
-					//findProviders: //key goes here I'm pretty sure
-					protocol: "/ipfs/kad/1.0.0",
-					clientMode: true,
-				}),
+				// dht: kadDHT({
+				// 	//findProviders: //key goes here I'm pretty sure
+				// 	protocol: "/ipfs/kad/1.0.0",
+				// 	clientMode: true,
+				// }),
 				identify: identify(),
 				keychain: keychain(),
-				ping: ping(),
+				// ping: ping(),
 				// ping: ping([
 				// 	"/ip4/174.105.208.56/tcp/40001/p2p/12D3KooWP49mSuMJ3Z4VARZM5av5cxbHFAmd7kVk31XvyGjcVi8q",
 				// 	"/ip4/174.105.208.56/tcp/40002/p2p/12D3KooWN4QE8uaE5EAJFXBduYaRaBDYkxNbCJMvxqT5H2gU6hhG",
@@ -331,7 +335,7 @@ const createNode = async () => {
 				console.log("can'tdecode:");
 			}
 		});
-		libp2p.services.pubsub.subscribe("CRDT.Datastore.TEST.Channel");
+		libp2p.services.pubsub.subscribe("SGNUS.TestNet.Channel");
 
 		//libp2p.services.pubsub.publish(
 		//	"CRDT.Datastore.TEST.Channel",
@@ -347,50 +351,50 @@ const createNode = async () => {
 		);
 		console.log("Cid to find:" + cidtofind.toString());
 
-		const provider = libp2p.services.dht.findProviders(cidtofind);
+		// const provider = libp2p.services.dht.findProviders(cidtofind);
 
-		for await (const event of provider) {
-			//console.log("Providers Event:::" + event.name);
-			switch (event.name) {
-				case "SEND_QUERY":
-					// Handle SendQueryEvent
-					break;
-				case "PEER_RESPONSE":
-					// Handle PeerResponseEvent
-					break;
-				case "FINAL_PEER":
-					// Handle FinalPeerEvent
-					//console.log("Final Peer:::" + event.from);
-					break;
-				case "QUERY_ERROR":
-					// Handle QueryErrorEvent
-					//console.log("Query Error:::" + event.error);
-					break;
-				case "PROVIDER":
-					// Handle ProviderEvent
-					console.log(
-						"Provider Given:" +
-							event.providers[0].id +
-							"Multiaddr" +
-							event.providers[0].multiaddrs,
-					);
-					break;
-				case "VALUE":
-					// Handle ValueEvent
-					//console.log("Value Event? " + event.from);
-					break;
-				case "ADD_PEER":
-					// Handle AddPeerEvent
-					break;
-				case "DIAL_PEER":
-					// Handle DialPeerEvent
-					break;
-				default:
-					// Handle unknown event
-					console.log("Unknown Event");
-					break;
-			}
-		}
+		// for await (const event of provider) {
+		// 	//console.log("Providers Event:::" + event.name);
+		// 	switch (event.name) {
+		// 		case "SEND_QUERY":
+		// 			// Handle SendQueryEvent
+		// 			break;
+		// 		case "PEER_RESPONSE":
+		// 			// Handle PeerResponseEvent
+		// 			break;
+		// 		case "FINAL_PEER":
+		// 			// Handle FinalPeerEvent
+		// 			//console.log("Final Peer:::" + event.from);
+		// 			break;
+		// 		case "QUERY_ERROR":
+		// 			// Handle QueryErrorEvent
+		// 			//console.log("Query Error:::" + event.error);
+		// 			break;
+		// 		case "PROVIDER":
+		// 			// Handle ProviderEvent
+		// 			console.log(
+		// 				"Provider Given:" +
+		// 					event.providers[0].id +
+		// 					"Multiaddr" +
+		// 					event.providers[0].multiaddrs,
+		// 			);
+		// 			break;
+		// 		case "VALUE":
+		// 			// Handle ValueEvent
+		// 			//console.log("Value Event? " + event.from);
+		// 			break;
+		// 		case "ADD_PEER":
+		// 			// Handle AddPeerEvent
+		// 			break;
+		// 		case "DIAL_PEER":
+		// 			// Handle DialPeerEvent
+		// 			break;
+		// 		default:
+		// 			// Handle unknown event
+		// 			console.log("Unknown Event");
+		// 			break;
+		// 	}
+		// }
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers(
@@ -463,7 +467,7 @@ function respondHandler(source: any) {
 						const delta = Delta.fromBinary(decodedData.Data);
 
 						for (const elementin of delta.elements) {
-							// console.log("Element Key:" + elementin.key);
+							console.log("Element Key:" + elementin.key);
 							// console.log("Element data:" + elementin.id);
 							// console.log("Element data:" + elementin.value);
 							//Transfer
@@ -471,17 +475,28 @@ function respondHandler(source: any) {
 								console.log("Transfer");
 								try {
 									const transfer = TransferTx.fromBinary(elementin.value);
-									// console.log("Transfer:" + transfer.tokenId);
-									// console.log("Transfer:" + transfer.encryptedAmount);
+									console.log("Transfer:" + transfer.tokenId);
+									for (const transferout of transfer.utxoParams.outputs)
+										{
+											console.log("TransferOut Amnt: " + transferout.encryptedAmount.map(byte => String.fromCharCode(byte)).join(''));
+											console.log("TransferOut Dest Addr: " + transferout.destAddr.map(byte => String.fromCharCode(byte)).join(''));
+										}
+									for (const transferin of transfer.utxoParams.inputs)
+										{
+											console.log("TransferIn Hash:" + transferin.txIdHash);
+											console.log("TransferIn Output Index:" + transferin.outputIndex);
+											console.log("TransferIn Output Sig:" + transferin.signature);
+										}
+									//console.log("Transfer:" + transfer.encryptedAmount);
 									// console.log("Transfer:" + transfer.destAddr);
-									// console.log("Transfer:" + transfer.dagStruct.type);
-									// console.log("Transfer:" + transfer.dagStruct.previousHash);
-									// console.log("Transfer:" + transfer.dagStruct.sourceAddr);
-									// console.log("Transfer:" + transfer.dagStruct.nonce);
-									// console.log("Transfer:" + transfer.dagStruct.timestamp);
-									// console.log("Transfer:" + transfer.dagStruct.uncleHash);
-									// console.log("Transfer:" + transfer.dagStruct.dataHash);
-									transferMsg(transfer, elementin.key);
+									console.log("Transfer:" + transfer.dagStruct.type);
+									console.log("Transfer:" + transfer.dagStruct.previousHash);
+									console.log("Transfer:" + transfer.dagStruct.sourceAddr);
+									console.log("Transfer:" + transfer.dagStruct.nonce);
+									console.log("Transfer:" + transfer.dagStruct.timestamp);
+									console.log("Transfer:" + transfer.dagStruct.uncleHash);
+									console.log("Transfer:" + transfer.dagStruct.dataHash);
+									//transferMsg(transfer, elementin.key);
 								} catch (e) {
 									console.log("Transfer error: " + e.message);
 								}
@@ -531,29 +546,56 @@ function respondHandler(source: any) {
 										// console.log("BlockHeader" + block.stateRoot);
 										// console.log("BlockHeader" + block.extrinsicsRoot);
 										// console.log("BlockHeader" + block.digest);
-										blockMsg(block, elementin.key);
+										//blockMsg(block, elementin.key);
 									} catch (e) {
 										console.log("Block Fail: " + e.message);
 									}
 								}
 							}
 							//Processing
-							if (elementin.key.includes("processing")) {
+							if (elementin.key.includes("process")) {
 								try {
 									const processing = ProcessingTx.fromBinary(elementin.value);
-									// console.log("Proc:" + processing.mpcMagicKey);
-									// console.log("Proc:" + processing.offset);
-									// console.log("Proc:" + processing.jobCid);
-									// console.log("Proc:" + processing.subtaskCid);
-									// console.log("Proc:" + processing.dagStruct.previousHash);
-									// console.log("Proc:" + processing.dagStruct.sourceAddr);
-									// console.log("Proc:" + processing.dagStruct.nonce);
-									// console.log("Proc:" + processing.dagStruct.timestamp);
-									// console.log("Proc:" + processing.dagStruct.uncleHash);
-									// console.log("Proc:" + processing.dagStruct.dataHash);
-									processingMsg(processing, elementin.key);
+									console.log("Proc:" + processing.mpcMagicKey);
+									console.log("Proc:" + processing.offset);
+									console.log("Proc:" + processing.jobCid);
+									console.log("Proc:" + processing.subtaskCid);
+									console.log("Proc:" + processing.dagStruct.previousHash);
+									console.log("Proc:" + processing.dagStruct.sourceAddr);
+									console.log("Proc:" + processing.dagStruct.nonce);
+									console.log("Proc:" + processing.dagStruct.timestamp);
+									console.log("Proc:" + processing.dagStruct.uncleHash);
+									console.log("Proc:" + processing.dagStruct.dataHash);
+									//processingMsg(processing, elementin.key);
 								} catch (e) {
 									console.log("Proc error");
+								}
+							}
+							if (elementin.key.includes("escrow")) {
+								try {
+									const escrow = EscrowTx.fromBinary(elementin.value);
+									console.log("Escrow Chunks:" + escrow.numChunks);
+									console.log("Escrow Dev_address:" + escrow.devAddr);
+									console.log("Escrow Dev_cut:" + escrow.devCut);
+									for (const transferout of escrow.utxoParams.outputs)
+										{
+											console.log("E TransferOut Amnt: " + transferout.encryptedAmount.map(byte => String.fromCharCode(byte)).join(''));
+											console.log("E TransferOut Dest Addr: " + transferout.destAddr.map(byte => String.fromCharCode(byte)).join(''));
+										}
+									for (const transferin of escrow.utxoParams.inputs)
+										{
+											console.log("E TransferIn Hash:" + transferin.txIdHash);
+											console.log("E TransferIn Output Index:" + transferin.outputIndex);
+											console.log("E TransferIn Output Sig:" + transferin.signature);
+										}		
+										console.log("Escrow:" + escrow.dagStruct.previousHash);
+										console.log("Escrow:" + escrow.dagStruct.sourceAddr);
+										console.log("Escrow:" + escrow.dagStruct.nonce);
+										console.log("Escrow:" + escrow.dagStruct.timestamp);
+										console.log("Escrow:" + escrow.dagStruct.uncleHash);
+										console.log("Escrow:" + escrow.dagStruct.dataHash);
+								} catch(e) {
+									console.log("Escrow error");
 								}
 							}
 						}
