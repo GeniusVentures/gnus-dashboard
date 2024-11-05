@@ -6,6 +6,7 @@ import NavDropdownMain from "../../sub-components/navbar/NavDropdownMain";
 import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
 import Search from "../../sub-components/navbar/Search";
+import ToggleSwitch from "widgets/forms/ToggleSwitch";
 
 const NavbarDefault: React.FC = () => {
   const [expandedMenu, setExpandedMenu] = useState<boolean>(false);
@@ -83,8 +84,8 @@ const NavbarDefault: React.FC = () => {
             <Nav className="mx-auto">
               <Search />
             </Nav>
-            <Nav className="ms-auto navbar-nav navbar-right-wrap nav-top-wrap">
-              <Socials si={"sm"} gap={5} />
+            <Nav className="navbar-nav navbar-right-wrap nav-top-wrap">
+              <ToggleSwitch label="Network" />
             </Nav>
           </Navbar.Collapse>
         </Container>

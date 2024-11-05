@@ -203,8 +203,6 @@ const OrderForm = () => {
 
   return (
     <Fragment>
-      <StaticVideoBG video="https://orange-generous-tern-256.mypinata.cloud/ipfs/QmaqTgr2wVEC92ByksgtcKobKYYetJLENMJmBUPzG7RBFA" />
-
       <div className="d-flex justify-content-center">
         <Card
           style={{ width: "1000px", height: height }}
@@ -265,10 +263,12 @@ const OrderForm = () => {
                               </Form.Group>
                               <Row className="justify-content-center mt-5">
                                 <Button
-                                  id="button"
                                   type="submit"
-                                  style={{ maxWidth: "350px" }}
-                                  className="btn btn-primary fs-3">
+                                  style={{
+                                    backgroundColor: " #00000000",
+                                    maxWidth: "350px",
+                                  }}
+                                  className="btn-gnus py-2 fs-4 w-100">
                                   Submit
                                 </Button>
                               </Row>
@@ -341,10 +341,12 @@ const OrderForm = () => {
                               </Form.Group>
                               <Row className="justify-content-center mt-5">
                                 <Button
-                                  id="button"
                                   type="submit"
-                                  style={{ maxWidth: "350px" }}
-                                  className="btn btn-primary fs-3">
+                                  style={{
+                                    backgroundColor: " #00000000",
+                                    maxWidth: "350px",
+                                  }}
+                                  className="btn-gnus py-2 fs-4 w-100">
                                   Submit
                                 </Button>
                               </Row>

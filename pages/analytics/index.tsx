@@ -1,15 +1,17 @@
 import { Fragment, useEffect, useState } from "react";
 import { Button, Row } from "react-bootstrap";
-import BlockchainInfo from "sub-components/dashboard/BlockchainInfo";
+import NetworkInfo from "sub-components/dashboard/NetworkSummary";
+import ResourcesLeased from "sub-components/dashboard/ResourcesLeased";
+import NetworkCapacity from "sub-components/dashboard/NetworkCapacity";
+import SpentAssets from "sub-components/dashboard/SpentAssets";
 import { useRouter } from "next/router";
-import lastUpdate from "../functions/time/lastUpdate";
+import lastUpdate from "../../functions/time/lastUpdate";
 import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
-const Landing: React.FC = () => {
+const Analytics: React.FC = () => {
   const router = useRouter();
   const [updated, setUpdated] = useState(null);
   const [width, setWidth] = useState<number>(0);
-  const [show, setShow] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -24,15 +26,6 @@ const Landing: React.FC = () => {
     setUpdated(lastUpdate());
   }, []);
 
-  useEffect(() => {
-    if (show) {
-      setShow(false);
-      setTimeout(() => {
-        setShow(true);
-      }, 500);
-    }
-  }, [width]);
-
   return (
     <Fragment>
       <div>
@@ -42,7 +35,7 @@ const Landing: React.FC = () => {
             minHeight: "100vh",
             alignContent: "center",
             height: "100%",
-            backgroundColor: width > 700 ? "#00000060" : "",
+            backgroundColor: "#00000060",
           }}>
           <Row className="justify-content-center mx-3 mx-lg-10">
             {width >= 1200 && (
@@ -63,22 +56,34 @@ const Landing: React.FC = () => {
                 <p className="text-white fs-5 pb-5">Last updated: {updated}</p>
               </div>
             )}
-
-            <Row className="px-0">
-              <BlockchainInfo />
+            <Row
+              className="border-bottom justify-content-center py-5"
+              style={{ maxWidth: "1570px" }}>
+              <NetworkInfo />
             </Row>
-          </Row>
-          <Row className="justify-content-center mt-5">
-            <div style={{ width: "250px" }} className="mx-auto mx-sm-0">
+            <Row
+              className="border-bottom m-0 mt-3 justify-content-center py-5"
+              style={{ maxWidth: "1570px" }}>
+              <ResourcesLeased />
+            </Row>
+            <Row
+              className="border-bottom m-0 mt-3 justify-content-center py-5"
+              style={{ maxWidth: "1570px" }}>
+              <NetworkCapacity />
+            </Row>
+            <Row
+              className="m-0 mt-3 justify-content-center py-5"
+              style={{ maxWidth: "1570px" }}>
+              <SpentAssets />
+            </Row>
+            <Row className="justify-content-center mt-5">
               <Button
                 onClick={() => router.push("/analytics")}
-                style={{
-                  backgroundColor: " #00000000",
-                }}
-                className="btn-gnus py-2 w-100">
-                View Analytics
+                style={{ width: "350px" }}
+                className="btn btn-gnus fs-3">
+                See Block Explorer
               </Button>
-            </div>
+            </Row>
           </Row>
         </div>
       </div>
@@ -86,4 +91,4 @@ const Landing: React.FC = () => {
   );
 };
 
-export default Landing;
+export default Analytics;

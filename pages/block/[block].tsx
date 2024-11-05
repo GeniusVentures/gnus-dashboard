@@ -33,7 +33,6 @@ const Blocks: React.FC = () => {
 
   return (
     <Fragment>
-      <StaticVideoBG video="https://orange-generous-tern-256.mypinata.cloud/ipfs/QmaqTgr2wVEC92ByksgtcKobKYYetJLENMJmBUPzG7RBFA" />
       <Row className="justify-content-center mx-3 mx-lg-15 pt-20 pb-5">
         {width >= 1200 && (
           <div>

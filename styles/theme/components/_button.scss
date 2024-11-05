@@ -23,12 +23,16 @@
 
 /* Hover state */
 .btn-gnus:hover {
+  color: white !important;
+
   // transform: scale(1.03); /* Slightly enlarges the button */
   filter: brightness(1.1); /* Darkens the button on hover */
 }
 
 /* Active state (clicked) */
 .btn-gnus:active {
+  color: white !important;
+
   transform: scale(0.98); /* Slightly shrinks the button when clicked */
   filter: brightness(0.98); /* Darkens the button even more on click */
 }
