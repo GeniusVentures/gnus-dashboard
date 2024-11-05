@@ -45,13 +45,25 @@ import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
 import { getPeer } from "@dcdn/graphsync";
 import { pipe } from "it-pipe";
-import { sgns as sgnsBroadcast } from "../../data/protobuf/broadcast";
-import { sgns as sgnsBcast } from "../../data/protobuf/bcast";
-import { Delta, Element } from "../../data/protobuf/delta";
+
 //import protobuf from "protobufjs";
 import { v4 as uuidv4 } from "uuid";
 import { CID } from "multiformats/cid";
 import { Buffer } from "buffer";
+//import { sgns as sgnsBroadcast } from "../../data/protobuf/broadcast";
+//import { sgns as sgnsBcast } from "../../data/protobuf/bcast";
+//import { Delta, Element } from "../../data/protobuf/delta";
+const {
+	BroadcastMessage
+} = require("data/protobuf/broadcast");
+const {
+	CRDTBroadcast,
+	Head
+} = require("data/protobuf/bcast");
+const {
+	Delta, 
+	Element
+} = require("data/protobuf/delta");
 const {
 	Message,
 	Message_Request,
@@ -59,6 +71,7 @@ const {
 	Message_Block,
 } = require("data/protobuf/message");
 const {
+	BlockID,
 	BlockHashData,
 	BlockHeaderData,
 	BlockPayloadData,
@@ -89,10 +102,10 @@ let node = null;
 let requestout = 0;
 const createNode = async () => {
 	try {
-		const { crdt: crdtBroadcast } = sgnsBroadcast;
-		const { crdt: crdtBcast } = sgnsBcast;
-		const { broadcasting } = crdtBroadcast;
-		const { pb: pbBcast } = crdtBcast;
+		// const { crdt: crdtBroadcast } = sgnsBroadcast;
+		// const { crdt: crdtBcast } = sgnsBcast;
+		// const { broadcasting } = crdtBroadcast;
+		// const { pb: pbBcast } = crdtBcast;
 
 		const blockstore = new MemoryBlockstore();
 		const datastore = new MemoryDatastore();
@@ -247,7 +260,7 @@ const createNode = async () => {
 		// });
 
 		//libp2p2.handle("/ipfs/graphsync/2.0.0",respondHandler)
-		const requestedCids: [] = [];
+		const requestedCids: string [] = [];
 
 		// Subscribe to query events
 
@@ -279,15 +292,19 @@ const createNode = async () => {
 			//console.log("Peerstore result: " + (await peerstoreres).addresses.at(0).multiaddr);
 			console.log("Source multiaddress:", extractedIPv4);
 			try {
-				const decodedTask = broadcasting.BroadcastMessage.decode(
-					message.detail.data,
-				);
+				const decodedTask = BroadcastMessage.fromBinary(message.detail.data);
+				
+				// const decodedTask = broadcasting.BroadcastMessage.decode(
+				// 	message.detail.data,
+				// );
 				//console.log("Decoded Task Object:", decodedTask);
 				//const buffer = decodedTask.data;
 				//const cidString = decodedTask.data.toString('utf-8');
 				//console.log("CID String:::: " + cidString);
 				try {
-					const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
+					const cids = CRDTBroadcast.fromBinary(decodedTask.data);
+					
+					//const cids = pbBcast.CRDTBroadcast.decode(decodedTask.data);
 					let requests: string[] = [];
 					for (const head of cids.heads) {
 						if (
@@ -636,10 +653,11 @@ function MakeGSMessage(requests) {
 	const binarymsg = Message.toBinary(message);
 
 	const buffer = Buffer.from(binarymsg);
+	const uint8ArrayBuffer = new Uint8Array(buffer);
 
 	const decodeTest = Message.fromBinary(binarymsg);
 
-	return encode.single(buffer);
+	return encode.single(uint8ArrayBuffer);
 }
 
 const processBlocks = async (cid, selector, providerId) => {
