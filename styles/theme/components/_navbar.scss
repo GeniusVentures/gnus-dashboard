@@ -8,8 +8,8 @@
     // font-size: 0rem;
   }
   .navbar-toggler {
-    border: 1px solid var(--#{$prefix}primary);
-    border-color: var(--#{$prefix}primary) !important;
+    border: 1px solid var(--#{$prefix}white);
+    border-color: var(--#{$prefix}white) !important;
     margin-left: 0.5rem;
     padding: 0.5rem;
     &:focus {
@@ -19,7 +19,7 @@
     .icon-bar {
       width: 20px;
       height: 2px;
-      background-color: var(--#{$prefix}primary) !important;
+      background-color: var(--#{$prefix}white) !important;
       display: block;
       -webkit-transition: all 0.2s;
       transition: all 0.2s;
@@ -28,7 +28,7 @@
     .top-bar {
       transform: rotate(45deg);
       transform-origin: 16% 190%;
-      background-color: var(--#{$prefix}primary) !important;
+      background-color: var(--#{$prefix}white) !important;
     }
     .middle-bar {
       opacity: 0;
@@ -36,7 +36,7 @@
     .bottom-bar {
       transform: rotate(-45deg);
       transform-origin: 10% -80%;
-      background-color: var(--#{$prefix}primary) !important;
+      background-color: var(--#{$prefix}white) !important;
     }
   }
   .navbar-collapse {
@@ -288,7 +288,7 @@
     }
   }
   .search-icon {
-    color: var(--#{$prefix}gray-400);
+    color: white !important;
   }
 }
 

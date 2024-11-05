@@ -47,3 +47,36 @@ a:hover .text-primary-hover {
 .cursor-pointer {
   cursor: pointer;
 }
+
+.gradient-text {
+  font-size: 3em;
+  font-weight: bold;
+  background: linear-gradient(90deg, #1daded 0%, #36edb5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  justify-self: center;
+  text-align: center;
+}
+
+.gradient-text-start {
+  font-weight: bold;
+  background: linear-gradient(45deg, #1daded 10%, #36edb5 45%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.montserrat {
+  font-family: "Montserrat";
+}
+
+h1,
+h2,
+button {
+  font-family: "Roboto" !important;
+}
+
+div {
+  height: fit-content !important;
+}

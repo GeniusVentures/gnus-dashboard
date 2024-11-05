@@ -90,16 +90,12 @@ const BlockchainInfo = () => {
     <Fragment>
       <h2
         className="display-7 text-white px-0"
-        style={{ fontFamily: "HKModularBold" }}
-      >
+        style={{ fontFamily: "HKModularBold" }}>
         Blockchain Information
       </h2>
       <Row className="justify-content-center px-0 gap-5 mb-5">
         <Col>
-          <Card
-            style={{ minWidth: "200px" }}
-            className="h-100 bg-gradient-gnus"
-          >
+          <Card style={{ minWidth: "200px" }} className="h-100">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Height</h4>
               <p className="mb-0 display-4">{blockHeight.toLocaleString()}</p>
@@ -107,7 +103,7 @@ const BlockchainInfo = () => {
           </Card>
         </Col>
         <Col>
-          <Card className="h-100 w-100 bg-gradient-gnus">
+          <Card className="h-100 w-100">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Transactions</h4>
               <p className="mb-0 display-4">{transactions.toLocaleString()}</p>
@@ -115,7 +111,7 @@ const BlockchainInfo = () => {
           </Card>
         </Col>
         <Col>
-          <Card className="h-100 bg-gradient-gnus">
+          <Card className="h-100">
             <Card.Body className="text-white">
               <h4 className="text-white fs-4">Tokens</h4>
               <p className="mb-0 display-4">

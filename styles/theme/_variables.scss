@@ -17,25 +17,25 @@ $black: #000 !default;
 
 $grays: () !default;
 $grays: map-merge(
-	(
-		"black": $black,
-		"100": $gray-100,
-		"200": $gray-200,
-		"300": $gray-300,
-		"400": $gray-400,
-		"500": $gray-500,
-		"600": $gray-600,
-		"700": $gray-700,
-		"800": $gray-800,
-		"900": $gray-900,
-		"1000": $gray-1000,
+  (
+    "black": $black,
+    "100": $gray-100,
+    "200": $gray-200,
+    "300": $gray-300,
+    "400": $gray-400,
+    "500": $gray-500,
+    "600": $gray-600,
+    "700": $gray-700,
+    "800": $gray-800,
+    "900": $gray-900,
+    "1000": $gray-1000,
 
-		"white": $white,
-	),
-	$grays
+    "white": $white,
+  ),
+  $grays
 );
 
-$primary: #2a2b31 !default;
+$primary: #36edb5 !default;
 $secondary: #36edb5 !default;
 $success: #19cb98 !default;
 $info: #29baf9 !default;
@@ -64,28 +64,28 @@ $dark-info: #51a0c2 !default; // NEW
 $white: $white !default;
 
 $theme-colors: (
-	"primary": $primary,
-	"secondary": $secondary,
-	"success": $success,
-	"info": $info,
-	"warning": $warning,
-	"danger": $danger,
-	"light": $light,
-	"dark": $dark,
-	"white": $white,
-	"light-primary": $light-primary,
-	"light-danger": $light-danger,
-	"light-info": $light-info,
-	"light-warning": $light-warning,
-	"light-secondary": $light-secondary,
-	"light-success": $light-success,
-	"light-dark": $light-dark,
-	"dark-primary": $dark-primary,
-	"dark-warning": $dark-warning,
-	"dark-info": $dark-info,
-	"dark-danger": $dark-danger,
-	"dark-success": $dark-success,
-	"dark-secondary": $dark-secondary,
+  "primary": $primary,
+  "secondary": $secondary,
+  "success": $success,
+  "info": $info,
+  "warning": $warning,
+  "danger": $danger,
+  "light": $light,
+  "dark": $dark,
+  "white": $white,
+  "light-primary": $light-primary,
+  "light-danger": $light-danger,
+  "light-info": $light-info,
+  "light-warning": $light-warning,
+  "light-secondary": $light-secondary,
+  "light-success": $light-success,
+  "light-dark": $light-dark,
+  "dark-primary": $dark-primary,
+  "dark-warning": $dark-warning,
+  "dark-info": $dark-info,
+  "dark-danger": $dark-danger,
+  "dark-success": $dark-success,
+  "dark-secondary": $dark-secondary,
 );
 
 // theme soft colors map
@@ -93,18 +93,18 @@ $soft-alpha: 0.3;
 
 $theme-soft-colors: () !default;
 $theme-soft-colors: map-merge(
-	(
-		"white-soft": rgba($white, $soft-alpha),
-		"primary-soft": rgba($primary, $soft-alpha),
-		"secondary-soft": rgba($secondary, $soft-alpha),
-		"success-soft": rgba($success, $soft-alpha),
-		"info-soft": rgba($info, $soft-alpha),
-		"warning-soft": rgba($warning, $soft-alpha),
-		"danger-soft": rgba($danger, $soft-alpha),
-		"light-soft": rgba($light, $soft-alpha),
-		"dark-soft": rgba($dark, $soft-alpha),
-	),
-	$theme-soft-colors
+  (
+    "white-soft": rgba($white, $soft-alpha),
+    "primary-soft": rgba($primary, $soft-alpha),
+    "secondary-soft": rgba($secondary, $soft-alpha),
+    "success-soft": rgba($success, $soft-alpha),
+    "info-soft": rgba($info, $soft-alpha),
+    "warning-soft": rgba($warning, $soft-alpha),
+    "danger-soft": rgba($danger, $soft-alpha),
+    "light-soft": rgba($light, $soft-alpha),
+    "dark-soft": rgba($dark, $soft-alpha),
+  ),
+  $theme-soft-colors
 );
 
 // The contrast ratio to reach against white, to determine if color changes from "light" to "dark". Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
@@ -167,12 +167,12 @@ $h6-font-size: 0.75rem !default;
 
 // scss-docs-start font-sizes
 $font-sizes: (
-	1: 3rem,
-	2: 2.5rem,
-	3: 1.25rem,
-	4: 1rem,
-	5: 0.875rem,
-	6: 0.75rem,
+  1: 3rem,
+  2: 2.5rem,
+  3: 1.25rem,
+  4: 1rem,
+  5: 0.875rem,
+  6: 0.75rem,
 ) !default;
 
 // scss-docs-start headings-variables
@@ -184,13 +184,13 @@ $headings-color: var(--#{$prefix}headings-color) !default;
 
 // scss-docs-start display-headings
 $display-font-sizes: (
-	1: 4.5rem,
-	2: 3.5rem,
-	3: 3rem,
-	4: 2.5rem,
-	5: 2rem,
-	6: 1.5rem,
-	7: 1.1rem,
+  1: 4.5rem,
+  2: 3.5rem,
+  3: 3rem,
+  4: 2.5rem,
+  5: 2rem,
+  6: 1.5rem,
+  7: 1.1rem,
 ) !default;
 
 $display-font-weight: 600 !default;
@@ -207,12 +207,12 @@ $breadcrumb-margin-bottom: 0rem;
 // scss-docs-start border-variables
 $border-width: 1px !default;
 $border-widths: (
-	1: 1px,
-	2: 2px,
-	3: 3px,
-	4: 4px,
-	5: 5px,
-	6: 6px,
+  1: 1px,
+  2: 2px,
+  3: 3px,
+  4: 4px,
+  5: 5px,
+  6: 6px,
 ) !default;
 
 // $border-color: $gray-200 !default;
@@ -245,7 +245,7 @@ $input-btn-padding-y-lg: 0.75rem !default;
 $input-btn-padding-x-lg: 1.25rem !default;
 $input-focus-bg: $white !default;
 $input-focus-border-color: $primary !default;
-$input-focus-box-shadow: var(--#{$prefix}input-focus-box-shadow);
+$input-focus-box-shadow: $primary !default;
 $input-group-addon-bg: $white !default;
 $input-font-size: $h5-font-size !default;
 $input-btn-padding-y-xs: 0.22rem !default;
@@ -253,8 +253,8 @@ $input-btn-padding-x-xs: 0.75rem !default;
 $input-btn-font-size-xs: 0.75rem !default;
 
 $form-text-color: var(--#{$prefix}form-text-color) !default;
-$form-select-color: $gray-1000 !default;
-$form-select-indicator-color: $gray-1000 !default;
+$form-select-color: $primary !default;
+$form-select-indicator-color: $primary !default;
 $form-label-margin-bottom: 0.5rem;
 $form-label-font-size: null;
 $form-label-font-style: null;
@@ -281,11 +281,11 @@ $badge-padding-x: 0.5rem !default;
 
 // scss-docs-start container-max-widths
 $container-max-widths: (
-	sm: 540px,
-	md: 720px,
-	lg: 960px,
-	xl: 1140px,
-	xxl: 1320px,
+  sm: 540px,
+  md: 720px,
+  lg: 960px,
+  xl: 1140px,
+  xxl: 1320px,
 ) !default;
 // scss-docs-end container-max-widths
 
@@ -301,54 +301,54 @@ $container-max-widths: (
 
 $spacer: 1rem !default;
 $spacers: (
-	0: 0,
-	// 0px
-	1: $spacer * 0.25,
-	// 4px
-	2: $spacer * 0.5,
-	// 8px
-	3: $spacer * 1,
-	// 16px
-	4: $spacer * 1.5,
-	// 24px
-	5: $spacer * 2,
-	// 32px
-	6: $spacer * 2.5,
-	// 40px
-	7: $spacer * 3,
-	// 48px
-	8: $spacer * 3.5,
-	// 56px
-	9: $spacer * 4,
-	// 64px
-	10: $spacer * 4.5,
-	// 72px
-	11: $spacer * 5,
-	// 80px
-	12: $spacer * 5.5,
-	// 88px
-	13: $spacer * 6,
-	// 96px
-	14: $spacer * 6.5,
-	// 104px
-	15: $spacer * 7,
-	// 112px
-	16: $spacer * 7.5,
-	// 120px
-	17: $spacer * 8,
-	// 128px
-	18: $spacer * 8.5,
-	// 136px
-	19: $spacer * 9,
-	// 144px
-	20: $spacer * 9.5,
-	// 152px
-	21: $spacer * 10,
-	// 160px
-	22: $spacer * 12,
-	// 192px
-	23: $spacer * 14,
-	// 224px
+  0: 0,
+  // 0px
+  1: $spacer * 0.25,
+  // 4px
+  2: $spacer * 0.5,
+  // 8px
+  3: $spacer * 1,
+  // 16px
+  4: $spacer * 1.5,
+  // 24px
+  5: $spacer * 2,
+  // 32px
+  6: $spacer * 2.5,
+  // 40px
+  7: $spacer * 3,
+  // 48px
+  8: $spacer * 3.5,
+  // 56px
+  9: $spacer * 4,
+  // 64px
+  10: $spacer * 4.5,
+  // 72px
+  11: $spacer * 5,
+  // 80px
+  12: $spacer * 5.5,
+  // 88px
+  13: $spacer * 6,
+  // 96px
+  14: $spacer * 6.5,
+  // 104px
+  15: $spacer * 7,
+  // 112px
+  16: $spacer * 7.5,
+  // 120px
+  17: $spacer * 8,
+  // 128px
+  18: $spacer * 8.5,
+  // 136px
+  19: $spacer * 9,
+  // 144px
+  20: $spacer * 9.5,
+  // 152px
+  21: $spacer * 10,
+  // 160px
+  22: $spacer * 12,
+  // 192px
+  23: $spacer * 14,
+  // 224px
 ) !default;
 
 $enable-negative-margins: true !default;
@@ -380,20 +380,28 @@ $list-group-action-active-bg: var(--#{$prefix}gray-100);
 // Box Shadow
 $box-shadow-sm: 0px 1px 3px rgba(17, 24, 39, 0.09) !default;
 $box-shadow: 0px 3px 6px rgba(17, 24, 39, 0.1) !default;
-$box-shadow-lg: 0 6px 8px 0 rgba(17, 24, 39, 0.08),
-	0 0 0 1px rgba(17, 24, 39, 0.04) !default;
+$box-shadow-lg:
+  0 6px 8px 0 rgba(17, 24, 39, 0.08),
+  0 0 0 1px rgba(17, 24, 39, 0.04) !default;
 
 // Smooth Box Shadow
-$box-shadow-smooth-sm: 0px 2px 4px rgba(0, 0, 20, 0.08),
-	0px 1px 2px rgba(0, 0, 20, 0.08) !default;
-$box-shadow-smooth-md: 0 1px 2px rgba(21, 30, 40, 0.07),
-	0 2px 4px rgba(21, 30, 40, 0.07), 0 4px 8px rgba(21, 30, 40, 0.07),
-	0 8px 16px rgba(21, 30, 40, 0.07), 0 16px 32px rgba(21, 30, 40, 0.07),
-	0 32px 64px rgba(21, 30, 40, 0.07) !default;
-$box-shadow-smooth-lg: 0 1px 1px rgba(21, 30, 40, 0.11),
-	0 2px 2px rgba(21, 30, 40, 0.11), 0 4px 4px rgba(21, 30, 40, 0.11),
-	0 8px 8px rgba(21, 30, 40, 0.11), 0 16px 16px rgba(21, 30, 40, 0.11),
-	0 32px 32px rgba(21, 30, 40, 0.11) !default;
+$box-shadow-smooth-sm:
+  0px 2px 4px rgba(0, 0, 20, 0.08),
+  0px 1px 2px rgba(0, 0, 20, 0.08) !default;
+$box-shadow-smooth-md:
+  0 1px 2px rgba(21, 30, 40, 0.07),
+  0 2px 4px rgba(21, 30, 40, 0.07),
+  0 4px 8px rgba(21, 30, 40, 0.07),
+  0 8px 16px rgba(21, 30, 40, 0.07),
+  0 16px 32px rgba(21, 30, 40, 0.07),
+  0 32px 64px rgba(21, 30, 40, 0.07) !default;
+$box-shadow-smooth-lg:
+  0 1px 1px rgba(21, 30, 40, 0.11),
+  0 2px 2px rgba(21, 30, 40, 0.11),
+  0 4px 4px rgba(21, 30, 40, 0.11),
+  0 8px 8px rgba(21, 30, 40, 0.11),
+  0 16px 16px rgba(21, 30, 40, 0.11),
+  0 32px 32px rgba(21, 30, 40, 0.11) !default;
 
 // Hr
 
@@ -460,8 +468,10 @@ $img-4by3-sm: 4rem;
 $img-4by3-xs: 2.75rem;
 
 // Social buttons
-$social-btn-transition: border-color 0.25s ease-in-out,
-	background-color 0.25s ease-in-out, color 0.25s ease-in-out !default;
+$social-btn-transition:
+  border-color 0.25s ease-in-out,
+  background-color 0.25s ease-in-out,
+  color 0.25s ease-in-out !default;
 $social-btn-size: 2.25rem !default;
 $social-btn-size-sm: 1.75rem !default;
 $social-btn-size-lg: 2.75rem !default;
@@ -535,7 +545,7 @@ $accordion-bg: $card-bg !default;
 $accordion-border-color: var(--#{$prefix}border-color) !default;
 $accordion-button-active-bg: var(--#{$prefix}border-color);
 $accordion-button-active-color: var(
-	--#{$prefix}accordion-button-active-color
+  --#{$prefix}accordion-button-active-color
 ) !default;
 
 // tooltip
@@ -615,9 +625,9 @@ $light-border-subtle-dark: $black;
 $dark-border-subtle-dark: $black;
 
 $grid-breakpoints: (
-	xs: 0,
-	sm: 650px,
-	md: 900px,
-	lg: 1150px,
-	xl: 1426px,
+  xs: 0,
+  sm: 650px,
+  md: 900px,
+  lg: 1150px,
+  xl: 1426px,
 );

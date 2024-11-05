@@ -2,6 +2,7 @@ import { Fragment, useState, useEffect, useRef } from "react";
 import { Form, Row, Card, Button, Modal, Image } from "react-bootstrap";
 import { Transition } from "react-transition-group";
 import { ethers } from "ethers";
+import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
 const OrderForm = () => {
   const [radios, setRadios] = useState(null);
@@ -202,14 +203,12 @@ const OrderForm = () => {
 
   return (
     <Fragment>
-      <div
-        style={{ minHeight: "70vh", minWidth: "90vw" }}
-        className="d-flex justify-content-center"
-      >
+      <StaticVideoBG video="https://orange-generous-tern-256.mypinata.cloud/ipfs/QmaqTgr2wVEC92ByksgtcKobKYYetJLENMJmBUPzG7RBFA" />
+
+      <div className="d-flex justify-content-center">
         <Card
           style={{ width: "1000px", height: height }}
-          className="bg-gradient-gnus mt-8 shadow-lg"
-        >
+          className="mt-8 shadow-lg">
           <Card.Body className="text-white">
             <Row>
               {showForm && (
@@ -245,15 +244,13 @@ const OrderForm = () => {
                         <Transition
                           nodeRef={nodeRef}
                           in={showUpload}
-                          timeout={500}
-                        >
+                          timeout={500}>
                           {(state) => (
                             <div
                               style={{
                                 ...defaultStyle,
                                 ...transitionStyles[state],
-                              }}
-                            >
+                              }}>
                               <Form.Group id="file" className="mb-3">
                                 <div className="mx-md-15 mx-lg-20">
                                   <Form.Label className="text-white">
@@ -271,8 +268,7 @@ const OrderForm = () => {
                                   id="button"
                                   type="submit"
                                   style={{ maxWidth: "350px" }}
-                                  className="btn btn-primary fs-3"
-                                >
+                                  className="btn btn-primary fs-3">
                                   Submit
                                 </Button>
                               </Row>
@@ -284,15 +280,13 @@ const OrderForm = () => {
                         <Transition
                           nodeRef={nodeRef}
                           in={showManual}
-                          timeout={500}
-                        >
+                          timeout={500}>
                           {(state) => (
                             <div
                               style={{
                                 ...defaultStyle,
                                 ...transitionStyles[state],
-                              }}
-                            >
+                              }}>
                               <Form.Group id="name">
                                 <div className="mx-md-15 mx-lg-20 mb-3">
                                   <Form.Label className="text-white">
@@ -350,8 +344,7 @@ const OrderForm = () => {
                                   id="button"
                                   type="submit"
                                   style={{ maxWidth: "350px" }}
-                                  className="btn btn-primary fs-3"
-                                >
+                                  className="btn btn-primary fs-3">
                                   Submit
                                 </Button>
                               </Row>
@@ -371,8 +364,7 @@ const OrderForm = () => {
                         style={{
                           ...defaultStyle,
                           ...transitionStyles[state],
-                        }}
-                      >
+                        }}>
                         <div className="d-flex justify-content-center mt-16">
                           <h3 className="text-center text-white">
                             Your request has been submitted and will begin

@@ -2,6 +2,46 @@
 // Extended From Bootstrap
 //
 
+.social-links {
+  color: white !important; /* Default link color */
+  font-size: 1.1rem;
+  padding: 0;
+  transition: color 0.15s ease-in-out;
+
+  &:hover {
+    color: var(
+      --#{$prefix}secondary
+    ) !important; /* Color when hovered or focused */
+  }
+
+  &:active {
+    color: var(--#{$prefix}secondary) !important; /* Color when clicked */
+  }
+}
+
+.nav-link {
+  color: white !important; /* Default link color */
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0;
+  transition: color 0.15s ease-in-out;
+
+  &:hover {
+    color: var(
+      --#{$prefix}secondary
+    ) !important; /* Color when hovered or focused */
+  }
+
+  &:active {
+    color: var(--#{$prefix}secondary) !important; /* Color when clicked */
+  }
+}
+
+/* Reset color back to white after hover, focus, or active states */
+.nav-link:not(:hover) {
+  color: white !important; /* Revert to white when not hovered, focused, or active */
+}
+
 // nav x padding
 
 .nav-x-0 {

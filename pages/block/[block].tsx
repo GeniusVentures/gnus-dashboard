@@ -3,17 +3,29 @@ import { useRouter } from "next/router";
 import { Card, Row } from "react-bootstrap";
 import BlockTransactions from "sub-components/tables/BlockTransactions";
 import lastUpdate from "../../functions/time/lastUpdate";
+import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
-const Blocks = () => {
+const Blocks: React.FC = () => {
   const [updated, setUpdated] = useState(null);
   const router = useRouter();
+  const [width, setWidth] = useState<number>(0);
   const { block } = router.query;
   const [blockInfo, setBlockInfo] = useState({
     proposer: "test",
     time: "Test",
     hash: "0xavs615gv1a6d5fv1a65v1afd57gsd6v54as65v1",
     transactions: [],
+    gas: "",
   });
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     setUpdated(lastUpdate());
@@ -21,16 +33,28 @@ const Blocks = () => {
 
   return (
     <Fragment>
-      <Row className="justify-content-center mx-3 mx-lg-15 mb-10">
-        <h1
-          className="display-4 text-white mt-lg-5 mb-0"
-          style={{ fontFamily: "HKModularBold" }}
-        >
-          Details for Block #{block}
-        </h1>
-        <p className="text-white pb-2">Last updated: {updated}</p>
+      <StaticVideoBG video="https://orange-generous-tern-256.mypinata.cloud/ipfs/QmaqTgr2wVEC92ByksgtcKobKYYetJLENMJmBUPzG7RBFA" />
+      <Row className="justify-content-center mx-3 mx-lg-15 pt-20 pb-5">
+        {width >= 1200 && (
+          <div>
+            <h1 className="display-4 text-white">Details for Block #{block}</h1>
+            <p className="text-white pb-2">Last updated: {updated}</p>
+          </div>
+        )}
+        {width >= 900 && width < 1200 && (
+          <div>
+            <h1 className="display-4 text-white">Details for Block #{block}</h1>
+            <p className="text-white pb-2">Last updated: {updated}</p>
+          </div>
+        )}
+        {width < 900 && (
+          <div>
+            <h1 className="display-5 text-white">Details for Block #{block}</h1>
+            <p className="text-white fs-5 pb-2">Last updated: {updated}</p>
+          </div>
+        )}
 
-        <Card className="p-5 px-lg-10 bg-gradient-gnus text-white">
+        <Card className="p-5 px-lg-10 text-white">
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
               <p className=" mb-0">Height</p>
@@ -75,7 +99,7 @@ const Blocks = () => {
           </div>
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
-              <p className=" mb-0">Gas wanted / used</p>
+              <p className=" mb-0">Gas Used</p>
             </div>
             <div className="fs-3">
               <p className="text-white mb-0">{blockInfo?.gas || 0}</p>
@@ -83,8 +107,8 @@ const Blocks = () => {
           </div>
         </Card>
       </Row>
-      <Row className="justify-content-center mx-3 mx-lg-15">
-        <Card className="p-5 px-lg-10 bg-gradient-gnus text-white">
+      <Row className="justify-content-center mx-3 mx-lg-15 pb-20">
+        <Card className="p-5 px-lg-10 text-white">
           <h2 className="text-white">Transactions</h2>
           <BlockTransactions transData={blockInfo?.transactions} />
         </Card>
