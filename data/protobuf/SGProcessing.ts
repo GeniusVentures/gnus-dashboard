@@ -1,1424 +1,1279 @@
-/* eslint-disable import/export */
-/* eslint-disable complexity */
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unnecessary-boolean-literal-compare */
-/* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { type Codec, CodeError, decodeMessage, type DecodeOptions, encodeMessage, enumeration, message } from 'protons-runtime'
-import type { Uint8ArrayList } from 'uint8arraylist'
-
-export interface SGProcessing {}
-
-export namespace SGProcessing {
-  export interface Task {
-    ipfsBlockId: string
-    blockLen: number
-    blockStride: number
-    blockLineStride: number
-    randomSeed: number
-    resultsChannel: string
-  }
-
-  export namespace Task {
-    let _codec: Codec<Task>
-
-    export const codec = (): Codec<Task> => {
-      if (_codec == null) {
-        _codec = message<Task>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.ipfsBlockId != null && obj.ipfsBlockId !== '')) {
-            w.uint32(10)
-            w.string(obj.ipfsBlockId)
-          }
-
-          if ((obj.blockLen != null && obj.blockLen !== 0)) {
-            w.uint32(16)
-            w.uint32(obj.blockLen)
-          }
-
-          if ((obj.blockStride != null && obj.blockStride !== 0)) {
-            w.uint32(24)
-            w.uint32(obj.blockStride)
-          }
-
-          if ((obj.blockLineStride != null && obj.blockLineStride !== 0)) {
-            w.uint32(32)
-            w.uint32(obj.blockLineStride)
-          }
-
-          if ((obj.randomSeed != null && obj.randomSeed !== 0)) {
-            w.uint32(45)
-            w.float(obj.randomSeed)
-          }
-
-          if ((obj.resultsChannel != null && obj.resultsChannel !== '')) {
-            w.uint32(50)
-            w.string(obj.resultsChannel)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            ipfsBlockId: '',
-            blockLen: 0,
-            blockStride: 0,
-            blockLineStride: 0,
-            randomSeed: 0,
-            resultsChannel: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.ipfsBlockId = reader.string()
-                break
-              }
-              case 2: {
-                obj.blockLen = reader.uint32()
-                break
-              }
-              case 3: {
-                obj.blockStride = reader.uint32()
-                break
-              }
-              case 4: {
-                obj.blockLineStride = reader.uint32()
-                break
-              }
-              case 5: {
-                obj.randomSeed = reader.float()
-                break
-              }
-              case 6: {
-                obj.resultsChannel = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<Task>): Uint8Array => {
-      return encodeMessage(obj, Task.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<Task>): Task => {
-      return decodeMessage(buf, Task.codec(), opts)
-    }
-  }
-
-  export interface TaskLock {
-    taskId: string
-    lockTimestamp: bigint
-  }
-
-  export namespace TaskLock {
-    let _codec: Codec<TaskLock>
-
-    export const codec = (): Codec<TaskLock> => {
-      if (_codec == null) {
-        _codec = message<TaskLock>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.taskId != null && obj.taskId !== '')) {
-            w.uint32(10)
-            w.string(obj.taskId)
-          }
-
-          if ((obj.lockTimestamp != null && obj.lockTimestamp !== 0n)) {
-            w.uint32(16)
-            w.int64(obj.lockTimestamp)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            taskId: '',
-            lockTimestamp: 0n
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.taskId = reader.string()
-                break
-              }
-              case 2: {
-                obj.lockTimestamp = reader.int64()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<TaskLock>): Uint8Array => {
-      return encodeMessage(obj, TaskLock.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<TaskLock>): TaskLock => {
-      return decodeMessage(buf, TaskLock.codec(), opts)
-    }
-  }
-
-  export interface SubTask {
-    ipfsblock: string
-    chunksToProcess: SGProcessing.ProcessingChunk[]
-    datalen: number
-    subtaskid: string
-  }
-
-  export namespace SubTask {
-    let _codec: Codec<SubTask>
-
-    export const codec = (): Codec<SubTask> => {
-      if (_codec == null) {
-        _codec = message<SubTask>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.ipfsblock != null && obj.ipfsblock !== '')) {
-            w.uint32(10)
-            w.string(obj.ipfsblock)
-          }
-
-          if (obj.chunksToProcess != null) {
-            for (const value of obj.chunksToProcess) {
-              w.uint32(18)
-              SGProcessing.ProcessingChunk.codec().encode(value, w)
-            }
-          }
-
-          if ((obj.datalen != null && obj.datalen !== 0)) {
-            w.uint32(24)
-            w.uint32(obj.datalen)
-          }
-
-          if ((obj.subtaskid != null && obj.subtaskid !== '')) {
-            w.uint32(34)
-            w.string(obj.subtaskid)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            ipfsblock: '',
-            chunksToProcess: [],
-            datalen: 0,
-            subtaskid: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.ipfsblock = reader.string()
-                break
-              }
-              case 2: {
-                if (opts.limits?.chunksToProcess != null && obj.chunksToProcess.length === opts.limits.chunksToProcess) {
-                  throw new CodeError('decode error - map field "chunksToProcess" had too many elements', 'ERR_MAX_LENGTH')
-                }
-
-                obj.chunksToProcess.push(SGProcessing.ProcessingChunk.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.chunksToProcess$
-                }))
-                break
-              }
-              case 3: {
-                obj.datalen = reader.uint32()
-                break
-              }
-              case 4: {
-                obj.subtaskid = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTask>): Uint8Array => {
-      return encodeMessage(obj, SubTask.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTask>): SubTask => {
-      return decodeMessage(buf, SubTask.codec(), opts)
-    }
-  }
-
-  export interface ProcessingChunk {
-    chunkid: string
-    offset: number
-    subchunkWidth: number
-    subchunkHeight: number
-    stride: number
-    lineStride: number
-    nSubchunks: number
-  }
-
-  export namespace ProcessingChunk {
-    let _codec: Codec<ProcessingChunk>
-
-    export const codec = (): Codec<ProcessingChunk> => {
-      if (_codec == null) {
-        _codec = message<ProcessingChunk>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.chunkid != null && obj.chunkid !== '')) {
-            w.uint32(10)
-            w.string(obj.chunkid)
-          }
-
-          if ((obj.offset != null && obj.offset !== 0)) {
-            w.uint32(16)
-            w.uint32(obj.offset)
-          }
-
-          if ((obj.subchunkWidth != null && obj.subchunkWidth !== 0)) {
-            w.uint32(24)
-            w.uint32(obj.subchunkWidth)
-          }
-
-          if ((obj.subchunkHeight != null && obj.subchunkHeight !== 0)) {
-            w.uint32(32)
-            w.uint32(obj.subchunkHeight)
-          }
-
-          if ((obj.stride != null && obj.stride !== 0)) {
-            w.uint32(40)
-            w.uint32(obj.stride)
-          }
-
-          if ((obj.lineStride != null && obj.lineStride !== 0)) {
-            w.uint32(48)
-            w.uint32(obj.lineStride)
-          }
-
-          if ((obj.nSubchunks != null && obj.nSubchunks !== 0)) {
-            w.uint32(56)
-            w.uint32(obj.nSubchunks)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            chunkid: '',
-            offset: 0,
-            subchunkWidth: 0,
-            subchunkHeight: 0,
-            stride: 0,
-            lineStride: 0,
-            nSubchunks: 0
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.chunkid = reader.string()
-                break
-              }
-              case 2: {
-                obj.offset = reader.uint32()
-                break
-              }
-              case 3: {
-                obj.subchunkWidth = reader.uint32()
-                break
-              }
-              case 4: {
-                obj.subchunkHeight = reader.uint32()
-                break
-              }
-              case 5: {
-                obj.stride = reader.uint32()
-                break
-              }
-              case 6: {
-                obj.lineStride = reader.uint32()
-                break
-              }
-              case 7: {
-                obj.nSubchunks = reader.uint32()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingChunk>): Uint8Array => {
-      return encodeMessage(obj, ProcessingChunk.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingChunk>): ProcessingChunk => {
-      return decodeMessage(buf, ProcessingChunk.codec(), opts)
-    }
-  }
-
-  export interface ProcessingQueueItem {
-    lockTimestamp: bigint
-    lockNodeId: string
-  }
-
-  export namespace ProcessingQueueItem {
-    let _codec: Codec<ProcessingQueueItem>
-
-    export const codec = (): Codec<ProcessingQueueItem> => {
-      if (_codec == null) {
-        _codec = message<ProcessingQueueItem>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.lockTimestamp != null && obj.lockTimestamp !== 0n)) {
-            w.uint32(8)
-            w.int64(obj.lockTimestamp)
-          }
-
-          if ((obj.lockNodeId != null && obj.lockNodeId !== '')) {
-            w.uint32(18)
-            w.string(obj.lockNodeId)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            lockTimestamp: 0n,
-            lockNodeId: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.lockTimestamp = reader.int64()
-                break
-              }
-              case 2: {
-                obj.lockNodeId = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingQueueItem>): Uint8Array => {
-      return encodeMessage(obj, ProcessingQueueItem.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingQueueItem>): ProcessingQueueItem => {
-      return decodeMessage(buf, ProcessingQueueItem.codec(), opts)
-    }
-  }
-
-  export interface ProcessingQueue {
-    items: SGProcessing.ProcessingQueueItem[]
-    lastUpdateTimestamp: bigint
-    ownerNodeId: string
-  }
-
-  export namespace ProcessingQueue {
-    let _codec: Codec<ProcessingQueue>
-
-    export const codec = (): Codec<ProcessingQueue> => {
-      if (_codec == null) {
-        _codec = message<ProcessingQueue>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.items != null) {
-            for (const value of obj.items) {
-              w.uint32(10)
-              SGProcessing.ProcessingQueueItem.codec().encode(value, w)
-            }
-          }
-
-          if ((obj.lastUpdateTimestamp != null && obj.lastUpdateTimestamp !== 0n)) {
-            w.uint32(16)
-            w.int64(obj.lastUpdateTimestamp)
-          }
-
-          if ((obj.ownerNodeId != null && obj.ownerNodeId !== '')) {
-            w.uint32(26)
-            w.string(obj.ownerNodeId)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            items: [],
-            lastUpdateTimestamp: 0n,
-            ownerNodeId: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                if (opts.limits?.items != null && obj.items.length === opts.limits.items) {
-                  throw new CodeError('decode error - map field "items" had too many elements', 'ERR_MAX_LENGTH')
-                }
-
-                obj.items.push(SGProcessing.ProcessingQueueItem.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.items$
-                }))
-                break
-              }
-              case 2: {
-                obj.lastUpdateTimestamp = reader.int64()
-                break
-              }
-              case 3: {
-                obj.ownerNodeId = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingQueue>): Uint8Array => {
-      return encodeMessage(obj, ProcessingQueue.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingQueue>): ProcessingQueue => {
-      return decodeMessage(buf, ProcessingQueue.codec(), opts)
-    }
-  }
-
-  export interface SubTaskCollection {
-    items: SGProcessing.SubTask[]
-  }
-
-  export namespace SubTaskCollection {
-    let _codec: Codec<SubTaskCollection>
-
-    export const codec = (): Codec<SubTaskCollection> => {
-      if (_codec == null) {
-        _codec = message<SubTaskCollection>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.items != null) {
-            for (const value of obj.items) {
-              w.uint32(10)
-              SGProcessing.SubTask.codec().encode(value, w)
-            }
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            items: []
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                if (opts.limits?.items != null && obj.items.length === opts.limits.items) {
-                  throw new CodeError('decode error - map field "items" had too many elements', 'ERR_MAX_LENGTH')
-                }
-
-                obj.items.push(SGProcessing.SubTask.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.items$
-                }))
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTaskCollection>): Uint8Array => {
-      return encodeMessage(obj, SubTaskCollection.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTaskCollection>): SubTaskCollection => {
-      return decodeMessage(buf, SubTaskCollection.codec(), opts)
-    }
-  }
-
-  export interface SubTaskQueue {
-    processingQueue?: SGProcessing.ProcessingQueue
-    subtasks?: SGProcessing.SubTaskCollection
-  }
-
-  export namespace SubTaskQueue {
-    let _codec: Codec<SubTaskQueue>
-
-    export const codec = (): Codec<SubTaskQueue> => {
-      if (_codec == null) {
-        _codec = message<SubTaskQueue>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.processingQueue != null) {
-            w.uint32(10)
-            SGProcessing.ProcessingQueue.codec().encode(obj.processingQueue, w)
-          }
-
-          if (obj.subtasks != null) {
-            w.uint32(18)
-            SGProcessing.SubTaskCollection.codec().encode(obj.subtasks, w)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.processingQueue = SGProcessing.ProcessingQueue.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.processingQueue
-                })
-                break
-              }
-              case 2: {
-                obj.subtasks = SGProcessing.SubTaskCollection.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.subtasks
-                })
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTaskQueue>): Uint8Array => {
-      return encodeMessage(obj, SubTaskQueue.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTaskQueue>): SubTaskQueue => {
-      return decodeMessage(buf, SubTaskQueue.codec(), opts)
-    }
-  }
-
-  export interface SubTaskQueueRequest {
-    nodeId: string
-  }
-
-  export namespace SubTaskQueueRequest {
-    let _codec: Codec<SubTaskQueueRequest>
-
-    export const codec = (): Codec<SubTaskQueueRequest> => {
-      if (_codec == null) {
-        _codec = message<SubTaskQueueRequest>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.nodeId != null && obj.nodeId !== '')) {
-            w.uint32(10)
-            w.string(obj.nodeId)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            nodeId: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.nodeId = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTaskQueueRequest>): Uint8Array => {
-      return encodeMessage(obj, SubTaskQueueRequest.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTaskQueueRequest>): SubTaskQueueRequest => {
-      return decodeMessage(buf, SubTaskQueueRequest.codec(), opts)
-    }
-  }
-
-  export interface SubTaskResult {
-    resultHash: number
-    chunkHashes: number[]
-    ipfsResultsDataId: string
-    subtaskid: string
-  }
-
-  export namespace SubTaskResult {
-    let _codec: Codec<SubTaskResult>
-
-    export const codec = (): Codec<SubTaskResult> => {
-      if (_codec == null) {
-        _codec = message<SubTaskResult>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.resultHash != null && obj.resultHash !== 0)) {
-            w.uint32(8)
-            w.uint32(obj.resultHash)
-          }
-
-          if (obj.chunkHashes != null) {
-            for (const value of obj.chunkHashes) {
-              w.uint32(16)
-              w.uint32(value)
-            }
-          }
-
-          if ((obj.ipfsResultsDataId != null && obj.ipfsResultsDataId !== '')) {
-            w.uint32(26)
-            w.string(obj.ipfsResultsDataId)
-          }
-
-          if ((obj.subtaskid != null && obj.subtaskid !== '')) {
-            w.uint32(34)
-            w.string(obj.subtaskid)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            resultHash: 0,
-            chunkHashes: [],
-            ipfsResultsDataId: '',
-            subtaskid: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.resultHash = reader.uint32()
-                break
-              }
-              case 2: {
-                if (opts.limits?.chunkHashes != null && obj.chunkHashes.length === opts.limits.chunkHashes) {
-                  throw new CodeError('decode error - map field "chunkHashes" had too many elements', 'ERR_MAX_LENGTH')
-                }
-
-                obj.chunkHashes.push(reader.uint32())
-                break
-              }
-              case 3: {
-                obj.ipfsResultsDataId = reader.string()
-                break
-              }
-              case 4: {
-                obj.subtaskid = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTaskResult>): Uint8Array => {
-      return encodeMessage(obj, SubTaskResult.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTaskResult>): SubTaskResult => {
-      return decodeMessage(buf, SubTaskResult.codec(), opts)
-    }
-  }
-
-  export interface SubTaskState {
-    state: SGProcessing.SubTaskState.Type
-    timestamp: bigint
-  }
-
-  export namespace SubTaskState {
-    export enum Type {
-      NONE = 'NONE',
-      ENQUEUED = 'ENQUEUED',
-      PROCESSING = 'PROCESSING',
-      PROCESSED = 'PROCESSED',
-      COMPLETE = 'COMPLETE'
-    }
-
-    enum __TypeValues {
-      NONE = 0,
-      ENQUEUED = 1,
-      PROCESSING = 2,
-      PROCESSED = 3,
-      COMPLETE = 4
-    }
-
-    export namespace Type {
-      export const codec = (): Codec<Type> => {
-        return enumeration<Type>(__TypeValues)
-      }
-    }
-
-    let _codec: Codec<SubTaskState>
-
-    export const codec = (): Codec<SubTaskState> => {
-      if (_codec == null) {
-        _codec = message<SubTaskState>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.state != null && __TypeValues[obj.state] !== 0) {
-            w.uint32(8)
-            SGProcessing.SubTaskState.Type.codec().encode(obj.state, w)
-          }
-
-          if ((obj.timestamp != null && obj.timestamp !== 0n)) {
-            w.uint32(16)
-            w.int64(obj.timestamp)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            state: Type.NONE,
-            timestamp: 0n
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.state = SGProcessing.SubTaskState.Type.codec().decode(reader)
-                break
-              }
-              case 2: {
-                obj.timestamp = reader.int64()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<SubTaskState>): Uint8Array => {
-      return encodeMessage(obj, SubTaskState.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SubTaskState>): SubTaskState => {
-      return decodeMessage(buf, SubTaskState.codec(), opts)
-    }
-  }
-
-  export interface TaskResult {
-    subtaskResults: SGProcessing.SubTaskResult[]
-  }
-
-  export namespace TaskResult {
-    let _codec: Codec<TaskResult>
-
-    export const codec = (): Codec<TaskResult> => {
-      if (_codec == null) {
-        _codec = message<TaskResult>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.subtaskResults != null) {
-            for (const value of obj.subtaskResults) {
-              w.uint32(10)
-              SGProcessing.SubTaskResult.codec().encode(value, w)
-            }
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            subtaskResults: []
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                if (opts.limits?.subtaskResults != null && obj.subtaskResults.length === opts.limits.subtaskResults) {
-                  throw new CodeError('decode error - map field "subtaskResults" had too many elements', 'ERR_MAX_LENGTH')
-                }
-
-                obj.subtaskResults.push(SGProcessing.SubTaskResult.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.subtaskResults$
-                }))
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<TaskResult>): Uint8Array => {
-      return encodeMessage(obj, TaskResult.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<TaskResult>): TaskResult => {
-      return decodeMessage(buf, TaskResult.codec(), opts)
-    }
-  }
-
-  export interface ProcessingChannelRequest {
-    environment: string
-  }
-
-  export namespace ProcessingChannelRequest {
-    let _codec: Codec<ProcessingChannelRequest>
-
-    export const codec = (): Codec<ProcessingChannelRequest> => {
-      if (_codec == null) {
-        _codec = message<ProcessingChannelRequest>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.environment != null && obj.environment !== '')) {
-            w.uint32(10)
-            w.string(obj.environment)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            environment: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.environment = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingChannelRequest>): Uint8Array => {
-      return encodeMessage(obj, ProcessingChannelRequest.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingChannelRequest>): ProcessingChannelRequest => {
-      return decodeMessage(buf, ProcessingChannelRequest.codec(), opts)
-    }
-  }
-
-  export interface ProcessingChannelResponse {
-    channelId: string
-  }
-
-  export namespace ProcessingChannelResponse {
-    let _codec: Codec<ProcessingChannelResponse>
-
-    export const codec = (): Codec<ProcessingChannelResponse> => {
-      if (_codec == null) {
-        _codec = message<ProcessingChannelResponse>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.channelId != null && obj.channelId !== '')) {
-            w.uint32(10)
-            w.string(obj.channelId)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            channelId: ''
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.channelId = reader.string()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingChannelResponse>): Uint8Array => {
-      return encodeMessage(obj, ProcessingChannelResponse.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingChannelResponse>): ProcessingChannelResponse => {
-      return decodeMessage(buf, ProcessingChannelResponse.codec(), opts)
-    }
-  }
-
-  export interface GridChannelMessage {
-    processingChannelRequest?: SGProcessing.ProcessingChannelRequest
-    processingChannelResponse?: SGProcessing.ProcessingChannelResponse
-  }
-
-  export namespace GridChannelMessage {
-    let _codec: Codec<GridChannelMessage>
-
-    export const codec = (): Codec<GridChannelMessage> => {
-      if (_codec == null) {
-        _codec = message<GridChannelMessage>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.processingChannelRequest != null) {
-            w.uint32(10)
-            SGProcessing.ProcessingChannelRequest.codec().encode(obj.processingChannelRequest, w)
-          }
-
-          if (obj.processingChannelResponse != null) {
-            w.uint32(18)
-            SGProcessing.ProcessingChannelResponse.codec().encode(obj.processingChannelResponse, w)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.processingChannelRequest = SGProcessing.ProcessingChannelRequest.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.processingChannelRequest
-                })
-                break
-              }
-              case 2: {
-                obj.processingChannelResponse = SGProcessing.ProcessingChannelResponse.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.processingChannelResponse
-                })
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<GridChannelMessage>): Uint8Array => {
-      return encodeMessage(obj, GridChannelMessage.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<GridChannelMessage>): GridChannelMessage => {
-      return decodeMessage(buf, GridChannelMessage.codec(), opts)
-    }
-  }
-
-  export interface ProcessingNode {
-    nodeId: string
-    timestamp: bigint
-  }
-
-  export namespace ProcessingNode {
-    let _codec: Codec<ProcessingNode>
-
-    export const codec = (): Codec<ProcessingNode> => {
-      if (_codec == null) {
-        _codec = message<ProcessingNode>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if ((obj.nodeId != null && obj.nodeId !== '')) {
-            w.uint32(10)
-            w.string(obj.nodeId)
-          }
-
-          if ((obj.timestamp != null && obj.timestamp !== 0n)) {
-            w.uint32(16)
-            w.uint64(obj.timestamp)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {
-            nodeId: '',
-            timestamp: 0n
-          }
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.nodeId = reader.string()
-                break
-              }
-              case 2: {
-                obj.timestamp = reader.uint64()
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingNode>): Uint8Array => {
-      return encodeMessage(obj, ProcessingNode.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingNode>): ProcessingNode => {
-      return decodeMessage(buf, ProcessingNode.codec(), opts)
-    }
-  }
-
-  export interface ProcessingChannelMessage {
-    subtaskQueue?: SGProcessing.SubTaskQueue
-    subtaskQueueRequest?: SGProcessing.SubTaskQueueRequest
-  }
-
-  export namespace ProcessingChannelMessage {
-    let _codec: Codec<ProcessingChannelMessage>
-
-    export const codec = (): Codec<ProcessingChannelMessage> => {
-      if (_codec == null) {
-        _codec = message<ProcessingChannelMessage>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (obj.subtaskQueue != null) {
-            w.uint32(10)
-            SGProcessing.SubTaskQueue.codec().encode(obj.subtaskQueue, w)
-          }
-
-          if (obj.subtaskQueueRequest != null) {
-            w.uint32(18)
-            SGProcessing.SubTaskQueueRequest.codec().encode(obj.subtaskQueueRequest, w)
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              case 1: {
-                obj.subtaskQueue = SGProcessing.SubTaskQueue.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.subtaskQueue
-                })
-                break
-              }
-              case 2: {
-                obj.subtaskQueueRequest = SGProcessing.SubTaskQueueRequest.codec().decode(reader, reader.uint32(), {
-                  limits: opts.limits?.subtaskQueueRequest
-                })
-                break
-              }
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<ProcessingChannelMessage>): Uint8Array => {
-      return encodeMessage(obj, ProcessingChannelMessage.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<ProcessingChannelMessage>): ProcessingChannelMessage => {
-      return decodeMessage(buf, ProcessingChannelMessage.codec(), opts)
-    }
-  }
-
-  let _codec: Codec<SGProcessing>
-
-  export const codec = (): Codec<SGProcessing> => {
-    if (_codec == null) {
-      _codec = message<SGProcessing>((obj, w, opts = {}) => {
-        if (opts.lengthDelimited !== false) {
-          w.fork()
-        }
-
-        if (opts.lengthDelimited !== false) {
-          w.ldelim()
-        }
-      }, (reader, length, opts = {}) => {
-        const obj: any = {}
-
-        const end = length == null ? reader.len : reader.pos + length
-
-        while (reader.pos < end) {
-          const tag = reader.uint32()
-
-          switch (tag >>> 3) {
-            default: {
-              reader.skipType(tag & 7)
-              break
-            }
-          }
-        }
-
-        return obj
-      })
-    }
-
-    return _codec
-  }
-
-  export const encode = (obj: Partial<SGProcessing>): Uint8Array => {
-    return encodeMessage(obj, SGProcessing.codec())
-  }
-
-  export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<SGProcessing>): SGProcessing => {
-    return decodeMessage(buf, SGProcessing.codec(), opts)
-  }
+// @generated by protobuf-ts 2.9.4
+// @generated from protobuf file "SGProcessing.proto" (package "SGProcessing", syntax proto3)
+// tslint:disable
+import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
+import type { IBinaryWriter } from "@protobuf-ts/runtime";
+import { WireType } from "@protobuf-ts/runtime";
+import type { BinaryReadOptions } from "@protobuf-ts/runtime";
+import type { IBinaryReader } from "@protobuf-ts/runtime";
+import { UnknownFieldHandler } from "@protobuf-ts/runtime";
+import type { PartialMessage } from "@protobuf-ts/runtime";
+import { reflectionMergePartial } from "@protobuf-ts/runtime";
+import { MessageType } from "@protobuf-ts/runtime";
+// import "google/protobuf/empty.proto";
+
+/**
+ * Work distribution
+ * Task messages are published/received in data feed (lobby) channel
+ *
+ * @generated from protobuf message SGProcessing.Task
+ */
+export interface Task {
+    /**
+     * @generated from protobuf field: string ipfs_block_id = 1;
+     */
+    ipfsBlockId: string; // source block data to be processed
+    /**
+     * @generated from protobuf field: bytes json_data = 2;
+     */
+    jsonData: Uint8Array; // Job information json
+    /**
+     * uint32 block_len = 3; // and ipfs block's length in bytes
+     * uint32 block_stride = 4; // Stride to use for access pattern
+     * uint32 block_line_stride = 5; // Line stride in bytes to get to next block start
+     *
+     * @generated from protobuf field: float random_seed = 3;
+     */
+    randomSeed: number; // used to randomly choose verifier block
+    /**
+     * @generated from protobuf field: string results_channel = 4;
+     */
+    resultsChannel: string; // which channel to publish results to.
 }
+/**
+ * @generated from protobuf message SGProcessing.TaskLock
+ */
+export interface TaskLock {
+    /**
+     * @generated from protobuf field: string task_id = 1;
+     */
+    taskId: string;
+    /**
+     * @generated from protobuf field: int64 lock_timestamp = 2;
+     */
+    lockTimestamp: bigint;
+}
+/**
+ * Subtask is pubished by host into ipfs_block_id channel
+ *
+ * @generated from protobuf message SGProcessing.SubTask
+ */
+export interface SubTask {
+    /**
+     * @generated from protobuf field: string ipfsblock = 1;
+     */
+    ipfsblock: string; // source block data to be processed
+    /**
+     * @generated from protobuf field: string json_data = 2;
+     */
+    jsonData: string; // json data of the specific inputs for this subtask
+    /**
+     * @generated from protobuf field: repeated SGProcessing.ProcessingChunk chunksToProcess = 3;
+     */
+    chunksToProcess: ProcessingChunk[]; // array of chunks to process
+    /**
+     * @generated from protobuf field: uint32 datalen = 4;
+     */
+    datalen: number; // length of ipfsBlock?
+    /**
+     * @generated from protobuf field: string subtaskid = 5;
+     */
+    subtaskid: string; // unique subtask ID
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingChunk
+ */
+export interface ProcessingChunk {
+    /**
+     * @generated from protobuf field: string chunkid = 1;
+     */
+    chunkid: string; // unique process chunk ID
+    /**
+     * uint32 offset = 2; // offset into data
+     * uint32 subchunk_width = 3; // width of subchunk/subblock
+     * uint32 subchunk_height = 4; // height of chunk/block
+     * uint32 stride = 5; // stride to use for overall data chunk
+     * uint32 line_stride = 6; // stride of one line of data
+     *
+     * @generated from protobuf field: uint32 n_subchunks = 2;
+     */
+    nSubchunks: number; // number of chunks to process  
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingQueueItem
+ */
+export interface ProcessingQueueItem {
+    /**
+     * @generated from protobuf field: int64 lock_timestamp = 1;
+     */
+    lockTimestamp: bigint;
+    /**
+     * @generated from protobuf field: string lock_node_id = 2;
+     */
+    lockNodeId: string;
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingQueue
+ */
+export interface ProcessingQueue {
+    /**
+     * @generated from protobuf field: repeated SGProcessing.ProcessingQueueItem items = 1;
+     */
+    items: ProcessingQueueItem[];
+    /**
+     * @generated from protobuf field: int64 last_update_timestamp = 2;
+     */
+    lastUpdateTimestamp: bigint;
+    /**
+     * @generated from protobuf field: string owner_node_id = 3;
+     */
+    ownerNodeId: string;
+}
+/**
+ * @generated from protobuf message SGProcessing.SubTaskCollection
+ */
+export interface SubTaskCollection {
+    /**
+     * @generated from protobuf field: repeated SGProcessing.SubTask items = 1;
+     */
+    items: SubTask[];
+}
+/**
+ * @generated from protobuf message SGProcessing.SubTaskQueue
+ */
+export interface SubTaskQueue {
+    /**
+     * @generated from protobuf field: SGProcessing.ProcessingQueue processing_queue = 1;
+     */
+    processingQueue?: ProcessingQueue;
+    /**
+     * @generated from protobuf field: SGProcessing.SubTaskCollection subtasks = 2;
+     */
+    subtasks?: SubTaskCollection;
+}
+/**
+ * @generated from protobuf message SGProcessing.SubTaskQueueRequest
+ */
+export interface SubTaskQueueRequest {
+    /**
+     * @generated from protobuf field: string node_id = 1;
+     */
+    nodeId: string;
+}
+/**
+ * SubTask results are published to result_channel
+ *
+ * @generated from protobuf message SGProcessing.SubTaskResult
+ */
+export interface SubTaskResult {
+    /**
+     * @generated from protobuf field: bytes result_hash = 1;
+     */
+    resultHash: Uint8Array; // hash of results
+    /**
+     * @generated from protobuf field: repeated bytes chunk_hashes = 2;
+     */
+    chunkHashes: Uint8Array[]; // the hashes for each chunk
+    /**
+     * @generated from protobuf field: string ipfs_results_data_id = 3;
+     */
+    ipfsResultsDataId: string; // UUID of the results data on ipfs
+    /**
+     * @generated from protobuf field: string subtaskid = 4;
+     */
+    subtaskid: string; // linked subtask id
+}
+/**
+ * @generated from protobuf message SGProcessing.SubTaskState
+ */
+export interface SubTaskState {
+    /**
+     * @generated from protobuf field: SGProcessing.SubTaskState.Type state = 1;
+     */
+    state: SubTaskState_Type;
+    /**
+     * @generated from protobuf field: int64 timestamp = 2;
+     */
+    timestamp: bigint;
+}
+/**
+ * @generated from protobuf enum SGProcessing.SubTaskState.Type
+ */
+export enum SubTaskState_Type {
+    /**
+     * @generated from protobuf enum value: NONE = 0;
+     */
+    NONE = 0,
+    /**
+     * @generated from protobuf enum value: ENQUEUED = 1;
+     */
+    ENQUEUED = 1,
+    /**
+     * @generated from protobuf enum value: PROCESSING = 2;
+     */
+    PROCESSING = 2,
+    /**
+     * @generated from protobuf enum value: PROCESSED = 3;
+     */
+    PROCESSED = 3,
+    /**
+     * @generated from protobuf enum value: COMPLETE = 4;
+     */
+    COMPLETE = 4
+}
+/**
+ * @generated from protobuf message SGProcessing.TaskResult
+ */
+export interface TaskResult {
+    /**
+     * @generated from protobuf field: repeated SGProcessing.SubTaskResult subtask_results = 1;
+     */
+    subtaskResults: SubTaskResult[];
+}
+/**
+ * Processing service handling
+ * Request for available processing channels
+ *
+ * @generated from protobuf message SGProcessing.ProcessingChannelRequest
+ */
+export interface ProcessingChannelRequest {
+    /**
+     * @generated from protobuf field: string environment = 1;
+     */
+    environment: string; // environment description required for a task processing
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingChannelResponse
+ */
+export interface ProcessingChannelResponse {
+    /**
+     * @generated from protobuf field: string channel_id = 1;
+     */
+    channelId: string; // Processing channel Id
+}
+/**
+ * @generated from protobuf message SGProcessing.GridChannelMessage
+ */
+export interface GridChannelMessage {
+    /**
+     * @generated from protobuf oneof: data
+     */
+    data: {
+        oneofKind: "processingChannelRequest";
+        /**
+         * @generated from protobuf field: SGProcessing.ProcessingChannelRequest processing_channel_request = 1;
+         */
+        processingChannelRequest: ProcessingChannelRequest;
+    } | {
+        oneofKind: "processingChannelResponse";
+        /**
+         * @generated from protobuf field: SGProcessing.ProcessingChannelResponse processing_channel_response = 2;
+         */
+        processingChannelResponse: ProcessingChannelResponse;
+    } | {
+        oneofKind: undefined;
+    };
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingNode
+ */
+export interface ProcessingNode {
+    /**
+     * @generated from protobuf field: string node_id = 1;
+     */
+    nodeId: string;
+    /**
+     * @generated from protobuf field: uint64 timestamp = 2;
+     */
+    timestamp: bigint;
+}
+/**
+ * @generated from protobuf message SGProcessing.ProcessingChannelMessage
+ */
+export interface ProcessingChannelMessage {
+    /**
+     * @generated from protobuf oneof: data
+     */
+    data: {
+        oneofKind: "subtaskQueue";
+        /**
+         * @generated from protobuf field: SGProcessing.SubTaskQueue subtask_queue = 1;
+         */
+        subtaskQueue: SubTaskQueue;
+    } | {
+        oneofKind: "subtaskQueueRequest";
+        /**
+         * @generated from protobuf field: SGProcessing.SubTaskQueueRequest subtask_queue_request = 2;
+         */
+        subtaskQueueRequest: SubTaskQueueRequest;
+    } | {
+        oneofKind: undefined;
+    };
+}
+// @generated message type with reflection information, may provide speed optimized methods
+class Task$Type extends MessageType<Task> {
+    constructor() {
+        super("SGProcessing.Task", [
+            { no: 1, name: "ipfs_block_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "json_data", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 3, name: "random_seed", kind: "scalar", T: 2 /*ScalarType.FLOAT*/ },
+            { no: 4, name: "results_channel", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<Task>): Task {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.ipfsBlockId = "";
+        message.jsonData = new Uint8Array(0);
+        message.randomSeed = 0;
+        message.resultsChannel = "";
+        if (value !== undefined)
+            reflectionMergePartial<Task>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: Task): Task {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string ipfs_block_id */ 1:
+                    message.ipfsBlockId = reader.string();
+                    break;
+                case /* bytes json_data */ 2:
+                    message.jsonData = reader.bytes();
+                    break;
+                case /* float random_seed */ 3:
+                    message.randomSeed = reader.float();
+                    break;
+                case /* string results_channel */ 4:
+                    message.resultsChannel = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: Task, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string ipfs_block_id = 1; */
+        if (message.ipfsBlockId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.ipfsBlockId);
+        /* bytes json_data = 2; */
+        if (message.jsonData.length)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.jsonData);
+        /* float random_seed = 3; */
+        if (message.randomSeed !== 0)
+            writer.tag(3, WireType.Bit32).float(message.randomSeed);
+        /* string results_channel = 4; */
+        if (message.resultsChannel !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.resultsChannel);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.Task
+ */
+export const Task = new Task$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class TaskLock$Type extends MessageType<TaskLock> {
+    constructor() {
+        super("SGProcessing.TaskLock", [
+            { no: 1, name: "task_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "lock_timestamp", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<TaskLock>): TaskLock {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.taskId = "";
+        message.lockTimestamp = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<TaskLock>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TaskLock): TaskLock {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string task_id */ 1:
+                    message.taskId = reader.string();
+                    break;
+                case /* int64 lock_timestamp */ 2:
+                    message.lockTimestamp = reader.int64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: TaskLock, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string task_id = 1; */
+        if (message.taskId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.taskId);
+        /* int64 lock_timestamp = 2; */
+        if (message.lockTimestamp !== 0n)
+            writer.tag(2, WireType.Varint).int64(message.lockTimestamp);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.TaskLock
+ */
+export const TaskLock = new TaskLock$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTask$Type extends MessageType<SubTask> {
+    constructor() {
+        super("SGProcessing.SubTask", [
+            { no: 1, name: "ipfsblock", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "json_data", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 3, name: "chunksToProcess", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => ProcessingChunk },
+            { no: 4, name: "datalen", kind: "scalar", T: 13 /*ScalarType.UINT32*/ },
+            { no: 5, name: "subtaskid", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<SubTask>): SubTask {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.ipfsblock = "";
+        message.jsonData = "";
+        message.chunksToProcess = [];
+        message.datalen = 0;
+        message.subtaskid = "";
+        if (value !== undefined)
+            reflectionMergePartial<SubTask>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTask): SubTask {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string ipfsblock */ 1:
+                    message.ipfsblock = reader.string();
+                    break;
+                case /* string json_data */ 2:
+                    message.jsonData = reader.string();
+                    break;
+                case /* repeated SGProcessing.ProcessingChunk chunksToProcess */ 3:
+                    message.chunksToProcess.push(ProcessingChunk.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* uint32 datalen */ 4:
+                    message.datalen = reader.uint32();
+                    break;
+                case /* string subtaskid */ 5:
+                    message.subtaskid = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTask, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string ipfsblock = 1; */
+        if (message.ipfsblock !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.ipfsblock);
+        /* string json_data = 2; */
+        if (message.jsonData !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.jsonData);
+        /* repeated SGProcessing.ProcessingChunk chunksToProcess = 3; */
+        for (let i = 0; i < message.chunksToProcess.length; i++)
+            ProcessingChunk.internalBinaryWrite(message.chunksToProcess[i], writer.tag(3, WireType.LengthDelimited).fork(), options).join();
+        /* uint32 datalen = 4; */
+        if (message.datalen !== 0)
+            writer.tag(4, WireType.Varint).uint32(message.datalen);
+        /* string subtaskid = 5; */
+        if (message.subtaskid !== "")
+            writer.tag(5, WireType.LengthDelimited).string(message.subtaskid);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTask
+ */
+export const SubTask = new SubTask$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingChunk$Type extends MessageType<ProcessingChunk> {
+    constructor() {
+        super("SGProcessing.ProcessingChunk", [
+            { no: 1, name: "chunkid", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "n_subchunks", kind: "scalar", T: 13 /*ScalarType.UINT32*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingChunk>): ProcessingChunk {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.chunkid = "";
+        message.nSubchunks = 0;
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingChunk>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingChunk): ProcessingChunk {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string chunkid */ 1:
+                    message.chunkid = reader.string();
+                    break;
+                case /* uint32 n_subchunks */ 2:
+                    message.nSubchunks = reader.uint32();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingChunk, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string chunkid = 1; */
+        if (message.chunkid !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.chunkid);
+        /* uint32 n_subchunks = 2; */
+        if (message.nSubchunks !== 0)
+            writer.tag(2, WireType.Varint).uint32(message.nSubchunks);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingChunk
+ */
+export const ProcessingChunk = new ProcessingChunk$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingQueueItem$Type extends MessageType<ProcessingQueueItem> {
+    constructor() {
+        super("SGProcessing.ProcessingQueueItem", [
+            { no: 1, name: "lock_timestamp", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 2, name: "lock_node_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingQueueItem>): ProcessingQueueItem {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.lockTimestamp = 0n;
+        message.lockNodeId = "";
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingQueueItem>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingQueueItem): ProcessingQueueItem {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* int64 lock_timestamp */ 1:
+                    message.lockTimestamp = reader.int64().toBigInt();
+                    break;
+                case /* string lock_node_id */ 2:
+                    message.lockNodeId = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingQueueItem, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* int64 lock_timestamp = 1; */
+        if (message.lockTimestamp !== 0n)
+            writer.tag(1, WireType.Varint).int64(message.lockTimestamp);
+        /* string lock_node_id = 2; */
+        if (message.lockNodeId !== "")
+            writer.tag(2, WireType.LengthDelimited).string(message.lockNodeId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingQueueItem
+ */
+export const ProcessingQueueItem = new ProcessingQueueItem$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingQueue$Type extends MessageType<ProcessingQueue> {
+    constructor() {
+        super("SGProcessing.ProcessingQueue", [
+            { no: 1, name: "items", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => ProcessingQueueItem },
+            { no: 2, name: "last_update_timestamp", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 3, name: "owner_node_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingQueue>): ProcessingQueue {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.items = [];
+        message.lastUpdateTimestamp = 0n;
+        message.ownerNodeId = "";
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingQueue>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingQueue): ProcessingQueue {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated SGProcessing.ProcessingQueueItem items */ 1:
+                    message.items.push(ProcessingQueueItem.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                case /* int64 last_update_timestamp */ 2:
+                    message.lastUpdateTimestamp = reader.int64().toBigInt();
+                    break;
+                case /* string owner_node_id */ 3:
+                    message.ownerNodeId = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingQueue, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated SGProcessing.ProcessingQueueItem items = 1; */
+        for (let i = 0; i < message.items.length; i++)
+            ProcessingQueueItem.internalBinaryWrite(message.items[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* int64 last_update_timestamp = 2; */
+        if (message.lastUpdateTimestamp !== 0n)
+            writer.tag(2, WireType.Varint).int64(message.lastUpdateTimestamp);
+        /* string owner_node_id = 3; */
+        if (message.ownerNodeId !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.ownerNodeId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingQueue
+ */
+export const ProcessingQueue = new ProcessingQueue$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTaskCollection$Type extends MessageType<SubTaskCollection> {
+    constructor() {
+        super("SGProcessing.SubTaskCollection", [
+            { no: 1, name: "items", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => SubTask }
+        ]);
+    }
+    create(value?: PartialMessage<SubTaskCollection>): SubTaskCollection {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.items = [];
+        if (value !== undefined)
+            reflectionMergePartial<SubTaskCollection>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTaskCollection): SubTaskCollection {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated SGProcessing.SubTask items */ 1:
+                    message.items.push(SubTask.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTaskCollection, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated SGProcessing.SubTask items = 1; */
+        for (let i = 0; i < message.items.length; i++)
+            SubTask.internalBinaryWrite(message.items[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTaskCollection
+ */
+export const SubTaskCollection = new SubTaskCollection$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTaskQueue$Type extends MessageType<SubTaskQueue> {
+    constructor() {
+        super("SGProcessing.SubTaskQueue", [
+            { no: 1, name: "processing_queue", kind: "message", T: () => ProcessingQueue },
+            { no: 2, name: "subtasks", kind: "message", T: () => SubTaskCollection }
+        ]);
+    }
+    create(value?: PartialMessage<SubTaskQueue>): SubTaskQueue {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        if (value !== undefined)
+            reflectionMergePartial<SubTaskQueue>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTaskQueue): SubTaskQueue {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGProcessing.ProcessingQueue processing_queue */ 1:
+                    message.processingQueue = ProcessingQueue.internalBinaryRead(reader, reader.uint32(), options, message.processingQueue);
+                    break;
+                case /* SGProcessing.SubTaskCollection subtasks */ 2:
+                    message.subtasks = SubTaskCollection.internalBinaryRead(reader, reader.uint32(), options, message.subtasks);
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTaskQueue, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGProcessing.ProcessingQueue processing_queue = 1; */
+        if (message.processingQueue)
+            ProcessingQueue.internalBinaryWrite(message.processingQueue, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* SGProcessing.SubTaskCollection subtasks = 2; */
+        if (message.subtasks)
+            SubTaskCollection.internalBinaryWrite(message.subtasks, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTaskQueue
+ */
+export const SubTaskQueue = new SubTaskQueue$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTaskQueueRequest$Type extends MessageType<SubTaskQueueRequest> {
+    constructor() {
+        super("SGProcessing.SubTaskQueueRequest", [
+            { no: 1, name: "node_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<SubTaskQueueRequest>): SubTaskQueueRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.nodeId = "";
+        if (value !== undefined)
+            reflectionMergePartial<SubTaskQueueRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTaskQueueRequest): SubTaskQueueRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string node_id */ 1:
+                    message.nodeId = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTaskQueueRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string node_id = 1; */
+        if (message.nodeId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.nodeId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTaskQueueRequest
+ */
+export const SubTaskQueueRequest = new SubTaskQueueRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTaskResult$Type extends MessageType<SubTaskResult> {
+    constructor() {
+        super("SGProcessing.SubTaskResult", [
+            { no: 1, name: "result_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 2, name: "chunk_hashes", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 12 /*ScalarType.BYTES*/ },
+            { no: 3, name: "ipfs_results_data_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 4, name: "subtaskid", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<SubTaskResult>): SubTaskResult {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.resultHash = new Uint8Array(0);
+        message.chunkHashes = [];
+        message.ipfsResultsDataId = "";
+        message.subtaskid = "";
+        if (value !== undefined)
+            reflectionMergePartial<SubTaskResult>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTaskResult): SubTaskResult {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* bytes result_hash */ 1:
+                    message.resultHash = reader.bytes();
+                    break;
+                case /* repeated bytes chunk_hashes */ 2:
+                    message.chunkHashes.push(reader.bytes());
+                    break;
+                case /* string ipfs_results_data_id */ 3:
+                    message.ipfsResultsDataId = reader.string();
+                    break;
+                case /* string subtaskid */ 4:
+                    message.subtaskid = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTaskResult, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* bytes result_hash = 1; */
+        if (message.resultHash.length)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.resultHash);
+        /* repeated bytes chunk_hashes = 2; */
+        for (let i = 0; i < message.chunkHashes.length; i++)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.chunkHashes[i]);
+        /* string ipfs_results_data_id = 3; */
+        if (message.ipfsResultsDataId !== "")
+            writer.tag(3, WireType.LengthDelimited).string(message.ipfsResultsDataId);
+        /* string subtaskid = 4; */
+        if (message.subtaskid !== "")
+            writer.tag(4, WireType.LengthDelimited).string(message.subtaskid);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTaskResult
+ */
+export const SubTaskResult = new SubTaskResult$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class SubTaskState$Type extends MessageType<SubTaskState> {
+    constructor() {
+        super("SGProcessing.SubTaskState", [
+            { no: 1, name: "state", kind: "enum", T: () => ["SGProcessing.SubTaskState.Type", SubTaskState_Type] },
+            { no: 2, name: "timestamp", kind: "scalar", T: 3 /*ScalarType.INT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<SubTaskState>): SubTaskState {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.state = 0;
+        message.timestamp = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<SubTaskState>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: SubTaskState): SubTaskState {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGProcessing.SubTaskState.Type state */ 1:
+                    message.state = reader.int32();
+                    break;
+                case /* int64 timestamp */ 2:
+                    message.timestamp = reader.int64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: SubTaskState, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGProcessing.SubTaskState.Type state = 1; */
+        if (message.state !== 0)
+            writer.tag(1, WireType.Varint).int32(message.state);
+        /* int64 timestamp = 2; */
+        if (message.timestamp !== 0n)
+            writer.tag(2, WireType.Varint).int64(message.timestamp);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.SubTaskState
+ */
+export const SubTaskState = new SubTaskState$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class TaskResult$Type extends MessageType<TaskResult> {
+    constructor() {
+        super("SGProcessing.TaskResult", [
+            { no: 1, name: "subtask_results", kind: "message", repeat: 1 /*RepeatType.PACKED*/, T: () => SubTaskResult }
+        ]);
+    }
+    create(value?: PartialMessage<TaskResult>): TaskResult {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.subtaskResults = [];
+        if (value !== undefined)
+            reflectionMergePartial<TaskResult>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: TaskResult): TaskResult {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* repeated SGProcessing.SubTaskResult subtask_results */ 1:
+                    message.subtaskResults.push(SubTaskResult.internalBinaryRead(reader, reader.uint32(), options));
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: TaskResult, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* repeated SGProcessing.SubTaskResult subtask_results = 1; */
+        for (let i = 0; i < message.subtaskResults.length; i++)
+            SubTaskResult.internalBinaryWrite(message.subtaskResults[i], writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.TaskResult
+ */
+export const TaskResult = new TaskResult$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingChannelRequest$Type extends MessageType<ProcessingChannelRequest> {
+    constructor() {
+        super("SGProcessing.ProcessingChannelRequest", [
+            { no: 1, name: "environment", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingChannelRequest>): ProcessingChannelRequest {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.environment = "";
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingChannelRequest>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingChannelRequest): ProcessingChannelRequest {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string environment */ 1:
+                    message.environment = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingChannelRequest, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string environment = 1; */
+        if (message.environment !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.environment);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingChannelRequest
+ */
+export const ProcessingChannelRequest = new ProcessingChannelRequest$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingChannelResponse$Type extends MessageType<ProcessingChannelResponse> {
+    constructor() {
+        super("SGProcessing.ProcessingChannelResponse", [
+            { no: 1, name: "channel_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingChannelResponse>): ProcessingChannelResponse {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.channelId = "";
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingChannelResponse>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingChannelResponse): ProcessingChannelResponse {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string channel_id */ 1:
+                    message.channelId = reader.string();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingChannelResponse, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string channel_id = 1; */
+        if (message.channelId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.channelId);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingChannelResponse
+ */
+export const ProcessingChannelResponse = new ProcessingChannelResponse$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class GridChannelMessage$Type extends MessageType<GridChannelMessage> {
+    constructor() {
+        super("SGProcessing.GridChannelMessage", [
+            { no: 1, name: "processing_channel_request", kind: "message", oneof: "data", T: () => ProcessingChannelRequest },
+            { no: 2, name: "processing_channel_response", kind: "message", oneof: "data", T: () => ProcessingChannelResponse }
+        ]);
+    }
+    create(value?: PartialMessage<GridChannelMessage>): GridChannelMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.data = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<GridChannelMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: GridChannelMessage): GridChannelMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGProcessing.ProcessingChannelRequest processing_channel_request */ 1:
+                    message.data = {
+                        oneofKind: "processingChannelRequest",
+                        processingChannelRequest: ProcessingChannelRequest.internalBinaryRead(reader, reader.uint32(), options, (message.data as any).processingChannelRequest)
+                    };
+                    break;
+                case /* SGProcessing.ProcessingChannelResponse processing_channel_response */ 2:
+                    message.data = {
+                        oneofKind: "processingChannelResponse",
+                        processingChannelResponse: ProcessingChannelResponse.internalBinaryRead(reader, reader.uint32(), options, (message.data as any).processingChannelResponse)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: GridChannelMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGProcessing.ProcessingChannelRequest processing_channel_request = 1; */
+        if (message.data.oneofKind === "processingChannelRequest")
+            ProcessingChannelRequest.internalBinaryWrite(message.data.processingChannelRequest, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* SGProcessing.ProcessingChannelResponse processing_channel_response = 2; */
+        if (message.data.oneofKind === "processingChannelResponse")
+            ProcessingChannelResponse.internalBinaryWrite(message.data.processingChannelResponse, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.GridChannelMessage
+ */
+export const GridChannelMessage = new GridChannelMessage$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingNode$Type extends MessageType<ProcessingNode> {
+    constructor() {
+        super("SGProcessing.ProcessingNode", [
+            { no: 1, name: "node_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 2, name: "timestamp", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingNode>): ProcessingNode {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.nodeId = "";
+        message.timestamp = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingNode>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingNode): ProcessingNode {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* string node_id */ 1:
+                    message.nodeId = reader.string();
+                    break;
+                case /* uint64 timestamp */ 2:
+                    message.timestamp = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingNode, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* string node_id = 1; */
+        if (message.nodeId !== "")
+            writer.tag(1, WireType.LengthDelimited).string(message.nodeId);
+        /* uint64 timestamp = 2; */
+        if (message.timestamp !== 0n)
+            writer.tag(2, WireType.Varint).uint64(message.timestamp);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingNode
+ */
+export const ProcessingNode = new ProcessingNode$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class ProcessingChannelMessage$Type extends MessageType<ProcessingChannelMessage> {
+    constructor() {
+        super("SGProcessing.ProcessingChannelMessage", [
+            { no: 1, name: "subtask_queue", kind: "message", oneof: "data", T: () => SubTaskQueue },
+            { no: 2, name: "subtask_queue_request", kind: "message", oneof: "data", T: () => SubTaskQueueRequest }
+        ]);
+    }
+    create(value?: PartialMessage<ProcessingChannelMessage>): ProcessingChannelMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.data = { oneofKind: undefined };
+        if (value !== undefined)
+            reflectionMergePartial<ProcessingChannelMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: ProcessingChannelMessage): ProcessingChannelMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* SGProcessing.SubTaskQueue subtask_queue */ 1:
+                    message.data = {
+                        oneofKind: "subtaskQueue",
+                        subtaskQueue: SubTaskQueue.internalBinaryRead(reader, reader.uint32(), options, (message.data as any).subtaskQueue)
+                    };
+                    break;
+                case /* SGProcessing.SubTaskQueueRequest subtask_queue_request */ 2:
+                    message.data = {
+                        oneofKind: "subtaskQueueRequest",
+                        subtaskQueueRequest: SubTaskQueueRequest.internalBinaryRead(reader, reader.uint32(), options, (message.data as any).subtaskQueueRequest)
+                    };
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: ProcessingChannelMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* SGProcessing.SubTaskQueue subtask_queue = 1; */
+        if (message.data.oneofKind === "subtaskQueue")
+            SubTaskQueue.internalBinaryWrite(message.data.subtaskQueue, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* SGProcessing.SubTaskQueueRequest subtask_queue_request = 2; */
+        if (message.data.oneofKind === "subtaskQueueRequest")
+            SubTaskQueueRequest.internalBinaryWrite(message.data.subtaskQueueRequest, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGProcessing.ProcessingChannelMessage
+ */
+export const ProcessingChannelMessage = new ProcessingChannelMessage$Type();

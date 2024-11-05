@@ -11,6 +11,15 @@ import type { PartialMessage } from "@protobuf-ts/runtime";
 import { reflectionMergePartial } from "@protobuf-ts/runtime";
 import { MessageType } from "@protobuf-ts/runtime";
 /**
+ * @generated from protobuf message SGBlocks.BlockID
+ */
+export interface BlockID {
+    /**
+     * @generated from protobuf field: uint64 block_number = 1;
+     */
+    blockNumber: bigint;
+}
+/**
  * @generated from protobuf message SGBlocks.BlockHashData
  */
 export interface BlockHashData {
@@ -61,6 +70,53 @@ export interface BlockPayloadData {
      */
     blockBody: Uint8Array[]; // 
 }
+// @generated message type with reflection information, may provide speed optimized methods
+class BlockID$Type extends MessageType<BlockID> {
+    constructor() {
+        super("SGBlocks.BlockID", [
+            { no: 1, name: "block_number", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+        ]);
+    }
+    create(value?: PartialMessage<BlockID>): BlockID {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.blockNumber = 0n;
+        if (value !== undefined)
+            reflectionMergePartial<BlockID>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BlockID): BlockID {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* uint64 block_number */ 1:
+                    message.blockNumber = reader.uint64().toBigInt();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BlockID, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* uint64 block_number = 1; */
+        if (message.blockNumber !== 0n)
+            writer.tag(1, WireType.Varint).uint64(message.blockNumber);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message SGBlocks.BlockID
+ */
+export const BlockID = new BlockID$Type();
 // @generated message type with reflection information, may provide speed optimized methods
 class BlockHashData$Type extends MessageType<BlockHashData> {
     constructor() {

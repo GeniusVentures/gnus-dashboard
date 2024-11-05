@@ -1,221 +1,146 @@
-/* eslint-disable import/export */
-/* eslint-disable complexity */
-/* eslint-disable @typescript-eslint/no-namespace */
-/* eslint-disable @typescript-eslint/no-unnecessary-boolean-literal-compare */
-/* eslint-disable @typescript-eslint/no-empty-interface */
-
-import { type Codec, decodeMessage, type DecodeOptions, encodeMessage, message } from 'protons-runtime'
-import { alloc as uint8ArrayAlloc } from 'uint8arrays/alloc'
-import type { Uint8ArrayList } from 'uint8arraylist'
-
-export interface sgns {}
-
-export namespace sgns {
-  export interface crdt {}
-
-  export namespace crdt {
-    export interface broadcasting {}
-
-    export namespace broadcasting {
-      export interface BroadcastMessage {
-        multiaddress: string
-        data: Uint8Array
-      }
-
-      export namespace BroadcastMessage {
-        let _codec: Codec<BroadcastMessage>
-
-        export const codec = (): Codec<BroadcastMessage> => {
-          if (_codec == null) {
-            _codec = message<BroadcastMessage>((obj, w, opts = {}) => {
-              if (opts.lengthDelimited !== false) {
-                w.fork()
-              }
-
-              if ((obj.multiaddress != null && obj.multiaddress !== '')) {
-                w.uint32(10)
-                w.string(obj.multiaddress)
-              }
-
-              if ((obj.data != null && obj.data.byteLength > 0)) {
-                w.uint32(18)
-                w.bytes(obj.data)
-              }
-
-              if (opts.lengthDelimited !== false) {
-                w.ldelim()
-              }
-            }, (reader, length, opts = {}) => {
-              const obj: any = {
-                multiaddress: '',
-                data: uint8ArrayAlloc(0)
-              }
-
-              const end = length == null ? reader.len : reader.pos + length
-
-              while (reader.pos < end) {
-                const tag = reader.uint32()
-
-                switch (tag >>> 3) {
-                  case 1: {
-                    obj.multiaddress = reader.string()
-                    break
-                  }
-                  case 2: {
-                    obj.data = reader.bytes()
-                    break
-                  }
-                  default: {
-                    reader.skipType(tag & 7)
-                    break
-                  }
-                }
-              }
-
-              return obj
-            })
-          }
-
-          return _codec
-        }
-
-        export const encode = (obj: Partial<BroadcastMessage>): Uint8Array => {
-          return encodeMessage(obj, BroadcastMessage.codec())
-        }
-
-        export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<BroadcastMessage>): BroadcastMessage => {
-          return decodeMessage(buf, BroadcastMessage.codec(), opts)
-        }
-      }
-
-      let _codec: Codec<broadcasting>
-
-      export const codec = (): Codec<broadcasting> => {
-        if (_codec == null) {
-          _codec = message<broadcasting>((obj, w, opts = {}) => {
-            if (opts.lengthDelimited !== false) {
-              w.fork()
-            }
-
-            if (opts.lengthDelimited !== false) {
-              w.ldelim()
-            }
-          }, (reader, length, opts = {}) => {
-            const obj: any = {}
-
-            const end = length == null ? reader.len : reader.pos + length
-
-            while (reader.pos < end) {
-              const tag = reader.uint32()
-
-              switch (tag >>> 3) {
-                default: {
-                  reader.skipType(tag & 7)
-                  break
-                }
-              }
-            }
-
-            return obj
-          })
-        }
-
-        return _codec
-      }
-
-      export const encode = (obj: Partial<broadcasting>): Uint8Array => {
-        return encodeMessage(obj, broadcasting.codec())
-      }
-
-      export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<broadcasting>): broadcasting => {
-        return decodeMessage(buf, broadcasting.codec(), opts)
-      }
-    }
-
-    let _codec: Codec<crdt>
-
-    export const codec = (): Codec<crdt> => {
-      if (_codec == null) {
-        _codec = message<crdt>((obj, w, opts = {}) => {
-          if (opts.lengthDelimited !== false) {
-            w.fork()
-          }
-
-          if (opts.lengthDelimited !== false) {
-            w.ldelim()
-          }
-        }, (reader, length, opts = {}) => {
-          const obj: any = {}
-
-          const end = length == null ? reader.len : reader.pos + length
-
-          while (reader.pos < end) {
-            const tag = reader.uint32()
-
-            switch (tag >>> 3) {
-              default: {
-                reader.skipType(tag & 7)
-                break
-              }
-            }
-          }
-
-          return obj
-        })
-      }
-
-      return _codec
-    }
-
-    export const encode = (obj: Partial<crdt>): Uint8Array => {
-      return encodeMessage(obj, crdt.codec())
-    }
-
-    export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<crdt>): crdt => {
-      return decodeMessage(buf, crdt.codec(), opts)
-    }
-  }
-
-  let _codec: Codec<sgns>
-
-  export const codec = (): Codec<sgns> => {
-    if (_codec == null) {
-      _codec = message<sgns>((obj, w, opts = {}) => {
-        if (opts.lengthDelimited !== false) {
-          w.fork()
-        }
-
-        if (opts.lengthDelimited !== false) {
-          w.ldelim()
-        }
-      }, (reader, length, opts = {}) => {
-        const obj: any = {}
-
-        const end = length == null ? reader.len : reader.pos + length
-
-        while (reader.pos < end) {
-          const tag = reader.uint32()
-
-          switch (tag >>> 3) {
-            default: {
-              reader.skipType(tag & 7)
-              break
-            }
-          }
-        }
-
-        return obj
-      })
-    }
-
-    return _codec
-  }
-
-  export const encode = (obj: Partial<sgns>): Uint8Array => {
-    return encodeMessage(obj, sgns.codec())
-  }
-
-  export const decode = (buf: Uint8Array | Uint8ArrayList, opts?: DecodeOptions<sgns>): sgns => {
-    return decodeMessage(buf, sgns.codec(), opts)
-  }
+// @generated by protobuf-ts 2.9.4
+// @generated from protobuf file "broadcast.proto" (package "sgns.crdt.broadcasting", syntax proto3)
+// tslint:disable
+import type { BinaryWriteOptions } from "@protobuf-ts/runtime";
+import type { IBinaryWriter } from "@protobuf-ts/runtime";
+import { WireType } from "@protobuf-ts/runtime";
+import type { BinaryReadOptions } from "@protobuf-ts/runtime";
+import type { IBinaryReader } from "@protobuf-ts/runtime";
+import { UnknownFieldHandler } from "@protobuf-ts/runtime";
+import type { PartialMessage } from "@protobuf-ts/runtime";
+import { reflectionMergePartial } from "@protobuf-ts/runtime";
+import { MessageType } from "@protobuf-ts/runtime";
+/**
+ * @generated from protobuf message sgns.crdt.broadcasting.BroadcastMessage
+ */
+export interface BroadcastMessage {
+    /**
+     * @generated from protobuf field: sgns.crdt.broadcasting.BroadcastMessage.PeerInfo peer = 1;
+     */
+    peer?: BroadcastMessage_PeerInfo;
+    /**
+     * @generated from protobuf field: bytes data = 2;
+     */
+    data: Uint8Array;
 }
+/**
+ * @generated from protobuf message sgns.crdt.broadcasting.BroadcastMessage.PeerInfo
+ */
+export interface BroadcastMessage_PeerInfo {
+    /**
+     * @generated from protobuf field: optional bytes id = 1;
+     */
+    id?: Uint8Array;
+    /**
+     * @generated from protobuf field: repeated bytes addrs = 2;
+     */
+    addrs: Uint8Array[];
+}
+// @generated message type with reflection information, may provide speed optimized methods
+class BroadcastMessage$Type extends MessageType<BroadcastMessage> {
+    constructor() {
+        super("sgns.crdt.broadcasting.BroadcastMessage", [
+            { no: 1, name: "peer", kind: "message", T: () => BroadcastMessage_PeerInfo },
+            { no: 2, name: "data", kind: "scalar", T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<BroadcastMessage>): BroadcastMessage {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.data = new Uint8Array(0);
+        if (value !== undefined)
+            reflectionMergePartial<BroadcastMessage>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BroadcastMessage): BroadcastMessage {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* sgns.crdt.broadcasting.BroadcastMessage.PeerInfo peer */ 1:
+                    message.peer = BroadcastMessage_PeerInfo.internalBinaryRead(reader, reader.uint32(), options, message.peer);
+                    break;
+                case /* bytes data */ 2:
+                    message.data = reader.bytes();
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BroadcastMessage, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* sgns.crdt.broadcasting.BroadcastMessage.PeerInfo peer = 1; */
+        if (message.peer)
+            BroadcastMessage_PeerInfo.internalBinaryWrite(message.peer, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
+        /* bytes data = 2; */
+        if (message.data.length)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.data);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message sgns.crdt.broadcasting.BroadcastMessage
+ */
+export const BroadcastMessage = new BroadcastMessage$Type();
+// @generated message type with reflection information, may provide speed optimized methods
+class BroadcastMessage_PeerInfo$Type extends MessageType<BroadcastMessage_PeerInfo> {
+    constructor() {
+        super("sgns.crdt.broadcasting.BroadcastMessage.PeerInfo", [
+            { no: 1, name: "id", kind: "scalar", opt: true, T: 12 /*ScalarType.BYTES*/ },
+            { no: 2, name: "addrs", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 12 /*ScalarType.BYTES*/ }
+        ]);
+    }
+    create(value?: PartialMessage<BroadcastMessage_PeerInfo>): BroadcastMessage_PeerInfo {
+        const message = globalThis.Object.create((this.messagePrototype!));
+        message.addrs = [];
+        if (value !== undefined)
+            reflectionMergePartial<BroadcastMessage_PeerInfo>(this, message, value);
+        return message;
+    }
+    internalBinaryRead(reader: IBinaryReader, length: number, options: BinaryReadOptions, target?: BroadcastMessage_PeerInfo): BroadcastMessage_PeerInfo {
+        let message = target ?? this.create(), end = reader.pos + length;
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag();
+            switch (fieldNo) {
+                case /* optional bytes id */ 1:
+                    message.id = reader.bytes();
+                    break;
+                case /* repeated bytes addrs */ 2:
+                    message.addrs.push(reader.bytes());
+                    break;
+                default:
+                    let u = options.readUnknownField;
+                    if (u === "throw")
+                        throw new globalThis.Error(`Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`);
+                    let d = reader.skip(wireType);
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(this.typeName, message, fieldNo, wireType, d);
+            }
+        }
+        return message;
+    }
+    internalBinaryWrite(message: BroadcastMessage_PeerInfo, writer: IBinaryWriter, options: BinaryWriteOptions): IBinaryWriter {
+        /* optional bytes id = 1; */
+        if (message.id !== undefined)
+            writer.tag(1, WireType.LengthDelimited).bytes(message.id);
+        /* repeated bytes addrs = 2; */
+        for (let i = 0; i < message.addrs.length; i++)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.addrs[i]);
+        let u = options.writeUnknownFields;
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
+        return writer;
+    }
+}
+/**
+ * @generated MessageType for protobuf message sgns.crdt.broadcasting.BroadcastMessage.PeerInfo
+ */
+export const BroadcastMessage_PeerInfo = new BroadcastMessage_PeerInfo$Type();
