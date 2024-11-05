@@ -43,7 +43,7 @@ import {
 import { peerIdFromKeys, peerIdFromBytes } from "@libp2p/peer-id";
 import { multiaddr } from "@multiformats/multiaddr";
 import { Ed25519PrivateKey } from "@libp2p/crypto/keys";
-import { getPeer } from "@dcdn/graphsync";
+//import { getPeer } from "@dcdn/graphsync";
 import { pipe } from "it-pipe";
 
 //import protobuf from "protobufjs";
@@ -314,32 +314,38 @@ const createNode = async () => {
 							requestout = 1;
 							requestedCids.push(String(head.cid));
 							console.log(`Head: ${head.cid}`);
-							console.log("Addresss : " + decodedTask.multiaddress);
+							//console.log("Addresss : " + decodedTask.multiaddress);
 							// decodedTask.multiaddress = decodedTask.multiaddress.replace(
 							// 	"192.168.46.18",
 							// 	"174.105.208.56",
 							// );
-							const replacedAddr = decodedTask.multiaddress.replace(
-								"[IP]",
-								extractedIPv4,
-							);
-							const provider = getPeer(replacedAddr);
-							console.log("ID CHECK:::" + provider.id);
-							libp2p2.peerStore.merge(provider.id, {
-								multiaddrs: provider.multiaddrs,
+							// const replacedAddr = decodedTask.multiaddress.replace(
+							// 	"[IP]",
+							// 	extractedIPv4,
+							// );
+							//const provider = getPeer(replacedAddr);
+							
+							
+							const peerId = peerIdFromBytes(decodedTask.peer.id);
+							const multiaddrs = decodedTask.peer.addrs.map((addr: Uint8Array) => multiaddr(addr));
+							const addr = decodedTask.peer.addrs;
+							console.log("ID CHECK:::" + peerId.toString());
+							libp2p2.peerStore.merge(peerId, {
+								multiaddrs: multiaddrs,
 							});
 							requests.push(MakeRequest(head.cid, requestIdCounter));
 							requestIdCounter++;
 							requestedCids.push(head.cid);
 						}
 						if (requests.length > 0) {
-							const replacedAddr = decodedTask.multiaddress.replace(
-								"[IP]",
-								extractedIPv4,
-							);
-							const provider = getPeer(replacedAddr);
+							// const replacedAddr = decodedTask.multiaddress.replace(
+							// 	"[IP]",
+							// 	extractedIPv4,
+							// );
+							//const provider = getPeer(replacedAddr);
+							const peerId = peerIdFromBytes(decodedTask.peer.id);
 							const stream = await libp2p2.dialProtocol(
-								provider.id,
+								peerId,
 								"/ipfs/graphsync/2.0.0",
 							);
 							await pipe([MakeGSMessage(requests)], stream, respondHandler);
