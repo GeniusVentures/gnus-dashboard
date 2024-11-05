@@ -157,7 +157,7 @@ const createNode = async () => {
 				// 	discoverRelays: 1,
 				// }),
 			],
-			connectionEncryption: [plaintext()],
+			connectionEncryption: [noise()],
 			streamMuxers: [yamux()],
 			//peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
