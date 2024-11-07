@@ -377,7 +377,7 @@ const createNode = async () => {
 		const provider = libp2p.services.dht.findProviders(cidtofind);
 
 		for await (const event of provider) {
-			//console.log("Providers Event:::" + event.name);
+			console.log("Providers Event:::" + event.name);
 			switch (event.name) {
 				case "SEND_QUERY":
 					// Handle SendQueryEvent
@@ -421,7 +421,7 @@ const createNode = async () => {
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers(
-				"CRDT.Datastore.TEST.Channel",
+				"SGNUS.TestNet.Channel",
 			);
 
 			//libp2p.services.pubsub.publish(
