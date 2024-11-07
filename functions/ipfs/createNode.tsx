@@ -269,8 +269,8 @@ const createNode = async () => {
 			// 	`${message.detail.topic}:`,
 			// 	new TextDecoder().decode(message.detail.data),
 			// );
-			const multiaddr = message.detail.from;
-			const peerstoreres = libp2p.peerStore.get(multiaddr);
+			const multiaddress = message.detail.from;
+			const peerstoreres = libp2p.peerStore.get(multiaddress);
 			const addresses = (await peerstoreres).addresses;
 			let ipv4Address = "";
 			for (const addr of addresses) {
@@ -311,9 +311,10 @@ const createNode = async () => {
 							!requestedCids.includes(String(head.cid)) &&
 							extractedIPv4.length > 0
 						) {
+							const decoder = new TextDecoder();
 							requestout = 1;
 							requestedCids.push(String(head.cid));
-							console.log(`Head: ${head.cid}`);
+							//console.log(`Head: ${head.cid}`);
 							//console.log("Addresss : " + decodedTask.multiaddress);
 							// decodedTask.multiaddress = decodedTask.multiaddress.replace(
 							// 	"192.168.46.18",
@@ -327,15 +328,29 @@ const createNode = async () => {
 							
 							
 							const peerId = peerIdFromBytes(decodedTask.peer.id);
-							const multiaddrs = decodedTask.peer.addrs.map((addr: Uint8Array) => multiaddr(addr));
-							const addr = decodedTask.peer.addrs;
+							console.log("Mid CHeck");
+
+							//const multiaddrs = decodedTask.peer.addrs.map((addr: String) => multiaddr(addr));
+							const multiaddrs = [];
+							
+							for(const addr of decodedTask.peer.addrs)
+							{
+								//console.log("Add addr:" + decoder.decode(addr));
+								multiaddrs.push(multiaddr(decoder.decode(addr)));
+							}
+							//const addr = decodedTask.peer.addrs;
 							console.log("ID CHECK:::" + peerId.toString());
 							libp2p2.peerStore.merge(peerId, {
 								multiaddrs: multiaddrs,
 							});
+							const headcid = decoder.decode(head.cid);
+							console.log("Head CID:" + decoder.decode(head.cid));
 							requests.push(MakeRequest(head.cid, requestIdCounter));
+							console.log("OK");
 							requestIdCounter++;
+							console.log("OK2");
 							requestedCids.push(head.cid);
+							console.log("OK3");
 						}
 						if (requests.length > 0) {
 							// const replacedAddr = decodedTask.multiaddress.replace(
@@ -377,7 +392,7 @@ const createNode = async () => {
 		const provider = libp2p.services.dht.findProviders(cidtofind);
 
 		for await (const event of provider) {
-			console.log("Providers Event:::" + event.name);
+			//console.log("Providers Event:::" + event.name);
 			switch (event.name) {
 				case "SEND_QUERY":
 					// Handle SendQueryEvent
@@ -635,6 +650,7 @@ function respondHandler(source: any) {
 	})();
 }
 function MakeRequest(base58cid: Uint8Array, requestIdCounter: number) {
+	console.log("Stringout?" + String(base58cid));
 	const root = CID.parse(String(base58cid));
 
 	const request: any = {
