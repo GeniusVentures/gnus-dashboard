@@ -172,14 +172,14 @@ const createNode = async () => {
 			],
 			connectionEncryption: [noise()],
 			streamMuxers: [yamux()],
-			//peerDiscovery: [bootstrap(bootstrapConfig)],
+			peerDiscovery: [bootstrap(bootstrapConfig)],
 			services: {
 				pubsub: gossipsub(opubptions),
-				// dht: kadDHT({
-				// 	//findProviders: //key goes here I'm pretty sure
-				// 	protocol: "/ipfs/kad/1.0.0",
-				// 	clientMode: true,
-				// }),
+				dht: kadDHT({
+					//findProviders: //key goes here I'm pretty sure
+					protocol: "/ipfs/kad/1.0.0",
+					clientMode: true,
+				}),
 				identify: identify(),
 				keychain: keychain(),
 				// ping: ping(),
@@ -370,54 +370,54 @@ const createNode = async () => {
 		//const cidtofind = CID.createV0(digest);
 		//const cidtofind = CID.parse("QmSnuWmxptJZdLJpKRarxBMS2Ju2oANVrgbr2xWbie9b2D");
 		const cidtofind = CID.parse(
-			"QmeTbk3jEuY9Yyfcmum87v1qd8aFFeqcWfpYqt65bSQGEZ",
+			"QmXMh9Z2CVk1r2cB8sPK9gMMawScYwPdcCjV1bg4XTBP3i",
 		);
 		console.log("Cid to find:" + cidtofind.toString());
 
-		// const provider = libp2p.services.dht.findProviders(cidtofind);
+		const provider = libp2p.services.dht.findProviders(cidtofind);
 
-		// for await (const event of provider) {
-		// 	//console.log("Providers Event:::" + event.name);
-		// 	switch (event.name) {
-		// 		case "SEND_QUERY":
-		// 			// Handle SendQueryEvent
-		// 			break;
-		// 		case "PEER_RESPONSE":
-		// 			// Handle PeerResponseEvent
-		// 			break;
-		// 		case "FINAL_PEER":
-		// 			// Handle FinalPeerEvent
-		// 			//console.log("Final Peer:::" + event.from);
-		// 			break;
-		// 		case "QUERY_ERROR":
-		// 			// Handle QueryErrorEvent
-		// 			//console.log("Query Error:::" + event.error);
-		// 			break;
-		// 		case "PROVIDER":
-		// 			// Handle ProviderEvent
-		// 			console.log(
-		// 				"Provider Given:" +
-		// 					event.providers[0].id +
-		// 					"Multiaddr" +
-		// 					event.providers[0].multiaddrs,
-		// 			);
-		// 			break;
-		// 		case "VALUE":
-		// 			// Handle ValueEvent
-		// 			//console.log("Value Event? " + event.from);
-		// 			break;
-		// 		case "ADD_PEER":
-		// 			// Handle AddPeerEvent
-		// 			break;
-		// 		case "DIAL_PEER":
-		// 			// Handle DialPeerEvent
-		// 			break;
-		// 		default:
-		// 			// Handle unknown event
-		// 			console.log("Unknown Event");
-		// 			break;
-		// 	}
-		// }
+		for await (const event of provider) {
+			//console.log("Providers Event:::" + event.name);
+			switch (event.name) {
+				case "SEND_QUERY":
+					// Handle SendQueryEvent
+					break;
+				case "PEER_RESPONSE":
+					// Handle PeerResponseEvent
+					break;
+				case "FINAL_PEER":
+					// Handle FinalPeerEvent
+					//console.log("Final Peer:::" + event.from);
+					break;
+				case "QUERY_ERROR":
+					// Handle QueryErrorEvent
+					//console.log("Query Error:::" + event.error);
+					break;
+				case "PROVIDER":
+					// Handle ProviderEvent
+					console.log(
+						"Provider Given:" +
+							event.providers[0].id +
+							"Multiaddr" +
+							event.providers[0].multiaddrs,
+					);
+					break;
+				case "VALUE":
+					// Handle ValueEvent
+					//console.log("Value Event? " + event.from);
+					break;
+				case "ADD_PEER":
+					// Handle AddPeerEvent
+					break;
+				case "DIAL_PEER":
+					// Handle DialPeerEvent
+					break;
+				default:
+					// Handle unknown event
+					console.log("Unknown Event");
+					break;
+			}
+		}
 
 		setInterval(() => {
 			const peerList = libp2p.services.pubsub.getSubscribers(
