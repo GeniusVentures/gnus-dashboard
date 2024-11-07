@@ -196,7 +196,7 @@ const createNode = async () => {
 			addresses: {
 				listen: ["/ip4/0.0.0.0/tcp/42453"],
 			},
-			streamMuxers: [mplex()],
+			streamMuxers: [yamux()],
 			transports: [tcp()],
 			connectionEncryption: [noise()],
 		});
@@ -344,13 +344,9 @@ const createNode = async () => {
 								multiaddrs: multiaddrs,
 							});
 							const headcid = decoder.decode(head.cid);
-							console.log("Head CID:" + decoder.decode(head.cid));
 							requests.push(MakeRequest(head.cid, requestIdCounter));
-							console.log("OK");
 							requestIdCounter++;
-							console.log("OK2");
 							requestedCids.push(head.cid);
-							console.log("OK3");
 						}
 						if (requests.length > 0) {
 							// const replacedAddr = decodedTask.multiaddress.replace(
@@ -650,8 +646,9 @@ function respondHandler(source: any) {
 	})();
 }
 function MakeRequest(base58cid: Uint8Array, requestIdCounter: number) {
-	console.log("Stringout?" + String(base58cid));
-	const root = CID.parse(String(base58cid));
+	const decoder = new TextDecoder();
+	console.log("Stringout?" + decoder.decode(base58cid));
+	const root = CID.parse(decoder.decode(base58cid));
 
 	const request: any = {
 		id: requestIdCounter,
