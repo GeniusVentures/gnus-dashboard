@@ -37,12 +37,12 @@ const Landing: React.FC = () => {
     <Fragment>
       <div>
         <div
-          className="w-100 fs-3 px-3 py-20"
+          className="w-100 fs-3 px-3 py-15"
           style={{
             minHeight: "100vh",
             alignContent: "center",
             height: "100%",
-            backgroundColor: width > 700 ? "#00000060" : "",
+            backgroundColor: "#00000060",
           }}>
           <Row className="justify-content-center mx-3 mx-lg-10">
             {width >= 1200 && (

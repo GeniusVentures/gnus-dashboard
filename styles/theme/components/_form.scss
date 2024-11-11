@@ -54,3 +54,24 @@ input::-webkit-inner-spin-button {
   filter: hue-rotate(310deg);
   cursor: pointer; /* Optional: Change to pointer on hover */
 }
+
+.form-label {
+  color: #fff;
+}
+
+.form-control {
+  margin-bottom: 20px;
+  background-color: #00000060 !important;
+  backdrop-filter: blur(10px) !important;
+  color: #fff !important;
+}
+
+.form-select {
+  background-color: #00000060 !important;
+  backdrop-filter: blur(10px) !important;
+  color: #fff;
+}
+
+.form-select {
+  box-shadow: none !important;
+}

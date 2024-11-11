@@ -5,7 +5,7 @@ import BlockTransactions from "sub-components/tables/BlockTransactions";
 import lastUpdate from "../../functions/time/lastUpdate";
 import Link from "next/link";
 
-const Transaction = () => {
+const Transaction: React.FC = () => {
   const [updated, setUpdated] = useState(null);
   const router = useRouter();
   const { transaction } = router.query;
@@ -26,16 +26,14 @@ const Transaction = () => {
       <Row className="justify-content-center mx-3 mx-lg-15">
         <h1
           className="display-4 text-white mt-5 mb-0"
-          style={{ fontFamily: "HKModularBold" }}
-        >
+          style={{ fontFamily: "HKModularBold" }}>
           Transaction Details
         </h1>
         <p className="text-white pb-2">Last updated: {updated}</p>
 
         <Card
           style={{ backdropFilter: "blur(5px)" }}
-          className="p-5 px-lg-10 bg-gradient-gnus text-white"
-        >
+          className="p-5 px-lg-10 bg-gradient-gnus text-white">
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
               <p className="mb-0">Hash</p>

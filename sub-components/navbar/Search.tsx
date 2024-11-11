@@ -1,38 +1,11 @@
 import { useState, useEffect } from "react";
-import { Form, Col } from "react-bootstrap";
+import { Form, Col, Image } from "react-bootstrap";
 import { useRouter } from "next/router";
 import validator from "validator";
-const SearchBar = () => {
+import { toast } from "react-toastify";
+const SearchBar: React.FC = () => {
   const router = useRouter();
-  const [formSearch, setFormSearch] = useState("");
-  const [searchError, setSearchError] = useState("");
-  const [width, setWidth] = useState("550px");
-
-  const handleResize = () => {
-    if (window.innerWidth >= 1450) {
-      setWidth("550px");
-    } else if (window.innerWidth < 1450 && window.innerWidth >= 1335) {
-      setWidth("450px");
-    } else if (window.innerWidth < 1335 && window.innerWidth >= 1250) {
-      setWidth("350px");
-    } else if (window.innerWidth < 1250 && window.innerWidth >= 1220) {
-      setWidth("325px");
-    } else if (window.innerWidth < 1220 && window.innerWidth >= 1150) {
-      setWidth("300px");
-    } else {
-      setWidth("360px");
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    // Cleanup function to remove event listener
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []); // Empty dependency array to run this effect only once on component mount
+  const [formSearch, setFormSearch] = useState<string>("");
 
   const search = (event: any) => {
     event.preventDefault();
@@ -43,12 +16,17 @@ const SearchBar = () => {
     } else if (validator.isInt(formSearch)) {
       router.push(`/block/${formSearch}`);
     } else {
-      setSearchError("The data entered was invalid, please try again.");
+      toast.error(`The data entered was invalid, please try again.`, {
+        className: "gnus-toast",
+        icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+      });
     }
   };
 
   return (
-    <Col style={{ width: width }} className="mx-auto mb-2 mb-lg-0">
+    <Col
+      style={{ maxWidth: "400px", width: "85vw" }}
+      className="mx-auto mb-2 mb-lg-0">
       <Form
         onSubmit={search}
         className="mt-3 mt-lg-0 d-flex align-items-center text-white">
@@ -59,7 +37,6 @@ const SearchBar = () => {
         </span>
         <Form.Control
           onChange={(e) => {
-            setSearchError("");
             setFormSearch(e.target.value);
           }}
           type="search"
@@ -68,8 +45,6 @@ const SearchBar = () => {
           placeholder="Block Number, TX Hash, Wallet Address..."
         />
       </Form>
-
-      <p className="text-danger mb-0 text-center">{searchError}</p>
     </Col>
   );
 };

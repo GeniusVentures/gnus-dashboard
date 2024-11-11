@@ -25,16 +25,12 @@ const NavbarDefault: React.FC = () => {
     <Fragment>
       <Navbar
         onToggle={(collapsed) => setExpandedMenu(collapsed)}
+        collapseOnSelect
         expanded={expandedMenu}
         expand="lg"
-        style={{
-          position: "fixed",
-          top: "0",
-          width: "100%",
-          zIndex: 2000,
-          overflow: "hidden",
-        }}
-        className={`w-100 navbar ps-1 navbar-default py-1 bg-trans`}>
+        fixed="top"
+        style={{ overflow: "hidden" }}
+        className={`w-100 navbar ps-1 pe-1 navbar-default py-1 bg-trans`}>
         <Container fluid className="px-0 px-lg-1">
           <Navbar.Brand
             className="py-0"
@@ -49,8 +45,11 @@ const NavbarDefault: React.FC = () => {
               />
             </div>
           </Navbar.Brand>
+          <Nav className="navbar-nav navbar-right-wrap nav-top-wrap ms-auto d-lg-none">
+            <ToggleSwitch label="Network" />
+          </Nav>
 
-          <Navbar.Toggle aria-controls="basic-navbar-nav">
+          <Navbar.Toggle aria-controls="basic-navbar-nav" className="me-2">
             <span className="icon-bar top-bar mt-0"></span>
             <span className="icon-bar middle-bar"></span>
             <span className="icon-bar bottom-bar"></span>
@@ -70,21 +69,14 @@ const NavbarDefault: React.FC = () => {
                     </Nav.Link>
                   );
                 } else {
-                  return (
-                    <NavDropdownMain
-                      href=""
-                      item={item}
-                      key={index}
-                      onClick={(value) => setExpandedMenu(value)}
-                    />
-                  );
+                  return <NavDropdownMain href="" item={item} key={index} />;
                 }
               })}
             </Nav>
             <Nav className="mx-auto">
               <Search />
             </Nav>
-            <Nav className="navbar-nav navbar-right-wrap nav-top-wrap">
+            <Nav className="navbar-nav navbar-right-wrap nav-top-wrap d-none d-lg-block">
               <ToggleSwitch label="Network" />
             </Nav>
           </Navbar.Collapse>

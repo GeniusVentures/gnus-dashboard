@@ -4,7 +4,7 @@ import { Card, Row } from "react-bootstrap";
 import BlockTransactions from "sub-components/tables/BlockTransactions";
 import lastUpdate from "../../functions/time/lastUpdate";
 
-const Address = () => {
+const Address: React.FC = () => {
   const [updated, setUpdated] = useState(null);
   const router = useRouter();
   const { address } = router.query;
@@ -32,12 +32,7 @@ const Address = () => {
   return (
     <Fragment>
       <Row className="justify-content-center mx-3 mx-lg-15 mb-10">
-        <h1
-          className="display-4 text-white mt-lg-5 mb-0"
-          style={{ fontFamily: "HKModularBold" }}
-        >
-          Address Details
-        </h1>
+        <h1 className="display-4 text-white mt-lg-5 mb-0">Address Details</h1>
         <p className="text-white pb-2">Last updated: {updated}</p>
 
         <Card className="p-5 px-lg-10 blur text-white bg-gradient-gnus">

@@ -10,8 +10,11 @@ const Footer: React.FC = () => {
   return (
     <Fragment>
       <div
-        className="pt-lg-10 pt-5 footer bg-black"
-        style={{ boxShadow: "0 -5px 10px rgba(54, 237, 181, .3)" }}>
+        className="pt-lg-10 pt-5 footer blur"
+        style={{
+          boxShadow: "0 -5px 10px rgba(54, 237, 181, .3)",
+          backgroundColor: "#00000060",
+        }}>
         <Row className="justify-content-center mx-0 mx-lg-10">
           <Col lg={4} md={6} sm={7} className="text-center">
             <div className="pb-4 pb-lg-4">

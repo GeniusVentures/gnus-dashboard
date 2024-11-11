@@ -9,8 +9,9 @@ import { store } from "../store/store";
 import { IPFSWrapper } from "../context/ipfs/IPFSContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import type { AppProps } from "next/app";
 
-function GNUSDashboard({ Component, pageProps }) {
+const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
   const pageURL = process.env.baseURL + router.pathname;
   const title = "GNUS.AI Dashboard";
@@ -40,7 +41,13 @@ function GNUSDashboard({ Component, pageProps }) {
         }}
       />
       <Provider store={store}>
-        <ToastContainer autoClose={5000} pauseOnHover={true} />
+        <ToastContainer
+          pauseOnHover={true}
+          autoClose={3000}
+          hideProgressBar={false}
+          closeOnClick={true}
+          draggable={false}
+        />
         <IPFSWrapper>
           <Layout>
             <Component {...pageProps} />
@@ -49,6 +56,6 @@ function GNUSDashboard({ Component, pageProps }) {
       </Provider>
     </>
   );
-}
+};
 
 export default GNUSDashboard;

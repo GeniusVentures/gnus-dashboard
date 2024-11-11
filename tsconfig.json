@@ -26,7 +26,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "sub-components/job-order/OrderForm.jsx"
+    "sub-components/job-order/OrderForm.tsx"
   ],
   "exclude": ["node_modules"]
 }

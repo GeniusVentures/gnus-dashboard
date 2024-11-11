@@ -1,4 +1,14 @@
 // Navbar
+.navbar-collapse {
+  max-height: 0; /* Start closed */
+  transition:
+    max-height 0.4s ease-out,
+    background-color 0.3s ease-in-out;
+}
+
+.navbar-collapse.show {
+  max-height: 500px; /* Large enough to display full menu */
+}
 
 .navbar {
   padding: 0.625rem 1rem;
@@ -47,6 +57,7 @@
       z-index: 1;
     }
   }
+
   .navbar-toggler.collapsed {
     .top-bar {
       transform: rotate(0);

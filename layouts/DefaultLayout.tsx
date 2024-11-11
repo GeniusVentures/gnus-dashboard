@@ -1,8 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
 import NavbarDefault from "./navbars/NavbarDefault";
 import Footer from "./footers/Footer";
-import { Form } from "react-bootstrap";
-import ToggleSwitch from "../widgets/forms/ToggleSwitch";
 import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
 const DefaultLayout = (props) => {
@@ -17,7 +15,7 @@ const DefaultLayout = (props) => {
         }
       />
       <NavbarDefault />
-      <main>{props.children}</main>
+      <main style={{ minHeight: "100vh" }}>{props.children}</main>
       <Footer />
     </Fragment>
   );

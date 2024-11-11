@@ -1,3 +1,4 @@
+import { Image } from "react-bootstrap";
 import { toast } from "react-toastify";
 
 interface ToggleSwitchProps {
@@ -8,24 +9,14 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ label }) => {
   const handleToggleClick = (event: React.MouseEvent<HTMLInputElement>) => {
     event.preventDefault(); // Prevents the checkbox from toggling
     toast(`Mainnet coming soon...stay tuned!`, {
-      style: {
-        backgroundColor: "#00000050",
-        backdropFilter: "blur(10px)",
-        color: "#ffffff",
-        fontSize: "1rem",
-        border: "1px solid #36edb5",
-      },
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: false,
-      draggable: false,
+      className: "gnus-toast",
+      icon: <Image height={30} src="images/logo/gnus-icon.png" />,
     });
   };
   return (
     <div className="container">
       {label}
-      <div className="toggle-switch">
+      <div className="toggle-switch mt-2">
         <input
           type="checkbox"
           className="checkbox"

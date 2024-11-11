@@ -6,7 +6,6 @@ import NetworkCapacity from "sub-components/dashboard/NetworkCapacity";
 import SpentAssets from "sub-components/dashboard/SpentAssets";
 import { useRouter } from "next/router";
 import lastUpdate from "../../functions/time/lastUpdate";
-import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
 const Analytics: React.FC = () => {
   const router = useRouter();
@@ -30,7 +29,7 @@ const Analytics: React.FC = () => {
     <Fragment>
       <div>
         <div
-          className="w-100 fs-3 px-3 py-20"
+          className="w-100 fs-3 px-3 py-15"
           style={{
             minHeight: "100vh",
             alignContent: "center",
@@ -57,7 +56,7 @@ const Analytics: React.FC = () => {
               </div>
             )}
             <Row
-              className="border-bottom justify-content-center py-5"
+              className="border-bottom justify-content-center pb-5"
               style={{ maxWidth: "1570px" }}>
               <NetworkInfo />
             </Row>
