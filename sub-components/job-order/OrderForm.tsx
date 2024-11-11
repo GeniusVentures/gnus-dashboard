@@ -78,13 +78,14 @@ const OrderForm: React.FC = () => {
 
   const manualSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pattern = /^model[\w_]*\.[a-z]{2,4}$/i;
-    const pattern2 = /^model[\w_/]*\.[a-z]{2,4}$/i;
+    const pattern = /^[\w_]*\.[a-z]{2,4}$/i;
+    const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
     const locationGood = validator.isURL(location);
     const typeGood = models.find((model) => model.value === type);
     const modelFileGood =
       validator.isAscii(modelFile) && pattern.test(modelFile);
     let inputsGood: boolean = false;
+    let inputErrors: string[] = [];
 
     if (!locationGood) {
       document.getElementById("location").className = "form-control is-invalid";
@@ -122,18 +123,21 @@ const OrderForm: React.FC = () => {
       if (!validator.isAscii(image) || !pattern2.test(image)) {
         document.getElementById(`image${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`image${i}`);
       } else {
         document.getElementById(`image${i}`).className = "form-control";
       }
       if (!validator.isNumeric(blockLength, { no_symbols: true })) {
         document.getElementById(`blockLength${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`blockLength${i}`);
       } else {
         document.getElementById(`blockLength${i}`).className = "form-control";
       }
       if (!validator.isNumeric(blockLineStride, { no_symbols: true })) {
         document.getElementById(`blockLineStride${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`blockLineStride${i}`);
       } else {
         document.getElementById(`blockLineStride${i}`).className =
           "form-control";
@@ -141,12 +145,14 @@ const OrderForm: React.FC = () => {
       if (!validator.isNumeric(blockStride, { no_symbols: true })) {
         document.getElementById(`blockStride${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`blockStride${i}`);
       } else {
         document.getElementById(`blockStride${i}`).className = "form-control";
       }
       if (!validator.isNumeric(chunkLineStride, { no_symbols: true })) {
         document.getElementById(`chunkLineStride${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`chunkLineStride${i}`);
       } else {
         document.getElementById(`chunkLineStride${i}`).className =
           "form-control";
@@ -154,18 +160,21 @@ const OrderForm: React.FC = () => {
       if (!validator.isNumeric(chunkOffset, { no_symbols: true })) {
         document.getElementById(`chunkOffset${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`chunkOffset${i}`);
       } else {
         document.getElementById(`chunkOffset${i}`).className = "form-control";
       }
       if (!validator.isNumeric(chunkStride, { no_symbols: true })) {
         document.getElementById(`chunkStride${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`chunkStride${i}`);
       } else {
         document.getElementById(`chunkStride${i}`).className = "form-control";
       }
       if (!validator.isNumeric(subchunkHeight, { no_symbols: true })) {
         document.getElementById(`subchunkHeight${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`subchunkHeight${i}`);
       } else {
         document.getElementById(`subchunkHeight${i}`).className =
           "form-control";
@@ -173,20 +182,28 @@ const OrderForm: React.FC = () => {
       if (!validator.isNumeric(subchunkWidth, { no_symbols: true })) {
         document.getElementById(`subchunkWidth${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`subchunkWidth${i}`);
       } else {
         document.getElementById(`subchunkWidth${i}`).className = "form-control";
       }
       if (!validator.isNumeric(chunkCount, { no_symbols: true })) {
         document.getElementById(`chunkCount${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`chunkCount${i}`);
       } else {
         document.getElementById(`chunkCount${i}`).className = "form-control";
       }
       if (!validator.isNumeric(channels, { no_symbols: true })) {
         document.getElementById(`channels${i}`).className =
           "form-control is-invalid";
+        inputErrors.push(`channels${i}`);
       } else {
         document.getElementById(`channels${i}`).className = "form-control";
+      }
+      if (inputErrors.length === 0) {
+        inputsGood = true;
+      } else {
+        inputsGood = false;
       }
     }
 
@@ -448,18 +465,44 @@ const OrderForm: React.FC = () => {
                         </Form.Group>
                       </Col>
                     </Row>
+                    <div className="d-flex justify-content-between">
+                      {inputSections.length === index + 1 ? (
+                        <div className="d-flex">
+                          <Image
+                            height={25}
+                            src="images/icons/add-btn.png"
+                            className="btn-add"
+                            onClick={addInputSection}
+                          />
+                          <p className="ms-2 fs-4 fw-bold">Add Input</p>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                      {inputSections.length > 1 ? (
+                        <div className="d-flex">
+                          <Image
+                            height={25}
+                            src="images/icons/remove-btn.png"
+                            className="btn-add"
+                            onClick={() => {
+                              setInputSections((prevItems) =>
+                                prevItems.filter(
+                                  (_, index1) => index1 !== index
+                                )
+                              );
+                            }}
+                          />
+                          <p className="ms-2 fs-4 fw-bold">Remove Input</p>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
                   </Fragment>
                 ))}
               </div>
-              <div className="d-flex">
-                <Image
-                  height={25}
-                  src="images/icons/add-btn.png"
-                  className="btn-add"
-                  onClick={addInputSection}
-                />
-                <p className="ms-2 fs-4 fw-bold">Add Input</p>
-              </div>
+
               <Row className="justify-content-center mt-5">
                 <div style={{ width: "250px" }} className="mx-auto mx-sm-0">
                   <Button
@@ -492,7 +535,6 @@ const OrderForm: React.FC = () => {
                 <Button
                   type="submit"
                   style={{
-                    backgroundColor: " #00000000",
                     maxWidth: "350px",
                   }}
                   className="btn-gnus py-2 fs-4 w-100">

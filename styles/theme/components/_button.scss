@@ -21,6 +21,22 @@
     filter 0.1s ease-in-out; /* Smooth transitions */
 }
 
+.btn-remove {
+  width: auto;
+  height: auto;
+  background-image: url("../../../public/images/icons/remove-btn.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  border: none;
+  display: inline-block;
+  cursor: pointer;
+  filter: brightness(1); /* Start with normal brightness */
+  transition:
+    transform 0.1s,
+    filter 0.1s ease-in-out; /* Smooth transitions */
+}
+
 /* Hover state */
 .btn-gnus:hover {
   color: white !important;
@@ -48,15 +64,17 @@
 }
 
 /* Optional: Add hover effect */
-.btn-add:hover {
-  filter: brightness(1.1); /* Lighten on hover */
+.btn-add:hover,
+.btn-remove:active {
+  filter: brightness(1.1);
 }
 
-.btn-add:active {
+.btn-add:active,
+.btn-remove:active {
   color: white !important;
 
-  transform: scale(0.98); /* Slightly shrinks the button when clicked */
-  filter: brightness(0.98); /* Darkens the button even more on click */
+  transform: scale(0.98);
+  filter: brightness(0.98);
 }
 
 // btn play
