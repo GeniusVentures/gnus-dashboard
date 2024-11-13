@@ -7,7 +7,11 @@
 $overflow-y: auto, hidden !default;
 
 @each $value in $overflow-y {
-    .overflow-y-#{$value} {
-        overflow-y: $value !important;
-    }
+  .overflow-y-#{$value} {
+    overflow-y: $value !important;
+  }
+}
+
+.row {
+  --fc-gutter-x: 0;
 }

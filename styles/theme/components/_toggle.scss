@@ -1,0 +1,72 @@
+.toggle-switch {
+  position: relative;
+  width: 75px;
+  display: inline-block;
+  text-align: left;
+}
+
+.checkbox {
+  display: none;
+}
+
+.label {
+  display: block;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid $primary;
+  border-radius: 20px;
+}
+.inner {
+  display: block;
+  width: 200%;
+  margin-left: -100%;
+  transition: margin 0.2s ease-in 0s;
+}
+.inner:before,
+.inner:after {
+  float: left;
+  width: 50%;
+  height: 28px;
+  padding: 0;
+  line-height: 28px;
+  color: #fff;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+.inner:before {
+  content: "Mainnet";
+  padding-left: 5px;
+  backdrop-filter: blur(10px);
+  background-color: #00000050;
+  color: #fff;
+  font-size: 0.7rem;
+}
+.inner:after {
+  content: "Testnet";
+  padding-right: 7px;
+  background-color: #00000050;
+  backdrop-filter: blur(10px);
+  color: #fff;
+  text-align: right;
+  font-size: 0.7rem;
+}
+.switch {
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: 5px;
+  background: #fff;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 45px;
+  border: 0 solid #bbb;
+  border-radius: 20px;
+  transition: all 0.2s ease-in 0s;
+}
+.checkbox:checked + .label .inner {
+  margin-left: 0;
+}
+.checkbox:checked + .label .switch {
+  right: 0px;
+}

@@ -5,6 +5,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import validator from "validator";
 import models from "data/orderForm/models";
 import { toast } from "react-toastify";
+import types from "data/orderForm/types";
+
 const OrderForm: React.FC = () => {
   const [parent] = useAutoAnimate();
   const web3Signer = useRef(null);
@@ -30,6 +32,8 @@ const OrderForm: React.FC = () => {
       channels: "",
     },
   ]);
+  const pattern = /^[\w_]*\.[a-z]{2,4}$/i;
+  const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
 
   useEffect(() => {
     w3getter();
@@ -78,8 +82,6 @@ const OrderForm: React.FC = () => {
 
   const manualSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
-    const pattern = /^[\w_]*\.[a-z]{2,4}$/i;
-    const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
     const locationGood = validator.isURL(location);
     const typeGood = models.find((model) => model.value === type);
     const modelFileGood =
@@ -200,11 +202,11 @@ const OrderForm: React.FC = () => {
       } else {
         document.getElementById(`channels${i}`).className = "form-control";
       }
-      if (inputErrors.length === 0) {
-        inputsGood = true;
-      } else {
-        inputsGood = false;
-      }
+    }
+    if (inputErrors.length === 0) {
+      inputsGood = true;
+    } else {
+      inputsGood = false;
     }
 
     if (locationGood && typeGood !== undefined && modelFileGood && inputsGood) {
@@ -221,6 +223,160 @@ const OrderForm: React.FC = () => {
 
   const fileSubmitHandler = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (file) {
+      if (
+        file.type === "application/json" &&
+        file.name.split(".")[1] === "json"
+      ) {
+        // Create a FileReader to read the contents of the file
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            // Parse the file content as JSON
+            const { data, model, input } = JSON.parse(
+              event.target.result as string
+            );
+
+            const locationGood = validator.isURL(data.URL);
+            const typeGood = types.find((type) => type === data.type);
+            const modelFileGood =
+              validator.isAscii(model.file) && pattern.test(model.file);
+            let inputsGood: boolean = false;
+            let inputErrors: string[] = [];
+
+            for (let i = 0; i < input.length; i++) {
+              const {
+                image,
+                block_len,
+                block_line_stride,
+                block_stride,
+                chunk_line_stride,
+                chunk_offset,
+                chunk_stride,
+                chunk_subchunk_height,
+                chunk_subchunk_width,
+                chunk_count,
+                channels,
+              } = input[i];
+
+              if (!validator.isAscii(image) || !pattern2.test(image)) {
+                inputErrors.push(`image${i}`);
+              }
+              if (
+                !validator.isNumeric(block_len.toString(), { no_symbols: true })
+              ) {
+                inputErrors.push(`blockLength${i}`);
+              }
+              if (
+                !validator.isNumeric(block_line_stride.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`blockLineStride${i}`);
+              }
+              if (
+                !validator.isNumeric(block_stride.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`blockStride${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_line_stride.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`chunkLineStride${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_offset.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`chunkOffset${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_stride.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`chunkStride${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_subchunk_height.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`subchunkHeight${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_subchunk_width.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`subchunkWidth${i}`);
+              }
+              if (
+                !validator.isNumeric(chunk_count.toString(), {
+                  no_symbols: true,
+                })
+              ) {
+                inputErrors.push(`chunkCount${i}`);
+              }
+              if (
+                !validator.isNumeric(channels.toString(), { no_symbols: true })
+              ) {
+                inputErrors.push(`channels${i}`);
+              }
+            }
+
+            if (inputErrors.length === 0) {
+              inputsGood = true;
+            } else {
+              inputsGood = false;
+            }
+            if (
+              locationGood &&
+              typeGood !== undefined &&
+              modelFileGood &&
+              inputsGood &&
+              inputErrors.length === 0
+            ) {
+              console.log("all good");
+            } else {
+              console.error("Invalid JSON file:");
+              toast.error("JSON file has invalid format.", {
+                className: "gnus-toast",
+                icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+              });
+            }
+          } catch (error) {
+            console.error("Invalid JSON file:", error);
+            toast.error("JSON file has invalid format.", {
+              className: "gnus-toast",
+              icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+            });
+            document.getElementById("fileInput").classList.add("is-invalid");
+          }
+        };
+
+        // Read the file as text
+        reader.readAsText(file);
+      } else {
+        toast.error("Submitted file must be in JSON format.", {
+          className: "gnus-toast",
+          icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+        });
+        document.getElementById("fileInput").classList.add("is-invalid");
+      }
+    } else {
+      toast.error("Select a file in JSON format to submit.", {
+        className: "gnus-toast",
+        icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+      });
+      document.getElementById("fileInput").classList.add("is-invalid");
+    }
   };
 
   return (
@@ -229,7 +385,29 @@ const OrderForm: React.FC = () => {
         ref={parent}
         style={{ width: "1000px" }}
         className="mt-8 shadow-lg text-white">
-        <Form.Group id="radios">
+        <Form.Group
+          id="radios"
+          onChange={() => {
+            setInputSections([
+              {
+                image: "",
+                blockLength: "",
+                blockLineStride: "",
+                blockStride: "",
+                chunkLineStride: "",
+                chunkOffset: "",
+                chunkStride: "",
+                subchunkHeight: "",
+                subchunkWidth: "",
+                chunkCount: "",
+                channels: "",
+              },
+            ]);
+            setFile(null);
+            setModelFile("");
+            setLocation("");
+            setType("");
+          }}>
           <Row className="text-center  pt-5">
             <Form.Label className="text-white fs-4">
               Would you like to upload your request or enter the details
@@ -527,7 +705,12 @@ const OrderForm: React.FC = () => {
                   <Form.Control
                     id="fileInput"
                     type="file"
-                    onChange={(e: any) => setFile(e.target.files[0])}
+                    onChange={(e: any) => {
+                      setFile(e.target.files[0]);
+                      document
+                        .getElementById("fileInput")
+                        .classList.remove("is-invalid");
+                    }}
                   />
                 </div>
               </Form.Group>

@@ -31,6 +31,7 @@
 @import "./components/_chat-app.scss";
 @import "./components/_theme-switch.scss";
 @import "./components/_pagination.scss";
+@import "./components/_toggle.scss";
 
 // helpers classes
 @import "./helpers/_text-truncate.scss";
@@ -48,7 +49,7 @@
 @import "./vendor/modal-video/_modal-video.scss";
 @import "./vendor/react-toastify/main.scss";
 @import "./vendor/nouislider/nouislider";
-@import "./vendor/map/map"; 
+@import "./vendor/map/map";
 @import "./vendor/lightbox/lightbox";
 @import "./vendor/dropzone/_dropzone.scss";
 @import "./vendor/fullcalendar/_calendar.scss";
