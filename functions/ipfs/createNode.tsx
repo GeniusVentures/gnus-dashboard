@@ -32,7 +32,7 @@ const GeniusArray = koffi.struct('GeniusArray', {
   const GeniusAddress = koffi.struct('GeniusAddress', {
 	address: koffi.array('char', 32), // Assuming a fixed size of 32 bytes for the address
   });
-  
+
 const GeniusSDKInit = GeniusSDK.func('const char* GeniusSDKInit(const char*, const char*)');
 const GeniusSDKProcess = GeniusSDK.func('void GeniusSDKProcess(const char*, unsigned long long)');
 const GeniusSDKGetBalance = GeniusSDK.func('uint64_t GeniusSDKGetBalance()');
@@ -77,10 +77,35 @@ const createNode = async () => {
 
 	  console.log('Balance:', getBalance());
 		const transactions = getTransactions();
-		console.log('Transactions:', transactions);
+
+
+
+
+		// Decode the GeniusMatrix
+		const transactionList = [];
+
+		// Decode the GeniusArray collection
+		const geniusArrays = koffi.decode(transactions.ptr, GeniusArray, transactions.size);
+	  
+		// Loop through each GeniusArray entry
+		for (let i = 0; i < transactions.size; i++) {
+		  const entry = geniusArrays[i]; // Get each GeniusArray entry
+		  const dataBuffer = koffi.decode(entry.ptr, 'uint8_t', entry.size); // Decode the raw data
+	  
+		  // Convert the data to a readable format
+		  const readableData = Buffer.from(dataBuffer).toString('hex'); // Or 'utf8' for text
+	  
+		  transactionList.push(readableData);
+		}
+	  
+		console.log('Readable Transactions:', transactionList);
+	
+	  
+		
+
 		// Free memory for transactions
 		freeTransactions(transactions);
-		mintTokens(1000);
+		//mintTokens(1000);
 		console.log('Address:', getAddress());
 };
 
