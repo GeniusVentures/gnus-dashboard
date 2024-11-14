@@ -2,8 +2,7 @@ import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
 let keys: string[] = [];
 
-const transferMsg = (transfer: any, key: string) => {
-  if (!keys.includes(key)) {
+const transferMsg = (transfer: any) => {
     let transaction = {
       txHash: String.fromCharCode(...transfer.dagStruct.dataHash), //previous hash until we have actual hash
       type: "Transfer",
@@ -12,8 +11,6 @@ const transferMsg = (transfer: any, key: string) => {
     };
 
     updateTD([transaction, ...transactionData].slice(0, 200));
-    keys.push(key);
-  }
 };
 
 export default transferMsg;

@@ -2,8 +2,7 @@ import { updateED, escrowData } from "../../data/prepared/escrowInfo";
 
 let keys: string[] = [];
 
-const escrowMsg = (escrow: any, key: string) => {
-  if (!keys.includes(key)) {
+const escrowMsg = (escrow: any) => {
     let msg = {
       txHash: String.fromCharCode(...escrow.dagStruct.dataHash),
       type: "Escrow",
@@ -14,8 +13,7 @@ const escrowMsg = (escrow: any, key: string) => {
     };
 
     updateED([msg, ...escrowData].slice(0, 200));
-    keys.push(key);
-  }
+  
 };
 
 export default escrowMsg;

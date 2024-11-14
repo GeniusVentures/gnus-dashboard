@@ -1,5 +1,32 @@
 import koffi from 'koffi';
 import path from 'path';
+const {
+	DAGStruct,
+	DAGWrapper,
+	TransferTx,
+	ProcessingTx,
+	MintTx,
+	EscrowTx,
+	UTXOTxParams,
+	TransferOutput,
+	TransferUTXOInput,
+} = require("data/protobuf/SGTransaction");
+const {
+	Delta, 
+	Element
+} = require("data/protobuf/delta");
+const {
+	BlockID,
+	BlockHashData,
+	BlockHeaderData,
+	BlockPayloadData,
+} = require("data/protobuf/SGBlocks");
+import transferMsg from "../../functions/messages/transfer";
+import mintMsg from "../../functions/messages/mint";
+import processingMsg from "../../functions/messages/processing";
+import blockMsg from "../../functions/messages/block";
+import escrowMsg from "../../functions/messages/escrow";
+
 let libraryPath;
 const basePath = path.join(process.cwd(), 'data'); // Base path relative to project root
 switch (process.platform) {
@@ -54,59 +81,111 @@ export const transferTokens = GeniusSDKTransferTokens;
 let node = null;
 
 let requestout = 0;
+let transactionList = [];
 const createNode = async () => {
 	try {
 		// Set up the required base path and Ethereum private key
 		const basePath = path.join(process.cwd(), 'data') + "/"; 
 		const ethPrivateKey = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'; // Replace with the actual private key
-	
+
 		// Initialize GeniusSDK
 		const result = GeniusSDKInit(basePath, ethPrivateKey);
-	
+
 		if (!result) {
-		  throw new Error('GeniusSDK initialization failed');
+			throw new Error('GeniusSDK initialization failed');
 		}
-	
+
 		console.log('GeniusSDK initialized successfully:', result);
-	
-		// You can now set up your node object or perform other actions
+
 		node = { initialized: true, details: result };
-	  } catch (e) {
+	} catch (e) {
 		console.error('Error initializing GeniusSDK:', e);
-	  }
+	}
 
-	  console.log('Balance:', getBalance());
-		const transactions = getTransactions();
+	//console.log('Balance:', getBalance());
 
+	CheckTransactions();
 
-
-
-		// Decode the GeniusMatrix
-		const transactionList = [];
-
-		// Decode the GeniusArray collection
-		const geniusArrays = koffi.decode(transactions.ptr, GeniusArray, transactions.size);
-	  
-		// Loop through each GeniusArray entry
-		for (let i = 0; i < transactions.size; i++) {
-		  const entry = geniusArrays[i]; // Get each GeniusArray entry
-		  const dataBuffer = koffi.decode(entry.ptr, 'uint8_t', entry.size); // Decode the raw data
-	  
-		  // Convert the data to a readable format
-		  const readableData = Buffer.from(dataBuffer).toString('hex'); // Or 'utf8' for text
-	  
-		  transactionList.push(readableData);
-		}
-	  
-		console.log('Readable Transactions:', transactionList);
-	
-	  
-		
-
-		// Free memory for transactions
-		freeTransactions(transactions);
-		//mintTokens(1000);
-		console.log('Address:', getAddress());
+	//mintTokens(1000);
+	//console.log('Address:', getAddress());
 };
+
+function CheckTransactions() {
+	const transactions = getTransactions();
+
+	// Decode the GeniusArray collection
+	const geniusArrays = koffi.decode(transactions.ptr, GeniusArray, transactions.size);
+	
+	// Loop through each GeniusArray entry
+	for (let i = 0; i < transactions.size; i++) {
+		const entry = geniusArrays[i]; // Get each GeniusArray entry
+		const dataBuffer = koffi.decode(entry.ptr, 'uint8_t', entry.size); // Decode the raw data
+	  
+		// Check if dataBuffer already exists in transactionList
+		const exists = transactionList.some(existingBuffer => Buffer.compare(Buffer.from(existingBuffer), Buffer.from(dataBuffer)) === 0);
+	  
+		if (!exists) {
+		  transactionList.push(dataBuffer); // Add the new transaction to the list
+		  ParseTransaction(dataBuffer); // Process the new transaction
+		}
+	}
+	//console.log('Readable Transactions:', transactionList);
+
+	// Free memory for transactions
+	freeTransactions(transactions);
+}
+
+function ParseTransaction(transactionData: Uint8Array) {
+	//Try Decoding as Mint
+	try{
+		const mint = MintTx.fromBinary(transactionData);
+		mintMsg(mint);
+		return;
+	}
+	catch(e)
+	{
+		console.log("Cannot Decode as mint" + e)
+	}
+	//Try decoding as processing
+	try{
+		const processing = ProcessingTx.fromBinary(transactionData);
+		processingMsg(processing);
+		return;
+	}
+	catch(e)
+	{
+		console.log("Cannot Decode as processing" + e)
+	}
+	//Try decoding as Escrow
+	try{
+		const escrow = EscrowTx.fromBinary(transactionData);
+		escrowMsg(escrow);
+		return;
+	}
+	catch(e)
+	{
+		console.log("Cannot Decode as escrow" + e)
+	}
+	//Try decoding as transfer
+	try{
+		const transfer = TransferTx.fromBinary(transactionData);
+		transferMsg(transfer);
+		return;
+	}
+	catch(e)
+	{
+		console.log("Cannot Decode as transfer" + e)
+	}
+	//Try Decoding as Block TX
+	// try{
+	// 	const block = BlockPayloadData.fromBinary(transactionData);
+	// 	blockMsg(block);
+	// 	return;
+	// }
+	// catch(e)
+	// {
+	// 	console.log("Cannot Decode as block tx" + e)
+	// }
+}
 
 export default createNode;

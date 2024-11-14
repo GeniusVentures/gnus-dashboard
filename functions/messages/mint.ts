@@ -2,9 +2,8 @@ import { updateTD, transactionData } from "data/prepared/transactionInfo";
 
 let keys: string[] = [];
 
-const mintMsg = (mint: any, key: string) => {
+const mintMsg = (mint: any) => {
 	try {
-		if (!keys.includes(key)) {
 			let transaction = {
 				txHash: String.fromCharCode(...mint.dagStruct.dataHash),
 				type: "Mint",
@@ -13,8 +12,6 @@ const mintMsg = (mint: any, key: string) => {
 			};
 
 			updateTD([transaction, ...transactionData].slice(0, 200));
-			keys.push(key);
-		}
 	} catch (err) {
 		console.log(err);
 	}
