@@ -122,11 +122,14 @@ function CheckTransactions() {
 		const dataBuffer = koffi.decode(entry.ptr, 'uint8_t', entry.size); // Decode the raw data
 	  
 		// Check if dataBuffer already exists in transactionList
-		const exists = transactionList.some(existingBuffer => Buffer.compare(Buffer.from(existingBuffer), Buffer.from(dataBuffer)) === 0);
-	  
+		const exists = transactionList.some(existingBuffer => 
+			existingBuffer.length === dataBuffer.length &&
+			existingBuffer.every((value, index) => value === dataBuffer[index])
+		  );
+
 		if (!exists) {
-		  transactionList.push(dataBuffer); // Add the new transaction to the list
-		  ParseTransaction(dataBuffer); // Process the new transaction
+		  transactionList.push(dataBuffer); 
+		  ParseTransaction(dataBuffer); 
 		}
 	}
 	//console.log('Readable Transactions:', transactionList);
@@ -187,5 +190,21 @@ function ParseTransaction(transactionData: Uint8Array) {
 	// 	console.log("Cannot Decode as block tx" + e)
 	// }
 }
+
+function runGeniusSDKProcess(jsonData, amount) {
+	try {
+	  // Ensure parameters are valid
+	  if (typeof jsonData !== 'string' || typeof amount !== 'number') {
+		throw new Error('Invalid arguments: jsonData must be a string, amount must be a number');
+	  }
+  
+	  // Call the GeniusSDKProcess C function
+	  GeniusSDKProcess(jsonData, BigInt(amount)); // Convert amount to BigInt if needed for C compatibility
+  
+	  console.log(`Processed successfully: JSON Data=${jsonData}, Amount=${amount}`);
+	} catch (error) {
+	  console.error(`Error running GeniusSDKProcess: ${error.message}`);
+	}
+  }
 
 export default createNode;
