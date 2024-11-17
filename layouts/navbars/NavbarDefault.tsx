@@ -56,13 +56,15 @@ const NavbarDefault: React.FC = () => {
             <span className="icon-bar bottom-bar"></span>
           </Navbar.Toggle>
 
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="ms-3 me-4">
+          <Navbar.Collapse
+            id="basic-navbar-nav"
+            className="justify-content-between mb-2 mb-lg-0">
+            <Nav className="ms-3 me-4 mt-3 mt-lg-0">
               {NavbarDefaultRoutes.map((item, index) => {
                 if (item.children === undefined) {
                   return (
                     <Nav.Link
-                      className="nladj text-primary"
+                      className="text-primary"
                       key={index}
                       as={Link}
                       href={item.link}>
@@ -74,10 +76,10 @@ const NavbarDefault: React.FC = () => {
                 }
               })}
             </Nav>
-            <Nav className="mx-auto">
+            <Nav className="">
               <Search />
             </Nav>
-            <Nav className="mx-auto">
+            <Nav className="">
               <Price />
             </Nav>
             <Nav className="navbar-nav navbar-right-wrap nav-top-wrap d-none d-lg-block">

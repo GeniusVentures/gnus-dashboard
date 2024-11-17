@@ -48,14 +48,19 @@ const OrderForm: React.FC = () => {
 
   useEffect(() => {
     if (!isConnected) {
-      open({ view: "Connect" }).then(() => {
-        if (
-          selectedNetworkId.split(":")[1] !==
-          config.networks.sepolia.chainId.toString()
-        ) {
-          open({ view: "Networks" });
-        }
-      });
+      open({ view: "Connect" })
+        .then(() => {
+          if (
+            selectedNetworkId.split(":")[1] !==
+            config.networks.sepolia.chainId.toString()
+          ) {
+            open({ view: "Networks" });
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          setModalStatus("closed");
+        });
     } else {
       console.log(
         selectedNetworkId.split(":")[1],
@@ -80,6 +85,8 @@ const OrderForm: React.FC = () => {
     if (events.data.event === "MODAL_OPEN") {
       setModalStatus("open");
     } else if (events.data.event === "MODAL_CLOSE") {
+      setModalStatus("closed");
+    } else if (events.data.event === "CONNECT_SUCCESS" && !isConnected) {
       setModalStatus("closed");
     }
   }, [events]);
