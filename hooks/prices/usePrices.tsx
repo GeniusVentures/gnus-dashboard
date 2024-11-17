@@ -6,6 +6,7 @@ interface Prices {
   percentChange24h: number | null;
   gasPrice: number | null;
   error: string | null;
+  updated: string | null;
 }
 
 export const usePrices = (): Prices => {
@@ -14,6 +15,7 @@ export const usePrices = (): Prices => {
     percentChange24h: null,
     gasPrice: null,
     error: null,
+    updated: null,
   });
 
   const fetchPrices = async () => {
@@ -66,6 +68,7 @@ export const usePrices = (): Prices => {
         percentChange24h,
         gasPrice: gasPrice,
         error: null,
+        updated: new Date().toString(),
       });
     } catch (error) {
       console.error("Error fetching prices:", error);

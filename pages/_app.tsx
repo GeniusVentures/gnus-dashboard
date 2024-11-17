@@ -13,6 +13,8 @@ import "react-toastify/dist/ReactToastify.css";
 import type { AppProps } from "next/app";
 import { Web3Modal } from "context/wallet/Web3Modal";
 import { PricesWrapper } from "context/prices/PricesContext";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 
 const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
@@ -53,14 +55,24 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
         />
         <Web3Modal>
           <PricesWrapper>
-            {/* <IPFSWrapper> */}
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-            {/* </IPFSWrapper> */}
+            <IPFSWrapper>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </IPFSWrapper>
           </PricesWrapper>
         </Web3Modal>
       </Provider>
+      <Tooltip
+        id="price-gas-tooltip"
+        place="bottom"
+        delayHide={300}
+        delayShow={300}
+        style={{ zIndex: 5000 }}
+        className="tooltip-custom"
+        offset={20}
+        role="tooltip"
+      />
     </>
   );
 };

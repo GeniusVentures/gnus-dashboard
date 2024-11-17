@@ -37,19 +37,6 @@
 @import "./helpers/_text-truncate.scss";
 
 // Vendor classes
-@import "./vendor/odometer/_odometer.scss";
-@import "./vendor/flatpickr/_flatpickr.scss";
-@import "./vendor/quill/_quill-snow.scss";
-@import "./vendor/prism/_prism.scss";
-@import "./vendor/stepper/_stepper.scss";
-@import "./vendor/apex-chart/_apexchart.scss";
-@import "./vendor/tag-input/_tag-input.scss";
-@import "./vendor/slick-slider/_slick_slider.scss";
-@import "./vendor/tippyjs/_tippy.scss";
-@import "./vendor/modal-video/_modal-video.scss";
 @import "./vendor/react-toastify/main.scss";
-@import "./vendor/nouislider/nouislider";
-@import "./vendor/map/map";
-@import "./vendor/lightbox/lightbox";
-@import "./vendor/dropzone/_dropzone.scss";
-@import "./vendor/fullcalendar/_calendar.scss";
+@import "./vendor/react-tooltip/_tooltips.scss";
+@import "./vendor/tag-input/_tag-input.scss";

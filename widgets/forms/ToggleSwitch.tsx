@@ -14,7 +14,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ label }) => {
     });
   };
   return (
-    <div className="container">
+    <div>
       <div className="toggle-switch mt-2">
         <input
           type="checkbox"

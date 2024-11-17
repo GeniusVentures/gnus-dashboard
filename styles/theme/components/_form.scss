@@ -59,20 +59,53 @@ input::-webkit-inner-spin-button {
   color: #fff;
 }
 
-.form-control {
+.form-control,
+.form-select {
   margin-bottom: 20px;
   background-color: #00000060 !important;
   backdrop-filter: blur(10px) !important;
   color: #fff !important;
+  border: solid 1px white;
+  box-shadow: 0 0 3px 1px $dark !important;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.form-select {
-  background-color: #00000060 !important;
-  backdrop-filter: blur(10px) !important;
-  color: #fff;
+.form-control:focus,
+.form-select:focus {
+  border-color: $primary;
+  box-shadow: 0 0 5px 2px $primary !important;
 }
 
 .form-select {
   box-shadow: none !important;
   margin-bottom: 20px;
+}
+
+.form-check-input {
+  background-color: white;
+  box-shadow: 0 0 3px 1px $dark !important;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  background-color: #fff; /* Green background */
+  color: $dark; /* White text */
+  border: none; /* Remove borders */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px 20px; /* Add padding */
+  font-size: 16px; /* Adjust font size */
+  cursor: pointer; /* Pointer cursor */
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+input[type="file"]:hover::-webkit-file-upload-button {
+  background-color: white !important; /* Green background */
+}
+input[type="file"]:hover {
+  box-shadow: 0 0 5px 2px $primary !important;
+  border-color: $primary;
 }

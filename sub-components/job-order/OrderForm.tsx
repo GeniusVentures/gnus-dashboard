@@ -13,6 +13,7 @@ import {
   useWeb3ModalState,
 } from "@web3modal/ethers/react";
 import config from "config/config";
+import Link from "next/link";
 const OrderForm: React.FC = () => {
   const [parent] = useAutoAnimate();
   const { open, close } = useWeb3Modal();
@@ -86,7 +87,7 @@ const OrderForm: React.FC = () => {
       setModalStatus("open");
     } else if (events.data.event === "MODAL_CLOSE") {
       setModalStatus("closed");
-    } else if (events.data.event === "CONNECT_SUCCESS" && !isConnected) {
+    } else if (events.data.event === "CONNECT_SUCCESS") {
       setModalStatus("closed");
     }
   }, [events]);
@@ -442,54 +443,67 @@ const OrderForm: React.FC = () => {
           </Row>
         )}
         {modalStatus === "closed" && isConnected && (
-          <Form.Group
-            id="radios"
-            onChange={() => {
-              setInputSections([
-                {
-                  image: "",
-                  blockLength: "",
-                  blockLineStride: "",
-                  blockStride: "",
-                  chunkLineStride: "",
-                  chunkOffset: "",
-                  chunkStride: "",
-                  subchunkHeight: "",
-                  subchunkWidth: "",
-                  chunkCount: "",
-                  channels: "",
-                },
-              ]);
-              setFile(null);
-              setModelFile("");
-              setLocation("");
-              setType("");
-            }}>
-            <Row className="text-center  pt-5">
-              <Form.Label className="text-white fs-4">
-                Would you like to upload your request or enter the details
-                manually?
-              </Form.Label>
+          <div>
+            <Row className="text-center mb-3">
+              <span>
+                Connected Address:{" "}
+                <Link
+                  className="text-primary"
+                  href=""
+                  onClick={() => open({ view: "Account" })}>
+                  {address}
+                </Link>
+              </span>
             </Row>
-            <Row className="mb-5">
-              <div className="d-flex justify-content-center text-white gap-5">
-                <Form.Check
-                  type="radio"
-                  label="Upload"
-                  name="formRadios"
-                  id="formRadios1"
-                  onClick={() => setRadios("upload")}
-                />
-                <Form.Check
-                  type="radio"
-                  label="Enter Manually"
-                  name="formRadios"
-                  id="formRadios2"
-                  onClick={() => setRadios("manual")}
-                />
-              </div>
-            </Row>
-          </Form.Group>
+            <Form.Group
+              id="radios"
+              onChange={() => {
+                setInputSections([
+                  {
+                    image: "",
+                    blockLength: "",
+                    blockLineStride: "",
+                    blockStride: "",
+                    chunkLineStride: "",
+                    chunkOffset: "",
+                    chunkStride: "",
+                    subchunkHeight: "",
+                    subchunkWidth: "",
+                    chunkCount: "",
+                    channels: "",
+                  },
+                ]);
+                setFile(null);
+                setModelFile("");
+                setLocation("");
+                setType("");
+              }}>
+              <Row className="text-center">
+                <Form.Label className="text-white fs-4">
+                  Would you like to upload your request or enter the details
+                  manually?
+                </Form.Label>
+              </Row>
+              <Row className="mb-5">
+                <div className="d-flex justify-content-center text-white gap-5">
+                  <Form.Check
+                    type="radio"
+                    label="Upload"
+                    name="formRadios"
+                    id="formRadios1"
+                    onClick={() => setRadios("upload")}
+                  />
+                  <Form.Check
+                    type="radio"
+                    label="Enter Manually"
+                    name="formRadios"
+                    id="formRadios2"
+                    onClick={() => setRadios("manual")}
+                  />
+                </div>
+              </Row>
+            </Form.Group>
+          </div>
         )}
         {radios === "manual" && (
           <Row>

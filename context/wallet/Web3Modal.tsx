@@ -18,6 +18,7 @@ createWeb3Modal({
   chains: [networks.sepolia],
   ethersConfig,
   enableOnramp: false,
+  enableSwaps: false,
   defaultChain: networks.sepolia,
   projectId,
   themeVariables: {

@@ -7,6 +7,7 @@ interface PricesContextValue {
   percentChange24h: number | null;
   gasPrice: number | null;
   error: string | null;
+  updated: string | null;
 }
 
 // Create the context
