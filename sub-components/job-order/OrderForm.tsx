@@ -6,9 +6,19 @@ import validator from "validator";
 import models from "data/orderForm/models";
 import { toast } from "react-toastify";
 import types from "data/orderForm/types";
-
+import {
+  useWeb3Modal,
+  useWeb3ModalAccount,
+  useWeb3ModalEvents,
+  useWeb3ModalState,
+} from "@web3modal/ethers/react";
+import config from "config/config";
 const OrderForm: React.FC = () => {
   const [parent] = useAutoAnimate();
+  const { open, close } = useWeb3Modal();
+  const { address, chainId, isConnected } = useWeb3ModalAccount();
+  const events = useWeb3ModalEvents();
+  const { selectedNetworkId } = useWeb3ModalState();
   const web3Signer = useRef(null);
   const web3Address = useRef(null);
   const [showSpinner, setShowSpinner] = useState<boolean>(false);
@@ -32,22 +42,47 @@ const OrderForm: React.FC = () => {
       channels: "",
     },
   ]);
+  const [modalStatus, setModalStatus] = useState<string>("");
   const pattern = /^[\w_]*\.[a-z]{2,4}$/i;
   const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
 
   useEffect(() => {
-    w3getter();
+    if (!isConnected) {
+      open({ view: "Connect" }).then(() => {
+        if (
+          selectedNetworkId.split(":")[1] !==
+          config.networks.sepolia.chainId.toString()
+        ) {
+          open({ view: "Networks" });
+        }
+      });
+    } else {
+      console.log(
+        selectedNetworkId.split(":")[1],
+        config.networks.sepolia.chainId.toString()
+      );
+      if (
+        selectedNetworkId.split(":")[1] !==
+        config.networks.sepolia.chainId.toString()
+      ) {
+        open({ view: "Networks" });
+      }
+    }
+    setModalStatus("closed");
   }, []);
 
-  // Initialize web3
-  const w3getter = async () => {
-    await (window as any).ethereum.enable();
-    let w3p = new ethers.BrowserProvider((window as any).ethereum);
-    let signer = await w3p.getSigner();
-    web3Signer.current = signer;
-    const web3Add = await signer.getAddress();
-    web3Address.current = web3Add;
-  };
+  useEffect(() => {
+    console.log(address, chainId, isConnected);
+  }, [address, chainId, isConnected]);
+
+  useEffect(() => {
+    console.log(events.data.event);
+    if (events.data.event === "MODAL_OPEN") {
+      setModalStatus("open");
+    } else if (events.data.event === "MODAL_CLOSE") {
+      setModalStatus("closed");
+    }
+  }, [events]);
 
   // Function to add a new input section
   const addInputSection = () => {
@@ -385,54 +420,70 @@ const OrderForm: React.FC = () => {
         ref={parent}
         style={{ width: "1000px" }}
         className="mt-8 shadow-lg text-white">
-        <Form.Group
-          id="radios"
-          onChange={() => {
-            setInputSections([
-              {
-                image: "",
-                blockLength: "",
-                blockLineStride: "",
-                blockStride: "",
-                chunkLineStride: "",
-                chunkOffset: "",
-                chunkStride: "",
-                subchunkHeight: "",
-                subchunkWidth: "",
-                chunkCount: "",
-                channels: "",
-              },
-            ]);
-            setFile(null);
-            setModelFile("");
-            setLocation("");
-            setType("");
-          }}>
-          <Row className="text-center  pt-5">
-            <Form.Label className="text-white fs-4">
-              Would you like to upload your request or enter the details
-              manually?
-            </Form.Label>
-          </Row>
-          <Row className="mb-5">
-            <div className="d-flex justify-content-center text-white gap-5">
-              <Form.Check
-                type="radio"
-                label="Upload"
-                name="formRadios"
-                id="formRadios1"
-                onClick={() => setRadios("upload")}
-              />
-              <Form.Check
-                type="radio"
-                label="Enter Manually"
-                name="formRadios"
-                id="formRadios2"
-                onClick={() => setRadios("manual")}
-              />
+        {modalStatus === "closed" && !isConnected && (
+          <Row className="justify-content-center">
+            <div style={{ width: "350px" }} className="mx-auto mx-sm-0 fs-3">
+              <Button
+                onClick={() => open()}
+                style={{
+                  backgroundColor: " #00000000",
+                }}
+                className="btn-gnus py-2 w-100 text-center">
+                Connect Wallet to Continue
+              </Button>
             </div>
           </Row>
-        </Form.Group>
+        )}
+        {modalStatus === "closed" && isConnected && (
+          <Form.Group
+            id="radios"
+            onChange={() => {
+              setInputSections([
+                {
+                  image: "",
+                  blockLength: "",
+                  blockLineStride: "",
+                  blockStride: "",
+                  chunkLineStride: "",
+                  chunkOffset: "",
+                  chunkStride: "",
+                  subchunkHeight: "",
+                  subchunkWidth: "",
+                  chunkCount: "",
+                  channels: "",
+                },
+              ]);
+              setFile(null);
+              setModelFile("");
+              setLocation("");
+              setType("");
+            }}>
+            <Row className="text-center  pt-5">
+              <Form.Label className="text-white fs-4">
+                Would you like to upload your request or enter the details
+                manually?
+              </Form.Label>
+            </Row>
+            <Row className="mb-5">
+              <div className="d-flex justify-content-center text-white gap-5">
+                <Form.Check
+                  type="radio"
+                  label="Upload"
+                  name="formRadios"
+                  id="formRadios1"
+                  onClick={() => setRadios("upload")}
+                />
+                <Form.Check
+                  type="radio"
+                  label="Enter Manually"
+                  name="formRadios"
+                  id="formRadios2"
+                  onClick={() => setRadios("manual")}
+                />
+              </div>
+            </Row>
+          </Form.Group>
+        )}
         {radios === "manual" && (
           <Row>
             <Form onSubmit={manualSubmitHandler}>

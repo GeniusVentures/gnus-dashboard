@@ -25,7 +25,7 @@ const SearchBar: React.FC = () => {
 
   return (
     <Col
-      style={{ maxWidth: "400px", width: "85vw" }}
+      style={{ maxWidth: "350px", width: "85vw" }}
       className="mx-auto mb-2 mb-lg-0">
       <Form
         onSubmit={search}

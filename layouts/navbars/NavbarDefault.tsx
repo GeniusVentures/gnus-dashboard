@@ -7,6 +7,7 @@ import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
 import Search from "../../sub-components/navbar/Search";
 import ToggleSwitch from "widgets/forms/ToggleSwitch";
+import Price from "sub-components/navbar/Price";
 
 const NavbarDefault: React.FC = () => {
   const [expandedMenu, setExpandedMenu] = useState<boolean>(false);
@@ -75,6 +76,9 @@ const NavbarDefault: React.FC = () => {
             </Nav>
             <Nav className="mx-auto">
               <Search />
+            </Nav>
+            <Nav className="mx-auto">
+              <Price />
             </Nav>
             <Nav className="navbar-nav navbar-right-wrap nav-top-wrap d-none d-lg-block">
               <ToggleSwitch label="Network" />

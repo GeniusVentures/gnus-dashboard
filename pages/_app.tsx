@@ -1,3 +1,4 @@
+import "dotenv/config";
 import "../styles/theme.scss";
 import React from "react";
 import Head from "next/head";
@@ -10,6 +11,8 @@ import { IPFSWrapper } from "../context/ipfs/IPFSContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import type { AppProps } from "next/app";
+import { Web3Modal } from "context/wallet/Web3Modal";
+import { PricesWrapper } from "context/prices/PricesContext";
 
 const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
@@ -48,11 +51,15 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
           closeOnClick={true}
           draggable={false}
         />
-        <IPFSWrapper>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </IPFSWrapper>
+        <Web3Modal>
+          <PricesWrapper>
+            {/* <IPFSWrapper> */}
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+            {/* </IPFSWrapper> */}
+          </PricesWrapper>
+        </Web3Modal>
       </Provider>
     </>
   );
