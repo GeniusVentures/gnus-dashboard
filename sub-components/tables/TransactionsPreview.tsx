@@ -19,9 +19,7 @@ const TransactionsPreview = () => {
           Recent Transactions
         </h3>
         <Card.Body className="pt-1">
-          <Card
-            style={{ background: "#2A2B31", color: "white" }}
-            className="bg-white table-responsive text-nowrap">
+          <Card className="table-responsive text-nowrap">
             <Table className="mb-0">
               <thead className="">
                 <tr className="text-center fs-4">

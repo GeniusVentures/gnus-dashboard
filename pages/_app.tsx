@@ -1,5 +1,8 @@
 import "dotenv/config";
 import "../styles/theme.scss";
+import "react-tooltip/dist/react-tooltip.css";
+import "react-toastify/dist/ReactToastify.css";
+
 import React from "react";
 import Head from "next/head";
 import { useRouter } from "next/router";
@@ -9,12 +12,10 @@ import { Provider } from "react-redux";
 import { store } from "../store/store";
 import { IPFSWrapper } from "../context/ipfs/IPFSContext";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import type { AppProps } from "next/app";
 import { Web3Modal } from "context/wallet/Web3Modal";
 import { PricesWrapper } from "context/prices/PricesContext";
 import { Tooltip } from "react-tooltip";
-import "react-tooltip/dist/react-tooltip.css";
 
 const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
@@ -65,13 +66,12 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
       </Provider>
       <Tooltip
         id="price-gas-tooltip"
-        place="bottom"
         delayHide={300}
         delayShow={300}
-        style={{ zIndex: 5000 }}
-        className="tooltip-custom"
+        style={{ zIndex: 50000 }}
+        place="bottom"
         offset={20}
-        role="tooltip"
+        className="tooltip-custom"
       />
     </>
   );

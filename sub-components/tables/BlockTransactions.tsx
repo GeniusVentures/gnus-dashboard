@@ -11,17 +11,17 @@ const BlockTransactions = ({ transData }) => {
 
   return (
     <Fragment>
-      <Card className="bg-white table-responsive text-nowrap">
+      <Card className="table-responsive text-nowrap">
         <Table className="mb-0">
           <thead>
-            <tr className="text-center bg-none">
-              <th className="bg-none">TX Hash</th>
-              <th className="bg-none">Type</th>
-              <th className="bg-none">Result</th>
-              <th className="bg-none">Value</th>
-              <th className="bg-none">Fee</th>
-              <th className="bg-none">Height</th>
-              <th className="bg-none">Time</th>
+            <tr className="text-center">
+              <th>TX Hash</th>
+              <th>Type</th>
+              <th>Result</th>
+              <th>Value</th>
+              <th>Fee</th>
+              <th>Height</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody ref={parent}>

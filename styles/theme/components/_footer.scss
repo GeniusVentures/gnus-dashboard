@@ -1,8 +1,10 @@
 // Footer
 
 .footer {
-  color: var(--#{$prefix}gray-600);
-
+  backdrop-filter: blur(10px);
+  box-shadow: 0 -5px 10px rgba(54, 237, 181, 0.3);
+  background-color: #00000060;
+  backdrop-filter: blur(10px);
 }
 
 .nav-footer {

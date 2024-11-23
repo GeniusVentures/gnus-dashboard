@@ -17,9 +17,7 @@ const BlockExplorerPreview = () => {
       <Card className="">
         <h3 className="text-white text-center mt-3 fs-4">Recent Blocks</h3>
         <Card.Body className="pt-1">
-          <Card
-            style={{ backgroundColor: "#3A3C43", color: "white" }}
-            className="table-responsive bg-primary">
+          <Card className="table-responsive">
             <Table className="mb-0">
               <thead className="">
                 <tr className="text-center fs-4">
