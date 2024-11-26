@@ -113,6 +113,53 @@ const createNode = async () => {
 	CheckBlocks();
 	//mintTokens(1000);
 	//console.log('Address:', getAddress());
+	const testJsonData = JSON.stringify({
+		data: {
+		  type: "https",
+		  URL: "https://ipfs.filebase.io/ipfs/QmdHvvEXRUgmyn1q3nkQwf9yE412Vzy5gSuGAukHRLicXA/"
+		},
+		model: {
+		  name: "mnnimage",
+		  file: "model.mnn"
+		},
+		input: [
+		  {
+			image: "data/ballet.data",
+			block_len: 4860000,
+			block_line_stride: 5400,
+			block_stride: 0,
+			chunk_line_stride: 1080,
+			chunk_offset: 0,
+			chunk_stride: 4320,
+			chunk_subchunk_height: 5,
+			chunk_subchunk_width: 5,
+			chunk_count: 25,
+			channels: 4
+		  },
+		  {
+			image: "data/frisbee3.data",
+			block_len: 786432,
+			block_line_stride: 1536,
+			block_stride: 0,
+			chunk_line_stride: 384,
+			chunk_offset: 0,
+			chunk_stride: 1152,
+			chunk_subchunk_height: 4,
+			chunk_subchunk_width: 4,
+			chunk_count: 16,
+			channels: 3
+		  }
+		]
+	  });
+	  
+	  // Call the function and log the output
+	  const cost = getGeniusSDKCost(testJsonData);
+	  
+	  if (cost !== null) {
+		console.log(`The calculated cost for the provided JSON data is: ${cost}`);
+	  } else {
+		console.error("Failed to calculate cost.");
+	  }
 };
 
 
@@ -260,5 +307,27 @@ function runGeniusSDKProcess(jsonData) {
 	  console.error(`Error running GeniusSDKProcess: ${error.message}`);
 	}
   }
+
+  function getGeniusSDKCost(jsonData: string): bigint | null {
+	try {
+	  // Ensure parameters are valid
+	  if (typeof jsonData !== 'string') {
+		throw new Error('Invalid arguments: jsonData must be a string');
+	  }
+  
+	  // Call the GeniusSDKGetCost C function and capture the result
+	  const cost = GeniusSDKGetCost(jsonData);
+  
+	  // Convert the result to BigInt if it's not already one (Koffi should handle this)
+	  const costBigInt = BigInt(cost);
+  
+	  console.log(`Processed successfully: JSON Data=${jsonData}, Cost=${costBigInt}`);
+	  return costBigInt;
+	} catch (error) {
+	  console.error(`Error running GeniusSDKGetCost: ${error.message}`);
+	  return null; // Return null in case of error
+	}
+  }
+  
 
 export default createNode;
