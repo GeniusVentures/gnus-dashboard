@@ -61,27 +61,32 @@ const GeniusArray = koffi.struct('GeniusArray', {
   });
 
 const GeniusSDKInit = GeniusSDK.func('const char* GeniusSDKInit(const char*, const char*)');
-const GeniusSDKProcess = GeniusSDK.func('void GeniusSDKProcess(const char*, unsigned long long)');
+const GeniusSDKProcess = GeniusSDK.func('void GeniusSDKProcess(const char*)');
 const GeniusSDKGetBalance = GeniusSDK.func('uint64_t GeniusSDKGetBalance()');
 const GeniusSDKGetTransactions = GeniusSDK.func('GeniusMatrix GeniusSDKGetTransactions()');
+const GeniusSDKGetBlocks = GeniusSDK.func('GeniusMatrix GeniusSDKGetBlocks()');
 const GeniusSDKFreeTransactions = GeniusSDK.func('void GeniusSDKFreeTransactions(GeniusMatrix)');
 const GeniusSDKMintTokens = GeniusSDK.func('void GeniusSDKMintTokens(uint64_t)');
 const GeniusSDKGetAddress = GeniusSDK.func('GeniusAddress GeniusSDKGetAddress()');
 const GeniusSDKTransferTokens = GeniusSDK.func('bool GeniusSDKTransferTokens(uint64_t, GeniusAddress*)');
+const GeniusSDKGetCost = GeniusSDK.func('uint64_t GeniusSDKGetCost(const char*)');
 
 export const initGnus = GeniusSDKInit;
 export const processGnus = GeniusSDKProcess;
 export const getBalance = GeniusSDKGetBalance;
 export const getTransactions = GeniusSDKGetTransactions;
+export const getBlocks = GeniusSDKGetBlocks;
 export const freeTransactions = GeniusSDKFreeTransactions;
 export const mintTokens = GeniusSDKMintTokens;
 export const getAddress = GeniusSDKGetAddress;
 export const transferTokens = GeniusSDKTransferTokens;
+export const getCost = GeniusSDKGetCost;
 
 let node = null;
 
 let requestout = 0;
 let transactionList = [];
+let blockList = [];
 const createNode = async () => {
 	try {
 		// Set up the required base path and Ethereum private key
@@ -105,10 +110,11 @@ const createNode = async () => {
 	//console.log('Balance:', getBalance());
 
 	CheckTransactions();
-
+	CheckBlocks();
 	//mintTokens(1000);
 	//console.log('Address:', getAddress());
 };
+
 
 function CheckTransactions() {
 	const transactions = getTransactions();
@@ -132,7 +138,35 @@ function CheckTransactions() {
 		  ParseTransaction(dataBuffer); 
 		}
 	}
-	//console.log('Readable Transactions:', transactionList);
+	console.log('Readable Transactions:', transactionList);
+
+	// Free memory for transactions
+	freeTransactions(transactions);
+}
+
+function CheckBlocks() {
+	const transactions = getBlocks();
+
+	// Decode the GeniusArray collection
+	const geniusArrays = koffi.decode(transactions.ptr, GeniusArray, transactions.size);
+	
+	// Loop through each GeniusArray entry
+	for (let i = 0; i < transactions.size; i++) {
+		const entry = geniusArrays[i]; // Get each GeniusArray entry
+		const dataBuffer = koffi.decode(entry.ptr, 'uint8_t', entry.size); // Decode the raw data
+	  
+		// Check if dataBuffer already exists in transactionList
+		const exists = transactionList.some(existingBuffer => 
+			existingBuffer.length === dataBuffer.length &&
+			existingBuffer.every((value, index) => value === dataBuffer[index])
+		  );
+
+		if (!exists) {
+			blockList.push(dataBuffer); 
+			ParseBlock(dataBuffer); 
+		}
+	}
+	console.log('Readable Blocks:', blockList);
 
 	// Free memory for transactions
 	freeTransactions(transactions);
@@ -142,6 +176,7 @@ function ParseTransaction(transactionData: Uint8Array) {
 	//Try Decoding as Mint
 	try{
 		const mint = MintTx.fromBinary(transactionData);
+		console.log("Mint Message: " + mint.amount);
 		mintMsg(mint);
 		return;
 	}
@@ -191,17 +226,36 @@ function ParseTransaction(transactionData: Uint8Array) {
 	// }
 }
 
-function runGeniusSDKProcess(jsonData, amount) {
+function ParseBlock(transactionData: Uint8Array) {
+	//Try Decoding as Block Header
+	try{
+		const block = BlockHeaderData.fromBinary(transactionData);
+		console.log(" Block Message ");
+		console.log("Parent Hash: " + block.parentHash);
+		console.log("Block Number: " + block.blockNumber);
+		console.log("stateRoot: " + block.stateRoot);
+		console.log("Extrin Root: " + block.extrinsicsRoot);
+		console.log("digest: " + block.digest);
+		blockMsg(block);
+		return;
+	}
+	catch(e)
+	{
+		console.log("Cannot Decode as block tx" + e)
+	}
+}
+
+function runGeniusSDKProcess(jsonData) {
 	try {
 	  // Ensure parameters are valid
-	  if (typeof jsonData !== 'string' || typeof amount !== 'number') {
-		throw new Error('Invalid arguments: jsonData must be a string, amount must be a number');
+	  if (typeof jsonData !== 'string') {
+		throw new Error('Invalid arguments: jsonData must be a string');
 	  }
   
 	  // Call the GeniusSDKProcess C function
-	  GeniusSDKProcess(jsonData, BigInt(amount)); // Convert amount to BigInt if needed for C compatibility
+	  GeniusSDKProcess(jsonData); // Convert amount to BigInt if needed for C compatibility
   
-	  console.log(`Processed successfully: JSON Data=${jsonData}, Amount=${amount}`);
+	  console.log(`Processed successfully: JSON Data=${jsonData}`);
 	} catch (error) {
 	  console.error(`Error running GeniusSDKProcess: ${error.message}`);
 	}
