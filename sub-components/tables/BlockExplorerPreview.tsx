@@ -4,10 +4,10 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import elapsedTime from "functions/time/elapseTime";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useIPFSContext } from "context/ipfs/IPFSContext";
+// import { useIPFSContext } from "context/ipfs/IPFSContext";
 
-const BlockExplorerPreview = () => {
-  const { blockchainInfo } = useIPFSContext();
+const BlockExplorerPreview = ({ blockData }) => {
+  // const { blockchainInfo } = useIPFSContext();
   const [parent] = useAutoAnimate();
   const router = useRouter();
   const [modal, setModal] = useState<boolean>(false);
@@ -28,7 +28,7 @@ const BlockExplorerPreview = () => {
                 </tr>
               </thead>
               <tbody ref={parent}>
-                {blockchainInfo.slice(0, 9).map(
+                {blockData.slice(0, 9).map(
                   (
                     item: {
                       block: string;
@@ -45,7 +45,11 @@ const BlockExplorerPreview = () => {
                             <u>{item.block}</u>
                           </Link>
                         </td>
-                        <td>{item.hash}</td>
+                        <td>
+                          {item.hash?.slice(0, 6) +
+                            "..." +
+                            item.hash?.slice(-6)}
+                        </td>
                         <td>{item.txs}</td>
                         <td className="text-nowrap">
                           {elapsedTime(item.time)} ago

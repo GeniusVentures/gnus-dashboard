@@ -1,17 +1,20 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Card, Table, Modal } from "react-bootstrap";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import elapsedTime from "functions/time/elapseTime";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useIPFSContext } from "context/ipfs/IPFSContext";
+// import { useIPFSContext } from "context/ipfs/IPFSContext";
 
-const TransactionsPreview = () => {
-  const { transactionInfo } = useIPFSContext();
+const TransactionsPreview = ({ transData }) => {
+  // const { transactionInfo } = useIPFSContext();
   const [parent] = useAutoAnimate();
   const [modal, setModal] = useState<boolean>(false);
   const router = useRouter();
 
+  useEffect(() => {
+    console.log(transData);
+  }, [transData]);
   return (
     <Fragment>
       <Card className="">
@@ -30,7 +33,8 @@ const TransactionsPreview = () => {
                 </tr>
               </thead>
               <tbody ref={parent}>
-                {transactionInfo.slice(0, 9).map((item, index) => {
+                {transData.slice(0, 9).map((item: any, index: string) => {
+                  console.log(elapsedTime(item.time));
                   return (
                     <tr className="text-center" key={index}>
                       <td>

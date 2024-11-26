@@ -1,9 +1,9 @@
 import { Fragment, useEffect, useState } from "react";
 import { Button, Row } from "react-bootstrap";
-import NetworkInfo from "sub-components/dashboard/NetworkSummary";
-import ResourcesLeased from "sub-components/dashboard/ResourcesLeased";
-import NetworkCapacity from "sub-components/dashboard/NetworkCapacity";
-import SpentAssets from "sub-components/dashboard/SpentAssets";
+import NetworkInfo from "sub-components/dashboard/analytics/NetworkSummary";
+import ResourcesLeased from "sub-components/dashboard/analytics/ResourcesLeased";
+import NetworkCapacity from "sub-components/dashboard/analytics/NetworkCapacity";
+import SpentAssets from "sub-components/dashboard/analytics/SpentAssets";
 import { useRouter } from "next/router";
 import lastUpdate from "../../functions/time/lastUpdate";
 
@@ -36,7 +36,7 @@ const Analytics: React.FC = () => {
             height: "100%",
             backgroundColor: "#00000060",
           }}>
-          <Row className="justify-content-center mx-3 mx-lg-10">
+          <Row className="justify-content-center mx-lg-10">
             {width >= 1200 && (
               <div className="text-center mt-5">
                 <h1 className="display-3 text-white">Testnet Dashboard</h1>

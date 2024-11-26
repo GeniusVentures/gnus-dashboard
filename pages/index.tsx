@@ -37,7 +37,7 @@ const Landing: React.FC = () => {
     <Fragment>
       <div>
         <div
-          className="w-100 fs-3 px-3 py-15"
+          className="w-100 fs-3 py-15"
           style={{
             minHeight: "100vh",
             alignContent: "center",

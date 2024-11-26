@@ -13,5 +13,5 @@ $overflow-y: auto, hidden !default;
 }
 
 .row {
-  --fc-gutter-x: 0;
+  --fc-gutter-x: 0 !important;
 }
