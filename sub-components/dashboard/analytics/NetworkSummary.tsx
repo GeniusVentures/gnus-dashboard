@@ -7,12 +7,12 @@ const GaugeComponent = dynamic(() => import("react-gauge-component"), {
   ssr: false,
 });
 
-const NetworkInfo = () => {
-  const [modal, setModal] = useState(false);
-  const [displayer, setDisplayer] = useState(null);
-  const [aggSpeed, setAggSpeed] = useState(0);
-  const speedIntRef = useRef(null);
-  const prevSpeedRef = useRef(1.7);
+const NetworkInfo: React.FC = () => {
+  const [modal, setModal] = useState<boolean>(false);
+  const [displayer, setDisplayer] = useState<string | null>(null);
+  const [aggSpeed, setAggSpeed] = useState<number>(0);
+  const speedIntRef = useRef<NodeJS.Timeout | null>(null);
+  const prevSpeedRef = useRef<number>(1.7);
 
   const speedInt = () => {
     const minSpeedPer = 1.3;

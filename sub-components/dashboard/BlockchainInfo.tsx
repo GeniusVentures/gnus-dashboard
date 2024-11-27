@@ -3,22 +3,44 @@ import BlockExplorerPreview from "sub-components/tables/BlockExplorerPreview";
 import TransactionsPreview from "sub-components/tables/TransactionsPreview";
 import React, { Fragment, useState, useEffect, useRef } from "react";
 
-const BlockchainInfo = () => {
-  const [blockData, setBlockData] = useState([]);
-  const [transData, setTransData] = useState([]);
-  const [blockchainInfo, setBlockchainInfo] = useState({
+// Define types for blocks and transactions
+interface Transaction {
+  txHash: string;
+  type: string;
+  value: string;
+  time: string;
+  height: number;
+}
+
+interface Block {
+  block: number;
+  proposer: string;
+  txs: string;
+  time: string;
+  hash: string;
+}
+
+interface BlockchainInfoData {
+  height: string;
+  transactions: string;
+  tokens: number;
+}
+
+const BlockchainInfo: React.FC = () => {
+  const [blockData, setBlockData] = useState<Block[]>([]);
+  const [transData, setTransData] = useState<Transaction[]>([]);
+  const [blockchainInfo] = useState<BlockchainInfoData>({
     height: "15,400,118",
     transactions: "1134369",
     tokens: 850527,
   });
-  const [transactions, setTransactions] = useState(1134369);
-  const [blockHeight, setBlockHeight] = useState(3708);
-  const heightRef = useRef(3709);
-  const transactionRef = useRef(16169);
+  const [transactions, setTransactions] = useState<number>(1134369);
+  const [blockHeight, setBlockHeight] = useState<number>(3708);
+  const heightRef = useRef<number>(3709);
 
+  // Create a new transaction
   const createTransactions = () => {
-    const random = Math.random().toString()[5];
-    console.log(random);
+    const randomIndex = Math.floor(Math.random() * 5);
     const typeDistribution = [
       "Transfer",
       "Processing",
@@ -26,13 +48,12 @@ const BlockchainInfo = () => {
       "Transfer",
       "Processing",
     ];
-    const type = typeDistribution[parseInt(random) % typeDistribution.length];
+    const type = typeDistribution[randomIndex];
     const txHash = `0x${Math.random().toString(16).substr(2, 64)}`;
     const value = `${(Math.random() * 10).toFixed(3)} GNUS`;
-    const time = Date.now().toString();
+    const time = new Date().toISOString();
 
-    // Create a new transaction object
-    const newTransaction = {
+    const newTransaction: Transaction = {
       txHash,
       type,
       value,
@@ -40,18 +61,17 @@ const BlockchainInfo = () => {
       height: heightRef.current,
     };
 
-    setTransactions((prevTransactions) => prevTransactions + 1);
-    setTransData((prevTransData) => [newTransaction, ...prevTransData]);
+    setTransactions((prev) => prev + 1);
+    setTransData((prev) => [newTransaction, ...prev]);
   };
 
+  // Create a new block
   const createBlocks = () => {
-    console.log("hello");
-    const txs = `${(Math.random() * 10).toFixed(0)}`;
-    const time = Date.now().toString();
+    const txs = `${Math.floor(Math.random() * 10)}`;
+    const time = new Date().toISOString();
     const hash = `0x${Math.random().toString(16).substr(2, 64)}`;
 
-    // Add a new test data entry to the array
-    let newBlock = {
+    const newBlock: Block = {
       block: heightRef.current,
       proposer: "GNUS.AI",
       txs,
@@ -59,33 +79,33 @@ const BlockchainInfo = () => {
       hash,
     };
 
-    // Update the transData state by creating a new array with the new transaction
-    setBlockData((prevBlockData) => [newBlock, ...prevBlockData]);
-    setBlockHeight((prevBlockHeight) => prevBlockHeight + 1);
-    heightRef.current = heightRef.current + 1;
+    setBlockData((prev) => [newBlock, ...prev]);
+    setBlockHeight((prev) => prev + 1);
+    heightRef.current += 1;
   };
 
+  // Start generating new transactions periodically
   const newTransactions = () => {
     setTimeout(() => {
-      setInterval(() => {
-        createTransactions();
-      }, 2150);
+      setInterval(createTransactions, 2150);
     }, 2000);
   };
 
+  // Start generating new blocks periodically
   const newBlocks = () => {
     setTimeout(() => {
-      setInterval(() => {
-        createBlocks();
-      }, 3350);
+      setInterval(createBlocks, 3350);
     }, 3500);
   };
 
   useEffect(() => {
-    // setBlockData(fakeBlocks);
-    // setTransData(fakeTransactions);
     newTransactions();
     newBlocks();
+
+    // Cleanup intervals when the component unmounts
+    return () => {
+      clearInterval(heightRef.current as unknown as NodeJS.Timeout);
+    };
   }, []);
 
   return (
@@ -134,4 +154,5 @@ const BlockchainInfo = () => {
     </Fragment>
   );
 };
+
 export default BlockchainInfo;

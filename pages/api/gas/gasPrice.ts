@@ -1,6 +1,11 @@
 import axios from "axios";
 import { formatUnits } from "ethers";
-const gasPrice = async (req, res) => {
+import { NextApiRequest, NextApiResponse } from "next";
+
+const gasPrice = async (
+  req: NextApiRequest,
+  res: NextApiResponse
+): Promise<void> => {
   await axios
     .post(
       "https://eth-mainnet.blastapi.io/bb92548d-1cc2-4d2a-b477-cb1473694cbd",

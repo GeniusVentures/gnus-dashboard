@@ -62,7 +62,7 @@ const NavbarDefault: React.FC = () => {
           id="basic-navbar-nav"
           className="justify-content-between mb-2 mb-lg-0">
           <Nav className="ms-lg-3 me-4 mt-3 mt-lg-0">
-            {NavbarDefaultRoutes.map((item, index) => {
+            {NavbarDefaultRoutes.map((item: any, index) => {
               if (item.children === undefined) {
                 return (
                   <Nav.Link

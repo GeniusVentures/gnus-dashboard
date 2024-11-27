@@ -1,19 +1,15 @@
 import { Row, Col, Card, Modal } from "react-bootstrap";
 import { Fragment, useState } from "react";
 
-const SpentAssets = () => {
+const SpentAssets: React.FC = () => {
   const [modal, setModal] = useState<boolean>(false);
   // const [displayer, setDisplayer] = useState(null);
   // const [chart, setChart] = useState(null);
 
   return (
     <Fragment>
-      <Row className="">
-        <h2
-          className="display-7 text-white"
-          style={{ fontFamily: "HKModularBold" }}>
-          Spent Assets
-        </h2>
+      <Row>
+        <h2 className="display-7 text-white">Spent Assets</h2>
       </Row>
       <Row className="d-flex justify-content-center gap-3">
         <Col style={{ maxWidth: "400px", minWidth: "300px" }} className="mb-4">

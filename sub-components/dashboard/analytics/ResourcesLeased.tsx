@@ -1,10 +1,9 @@
 import { Row, Col, Card, Modal } from "react-bootstrap";
-import { Fragment, useState, useEffect } from "react";
-import ApexCharts from "widgets/charts/ApexCharts";
+import { Fragment, useState } from "react";
 import MapChart from "./MapChart";
-import AggregateSpeed from "./AggregateSpeed";
+import DeviceMix from "./DeviceMix";
 
-const ResourcesLeased = () => {
+const ResourcesLeased: React.FC = () => {
   const [modal, setModal] = useState<boolean>(false);
 
   return (
@@ -12,15 +11,15 @@ const ResourcesLeased = () => {
       <Row className="justify-content-center gap-5 d-flex align-items-stretch px-0">
         <h2 className="display-7 text-white">Resources Leased</h2>
         <Col style={{ maxWidth: "600px", minWidth: "300px" }} className="mb-4">
-          <AggregateSpeed setModal={setModal} />
+          <DeviceMix setModal={setModal} />
         </Col>
 
         <Col style={{ maxWidth: "600px", minWidth: "300px" }} className="mb-4">
           <MapChart setModal={setModal} />
         </Col>
       </Row>
-      <Modal show={modal}>
-        <Modal.Header closeButton onHide={() => setModal(false)} />
+      <Modal show={modal} onHide={() => setModal(false)}>
+        <Modal.Header closeButton />
         <Modal.Body>{/* Add any content for the modal here */}</Modal.Body>
       </Modal>
     </Fragment>

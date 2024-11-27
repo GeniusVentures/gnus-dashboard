@@ -1,4 +1,4 @@
-// import node module libraries
+// Import node module libraries
 import React from "react";
 import {
   ComposableMap,
@@ -8,23 +8,20 @@ import {
 } from "react-simple-maps";
 
 // Import required data files
-import WorldMap from "data/charts/WorldMap";
+import WorldMap from "data/map/worldMap";
 import { Card } from "react-bootstrap";
+import markers from "data/map/markers";
+// Define marker type
+interface MarkerType {
+  coordinates: [number, number]; // Tuple for latitude and longitude
+}
 
-const MapChart = ({ setModal }) => {
-  const markers = [
-    {
-      coordinates: [-11.6368, 53.613],
-    },
-    { coordinates: [73.7276105, 20.7504374] },
-    {
-      coordinates: [-104.657039, 37.2580397],
-    },
-    {
-      coordinates: [115.2092761, -25.0304388],
-    },
-  ];
+// Define component props type
+interface MapChartProps {
+  setModal: (value: boolean) => void; // Function to toggle modal
+}
 
+const MapChart: React.FC<MapChartProps> = ({ setModal }) => {
   return (
     <div>
       <Card className="h-100 text-white px-0 pt-5 item-stretch">
@@ -51,7 +48,7 @@ const MapChart = ({ setModal }) => {
                 ))
               }
             </Geographies>
-            {markers.map(({ coordinates }, index) => (
+            {markers.map(({ coordinates }: MarkerType, index) => (
               <Marker key={index} coordinates={coordinates}>
                 <circle
                   r={10}
@@ -61,7 +58,7 @@ const MapChart = ({ setModal }) => {
                 />
               </Marker>
             ))}
-          </ComposableMap>{" "}
+          </ComposableMap>
         </div>
         <Card.Footer
           className="p-0 text-center"
