@@ -66,7 +66,7 @@ const GeniusSDKGetBalance = GeniusSDK.func('uint64_t GeniusSDKGetBalance()');
 const GeniusSDKGetTransactions = GeniusSDK.func('GeniusMatrix GeniusSDKGetTransactions()');
 const GeniusSDKGetBlocks = GeniusSDK.func('GeniusMatrix GeniusSDKGetBlocks()');
 const GeniusSDKFreeTransactions = GeniusSDK.func('void GeniusSDKFreeTransactions(GeniusMatrix)');
-const GeniusSDKMintTokens = GeniusSDK.func('void GeniusSDKMintTokens(uint64_t)');
+const GeniusSDKMintTokens = GeniusSDK.func('void GeniusSDKMintTokens(uint64_t, const char*, const char*)');
 const GeniusSDKGetAddress = GeniusSDK.func('GeniusAddress GeniusSDKGetAddress()');
 const GeniusSDKTransferTokens = GeniusSDK.func('bool GeniusSDKTransferTokens(uint64_t, GeniusAddress*)');
 const GeniusSDKGetCost = GeniusSDK.func('uint64_t GeniusSDKGetCost(const char*)');
@@ -111,7 +111,7 @@ const createNode = async () => {
 
 	CheckTransactions();
 	CheckBlocks();
-	//mintTokens(1000);
+	//mintTokens(1000, "", "");
 	//console.log('Address:', getAddress());
 	const testJsonData = JSON.stringify({
 		data: {
