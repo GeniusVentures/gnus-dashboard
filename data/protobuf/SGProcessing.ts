@@ -39,6 +39,10 @@ export interface Task {
      * @generated from protobuf field: string results_channel = 4;
      */
     resultsChannel: string; // which channel to publish results to.
+    /**
+     * @generated from protobuf field: string escrow_path = 5;
+     */
+    escrowPath: string; // the path of the escrow transaction
 }
 /**
  * @generated from protobuf message SGProcessing.TaskLock
@@ -182,6 +186,14 @@ export interface SubTaskResult {
      * @generated from protobuf field: string subtaskid = 4;
      */
     subtaskid: string; // linked subtask id
+    /**
+     * @generated from protobuf field: string node_address = 5;
+     */
+    nodeAddress: string; // The processor node ID/address
+    /**
+     * @generated from protobuf field: string escrow_path = 6;
+     */
+    escrowPath: string; // the path of the escrow transaction
 }
 /**
  * @generated from protobuf message SGProcessing.SubTaskState
@@ -317,7 +329,8 @@ class Task$Type extends MessageType<Task> {
             { no: 1, name: "ipfs_block_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
             { no: 2, name: "json_data", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
             { no: 3, name: "random_seed", kind: "scalar", T: 2 /*ScalarType.FLOAT*/ },
-            { no: 4, name: "results_channel", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 4, name: "results_channel", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "escrow_path", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<Task>): Task {
@@ -326,6 +339,7 @@ class Task$Type extends MessageType<Task> {
         message.jsonData = new Uint8Array(0);
         message.randomSeed = 0;
         message.resultsChannel = "";
+        message.escrowPath = "";
         if (value !== undefined)
             reflectionMergePartial<Task>(this, message, value);
         return message;
@@ -346,6 +360,9 @@ class Task$Type extends MessageType<Task> {
                     break;
                 case /* string results_channel */ 4:
                     message.resultsChannel = reader.string();
+                    break;
+                case /* string escrow_path */ 5:
+                    message.escrowPath = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -371,6 +388,9 @@ class Task$Type extends MessageType<Task> {
         /* string results_channel = 4; */
         if (message.resultsChannel !== "")
             writer.tag(4, WireType.LengthDelimited).string(message.resultsChannel);
+        /* string escrow_path = 5; */
+        if (message.escrowPath !== "")
+            writer.tag(5, WireType.LengthDelimited).string(message.escrowPath);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -842,7 +862,9 @@ class SubTaskResult$Type extends MessageType<SubTaskResult> {
             { no: 1, name: "result_hash", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
             { no: 2, name: "chunk_hashes", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 12 /*ScalarType.BYTES*/ },
             { no: 3, name: "ipfs_results_data_id", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 4, name: "subtaskid", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 4, name: "subtaskid", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 5, name: "node_address", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
+            { no: 6, name: "escrow_path", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<SubTaskResult>): SubTaskResult {
@@ -851,6 +873,8 @@ class SubTaskResult$Type extends MessageType<SubTaskResult> {
         message.chunkHashes = [];
         message.ipfsResultsDataId = "";
         message.subtaskid = "";
+        message.nodeAddress = "";
+        message.escrowPath = "";
         if (value !== undefined)
             reflectionMergePartial<SubTaskResult>(this, message, value);
         return message;
@@ -871,6 +895,12 @@ class SubTaskResult$Type extends MessageType<SubTaskResult> {
                     break;
                 case /* string subtaskid */ 4:
                     message.subtaskid = reader.string();
+                    break;
+                case /* string node_address */ 5:
+                    message.nodeAddress = reader.string();
+                    break;
+                case /* string escrow_path */ 6:
+                    message.escrowPath = reader.string();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -896,6 +926,12 @@ class SubTaskResult$Type extends MessageType<SubTaskResult> {
         /* string subtaskid = 4; */
         if (message.subtaskid !== "")
             writer.tag(4, WireType.LengthDelimited).string(message.subtaskid);
+        /* string node_address = 5; */
+        if (message.nodeAddress !== "")
+            writer.tag(5, WireType.LengthDelimited).string(message.nodeAddress);
+        /* string escrow_path = 6; */
+        if (message.escrowPath !== "")
+            writer.tag(6, WireType.LengthDelimited).string(message.escrowPath);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);

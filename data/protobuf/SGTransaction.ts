@@ -133,9 +133,13 @@ export interface ProcessingTx {
      */
     jobCid: string; // 
     /**
-     * @generated from protobuf field: string subtask_cid = 5;
+     * @generated from protobuf field: repeated string subtask_cids = 5;
      */
-    subtaskCid: string; // 
+    subtaskCids: string[]; // 
+    /**
+     * @generated from protobuf field: repeated string node_addresses = 6;
+     */
+    nodeAddresses: string[];
 }
 /**
  * @generated from protobuf message SGTransaction.MintTx
@@ -146,7 +150,11 @@ export interface MintTx {
      */
     dagStruct?: DAGStruct; // 
     /**
-     * @generated from protobuf field: uint64 amount = 2;
+     * @generated from protobuf field: bytes chain_id = 2;
+     */
+    chainId: Uint8Array;
+    /**
+     * @generated from protobuf field: uint64 amount = 3;
      */
     amount: bigint; // 
 }
@@ -163,17 +171,17 @@ export interface EscrowTx {
      */
     utxoParams?: UTXOTxParams;
     /**
-     * @generated from protobuf field: uint64 num_chunks = 3;
+     * @generated from protobuf field: uint64 amount = 3;
      */
-    numChunks: bigint;
+    amount: bigint;
     /**
      * @generated from protobuf field: bytes dev_addr = 4;
      */
     devAddr: Uint8Array; // 
     /**
-     * @generated from protobuf field: float dev_cut = 5;
+     * @generated from protobuf field: float peers_cut = 5;
      */
-    devCut: number; // 
+    peersCut: number; // 
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class DAGStruct$Type extends MessageType<DAGStruct> {
@@ -558,7 +566,8 @@ class ProcessingTx$Type extends MessageType<ProcessingTx> {
             { no: 2, name: "mpc_magic_key", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 3, name: "offset", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 4, name: "job_cid", kind: "scalar", T: 9 /*ScalarType.STRING*/ },
-            { no: 5, name: "subtask_cid", kind: "scalar", T: 9 /*ScalarType.STRING*/ }
+            { no: 5, name: "subtask_cids", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 9 /*ScalarType.STRING*/ },
+            { no: 6, name: "node_addresses", kind: "scalar", repeat: 2 /*RepeatType.UNPACKED*/, T: 9 /*ScalarType.STRING*/ }
         ]);
     }
     create(value?: PartialMessage<ProcessingTx>): ProcessingTx {
@@ -566,7 +575,8 @@ class ProcessingTx$Type extends MessageType<ProcessingTx> {
         message.mpcMagicKey = 0n;
         message.offset = 0n;
         message.jobCid = "";
-        message.subtaskCid = "";
+        message.subtaskCids = [];
+        message.nodeAddresses = [];
         if (value !== undefined)
             reflectionMergePartial<ProcessingTx>(this, message, value);
         return message;
@@ -588,8 +598,11 @@ class ProcessingTx$Type extends MessageType<ProcessingTx> {
                 case /* string job_cid */ 4:
                     message.jobCid = reader.string();
                     break;
-                case /* string subtask_cid */ 5:
-                    message.subtaskCid = reader.string();
+                case /* repeated string subtask_cids */ 5:
+                    message.subtaskCids.push(reader.string());
+                    break;
+                case /* repeated string node_addresses */ 6:
+                    message.nodeAddresses.push(reader.string());
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -615,9 +628,12 @@ class ProcessingTx$Type extends MessageType<ProcessingTx> {
         /* string job_cid = 4; */
         if (message.jobCid !== "")
             writer.tag(4, WireType.LengthDelimited).string(message.jobCid);
-        /* string subtask_cid = 5; */
-        if (message.subtaskCid !== "")
-            writer.tag(5, WireType.LengthDelimited).string(message.subtaskCid);
+        /* repeated string subtask_cids = 5; */
+        for (let i = 0; i < message.subtaskCids.length; i++)
+            writer.tag(5, WireType.LengthDelimited).string(message.subtaskCids[i]);
+        /* repeated string node_addresses = 6; */
+        for (let i = 0; i < message.nodeAddresses.length; i++)
+            writer.tag(6, WireType.LengthDelimited).string(message.nodeAddresses[i]);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -633,11 +649,13 @@ class MintTx$Type extends MessageType<MintTx> {
     constructor() {
         super("SGTransaction.MintTx", [
             { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
-            { no: 2, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+            { no: 2, name: "chain_id", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 3, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
         ]);
     }
     create(value?: PartialMessage<MintTx>): MintTx {
         const message = globalThis.Object.create((this.messagePrototype!));
+        message.chainId = new Uint8Array(0);
         message.amount = 0n;
         if (value !== undefined)
             reflectionMergePartial<MintTx>(this, message, value);
@@ -651,7 +669,10 @@ class MintTx$Type extends MessageType<MintTx> {
                 case /* SGTransaction.DAGStruct dag_struct */ 1:
                     message.dagStruct = DAGStruct.internalBinaryRead(reader, reader.uint32(), options, message.dagStruct);
                     break;
-                case /* uint64 amount */ 2:
+                case /* bytes chain_id */ 2:
+                    message.chainId = reader.bytes();
+                    break;
+                case /* uint64 amount */ 3:
                     message.amount = reader.uint64().toBigInt();
                     break;
                 default:
@@ -669,9 +690,12 @@ class MintTx$Type extends MessageType<MintTx> {
         /* SGTransaction.DAGStruct dag_struct = 1; */
         if (message.dagStruct)
             DAGStruct.internalBinaryWrite(message.dagStruct, writer.tag(1, WireType.LengthDelimited).fork(), options).join();
-        /* uint64 amount = 2; */
+        /* bytes chain_id = 2; */
+        if (message.chainId.length)
+            writer.tag(2, WireType.LengthDelimited).bytes(message.chainId);
+        /* uint64 amount = 3; */
         if (message.amount !== 0n)
-            writer.tag(2, WireType.Varint).uint64(message.amount);
+            writer.tag(3, WireType.Varint).uint64(message.amount);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
@@ -688,16 +712,16 @@ class EscrowTx$Type extends MessageType<EscrowTx> {
         super("SGTransaction.EscrowTx", [
             { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
             { no: 2, name: "utxo_params", kind: "message", T: () => UTXOTxParams },
-            { no: 3, name: "num_chunks", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
+            { no: 3, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ },
             { no: 4, name: "dev_addr", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
-            { no: 5, name: "dev_cut", kind: "scalar", T: 2 /*ScalarType.FLOAT*/ }
+            { no: 5, name: "peers_cut", kind: "scalar", T: 2 /*ScalarType.FLOAT*/ }
         ]);
     }
     create(value?: PartialMessage<EscrowTx>): EscrowTx {
         const message = globalThis.Object.create((this.messagePrototype!));
-        message.numChunks = 0n;
+        message.amount = 0n;
         message.devAddr = new Uint8Array(0);
-        message.devCut = 0;
+        message.peersCut = 0;
         if (value !== undefined)
             reflectionMergePartial<EscrowTx>(this, message, value);
         return message;
@@ -713,14 +737,14 @@ class EscrowTx$Type extends MessageType<EscrowTx> {
                 case /* SGTransaction.UTXOTxParams utxo_params */ 2:
                     message.utxoParams = UTXOTxParams.internalBinaryRead(reader, reader.uint32(), options, message.utxoParams);
                     break;
-                case /* uint64 num_chunks */ 3:
-                    message.numChunks = reader.uint64().toBigInt();
+                case /* uint64 amount */ 3:
+                    message.amount = reader.uint64().toBigInt();
                     break;
                 case /* bytes dev_addr */ 4:
                     message.devAddr = reader.bytes();
                     break;
-                case /* float dev_cut */ 5:
-                    message.devCut = reader.float();
+                case /* float peers_cut */ 5:
+                    message.peersCut = reader.float();
                     break;
                 default:
                     let u = options.readUnknownField;
@@ -740,15 +764,15 @@ class EscrowTx$Type extends MessageType<EscrowTx> {
         /* SGTransaction.UTXOTxParams utxo_params = 2; */
         if (message.utxoParams)
             UTXOTxParams.internalBinaryWrite(message.utxoParams, writer.tag(2, WireType.LengthDelimited).fork(), options).join();
-        /* uint64 num_chunks = 3; */
-        if (message.numChunks !== 0n)
-            writer.tag(3, WireType.Varint).uint64(message.numChunks);
+        /* uint64 amount = 3; */
+        if (message.amount !== 0n)
+            writer.tag(3, WireType.Varint).uint64(message.amount);
         /* bytes dev_addr = 4; */
         if (message.devAddr.length)
             writer.tag(4, WireType.LengthDelimited).bytes(message.devAddr);
-        /* float dev_cut = 5; */
-        if (message.devCut !== 0)
-            writer.tag(5, WireType.Bit32).float(message.devCut);
+        /* float peers_cut = 5; */
+        if (message.peersCut !== 0)
+            writer.tag(5, WireType.Bit32).float(message.peersCut);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
