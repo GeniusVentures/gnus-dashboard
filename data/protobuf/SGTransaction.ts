@@ -154,7 +154,11 @@ export interface MintTx {
      */
     chainId: Uint8Array;
     /**
-     * @generated from protobuf field: uint64 amount = 3;
+     * @generated from protobuf field: bytes token_id = 3;
+     */
+    tokenId: Uint8Array;
+    /**
+     * @generated from protobuf field: uint64 amount = 4;
      */
     amount: bigint; // 
 }
@@ -650,12 +654,14 @@ class MintTx$Type extends MessageType<MintTx> {
         super("SGTransaction.MintTx", [
             { no: 1, name: "dag_struct", kind: "message", T: () => DAGStruct },
             { no: 2, name: "chain_id", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
-            { no: 3, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
+            { no: 3, name: "token_id", kind: "scalar", T: 12 /*ScalarType.BYTES*/ },
+            { no: 4, name: "amount", kind: "scalar", T: 4 /*ScalarType.UINT64*/, L: 0 /*LongType.BIGINT*/ }
         ]);
     }
     create(value?: PartialMessage<MintTx>): MintTx {
         const message = globalThis.Object.create((this.messagePrototype!));
         message.chainId = new Uint8Array(0);
+        message.tokenId = new Uint8Array(0);
         message.amount = 0n;
         if (value !== undefined)
             reflectionMergePartial<MintTx>(this, message, value);
@@ -672,7 +678,10 @@ class MintTx$Type extends MessageType<MintTx> {
                 case /* bytes chain_id */ 2:
                     message.chainId = reader.bytes();
                     break;
-                case /* uint64 amount */ 3:
+                case /* bytes token_id */ 3:
+                    message.tokenId = reader.bytes();
+                    break;
+                case /* uint64 amount */ 4:
                     message.amount = reader.uint64().toBigInt();
                     break;
                 default:
@@ -693,9 +702,12 @@ class MintTx$Type extends MessageType<MintTx> {
         /* bytes chain_id = 2; */
         if (message.chainId.length)
             writer.tag(2, WireType.LengthDelimited).bytes(message.chainId);
-        /* uint64 amount = 3; */
+        /* bytes token_id = 3; */
+        if (message.tokenId.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.tokenId);
+        /* uint64 amount = 4; */
         if (message.amount !== 0n)
-            writer.tag(3, WireType.Varint).uint64(message.amount);
+            writer.tag(4, WireType.Varint).uint64(message.amount);
         let u = options.writeUnknownFields;
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(this.typeName, message, writer);
