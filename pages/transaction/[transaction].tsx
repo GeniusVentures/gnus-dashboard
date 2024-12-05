@@ -74,17 +74,17 @@ const Transaction: React.FC = () => {
             <div className="fs-4 w-md-15">
               <p className=" mb-0">Fee</p>
             </div>
-            <div className="fs-3">
+            {/* <div className="fs-3">
               <p className="text-white">{transInfo?.fee || "0"}</p>
-            </div>
+            </div> */}
           </div>
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
               <p className=" mb-0">{"Gas (used/wanted)"}</p>
             </div>
-            <div className="fs-3">
+            {/* <div className="fs-3">
               <p className="text-white">{transInfo?.gas || "0"}</p>
-            </div>
+            </div> */}
           </div>
           <div className="d-block d-md-flex">
             <div className="fs-4 w-md-15">
@@ -102,9 +102,9 @@ const Transaction: React.FC = () => {
             <div className="fs-4 w-md-15">
               <p className=" mb-0">Memo</p>
             </div>
-            <div className="fs-3">
+            {/* <div className="fs-3">
               <p className="text-white mb-0">{transInfo?.memo}</p>
-            </div>
+            </div> */}
           </div>
         </Card>
       </Row>

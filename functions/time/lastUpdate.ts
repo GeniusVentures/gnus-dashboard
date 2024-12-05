@@ -11,7 +11,10 @@ const lastUpdate = () => {
     timeZoneName: "short",
     timeZone: userTimeZone,
   };
-  const formattedDateTime = currentDate.toLocaleString("en-US", options);
+  const formattedDateTime = currentDate.toLocaleString(
+    "en-US",
+    options as Intl.DateTimeFormatOptions
+  );
   return formattedDateTime;
 };
 export default lastUpdate;
