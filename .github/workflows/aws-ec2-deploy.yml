@@ -1,0 +1,35 @@
+name: CI/CD Deploy Genius Dashboard Backend/Frontend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
+    steps:
+#      - name: Deploy to CloudFlare
+#        run: |
+#          curl -s -X POST "${{ secrets.CLOUD_FLARE_TRIGGER_DEPLOY }}" > /dev/null
+      - name: Deploy to AWS/EC2
+        if: (github.ref_name == 'main' || github.ref_name == 'develop')
+        run: |
+          echo "${{ secrets.DEPLOY_ACTION_SSH_PRIVATE_KEY  }}" > private_key && chmod 600 private_key
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          APP_DIR="gnus-dashboard"
+          ssh -T -o StrictHostKeyChecking=no -i private_key deploy@${{ secrets.DEPLOY_HOSTNAME  }} <<-ENDSSH
+            #!/usr/bin/env bash
+            set -e
+            if [ ! -d "gnus-dashboard" ]; then
+              git clone git@gnus-dashboard.github.com:GeniusVentures/gnus-dashboard.git
+            fi
+            cd gnus-dashboard
+            echo "Branch found is $BRANCH"
+            git checkout $BRANCH
+            git fetch --all
+            git reset --hard origin/$BRANCH
+            git pull origin $BRANCH
+            yarn install
+            yarn run build $BUILD_OPTIONS
+            pm2 restart gnus-dashboard
+          ENDSSH
