@@ -52,6 +52,7 @@ const OrderForm: React.FC = () => {
   const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
   const ERC1155_ABI = [
     "function balanceOf(address account, uint256 id) view returns (uint256)",
+    "function bridgeOut(uint256 amount, uint256 id, uint256 destChainID) external",
   ];
   useEffect(() => {
     if (!isConnected) {
@@ -69,10 +70,6 @@ const OrderForm: React.FC = () => {
           setModalStatus("closed");
         });
     } else {
-      console.log(
-        selectedNetworkId.split(":")[1],
-        config.networks.amoy.chainId.toString()
-      );
       if (
         selectedNetworkId.split(":")[1] !==
         config.networks.amoy.chainId.toString()
@@ -418,8 +415,34 @@ const OrderForm: React.FC = () => {
                 .post("/api/processing/getEstimate", {
                   jsonRequest: JSON.stringify({ data, model, input }),
                 })
-                .then((response) => {
-                  console.log(response);
+                .then(async (response: any) => {
+                  const tokenContract = new ethers.Contract(
+                    tokenAddress.current,
+                    ERC1155_ABI,
+                    signer
+                  );
+                  const destChainID = parseInt("deba5edc0de", 16);
+                  console.log(response.data, BigInt(response.data * 10 ** 18));
+                  const tx = await tokenContract
+                    .bridgeOut(
+                      BigInt(response.data * 10 ** 18).toString(),
+                      0,
+                      destChainID
+                    )
+                    .catch((error) => {
+                      console.log(error);
+                      toast.error("Payment failed, please try again.", {
+                        className: "gnus-toast",
+                        icon: (
+                          <Image
+                            height={30}
+                            src="images/logo/gnus-icon-red.png"
+                          />
+                        ),
+                      });
+                    });
+
+                  console.log(tx);
                 })
                 .catch((err) => {
                   toast.error("Something went wrong, please try again.", {

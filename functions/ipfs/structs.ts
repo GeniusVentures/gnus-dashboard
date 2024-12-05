@@ -1,12 +1,21 @@
 import koffi from "koffi";
 
-// Local registry for defined structs
-const structRegistry = new Map<string, any>();
+// Ensure the global registry exists
+if (!globalThis.structRegistry) {
+  globalThis.structRegistry = new Map<string, any>();
+}
+
+// Use the global registry
+const structRegistry = globalThis.structRegistry;
 
 export function getStruct(structName: string, definitionCallback: () => any) {
+  console.log("Current registry:", Array.from(structRegistry.keys()));
   if (!structRegistry.has(structName)) {
+    console.log(`Defining new struct: ${structName}`);
     const struct = definitionCallback();
     structRegistry.set(structName, struct);
+  } else {
+    console.log(`Using existing struct: ${structName}`);
   }
   return structRegistry.get(structName);
 }

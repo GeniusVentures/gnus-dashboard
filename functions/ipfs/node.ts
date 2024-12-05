@@ -1,6 +1,6 @@
 import koffi from "koffi";
 import path from "path";
-import { GeniusArray, GeniusMatrix, GeniusAddress } from "./structs";
+import { GeniusArray, getStruct, GeniusMatrix, GeniusAddress } from "./structs";
 
 const {
   DAGStruct,
@@ -25,6 +25,7 @@ import mintMsg from "../messages/mint";
 import processingMsg from "../messages/processing";
 import blockMsg from "../messages/block";
 import escrowMsg from "../messages/escrow";
+import { get } from "http";
 
 let libraryPath;
 const basePath = path.join(process.cwd(), "data"); // Base path relative to project root
@@ -44,18 +45,6 @@ switch (process.platform) {
 
 console.log("Library path resolved to:", libraryPath);
 const GeniusSDK = koffi.load(libraryPath);
-
-// Local registry for defined structs
-const structRegistry = new Map<string, any>();
-
-// Function to retrieve or define a struct
-function getStruct(structName: string, definitionCallback: () => any) {
-  if (!structRegistry.has(structName)) {
-    const struct = definitionCallback();
-    structRegistry.set(structName, struct);
-  }
-  return structRegistry.get(structName);
-}
 
 const GeniusSDKInit = GeniusSDK.func(
   "const char* GeniusSDKInit(const char*, const char*)"
@@ -117,60 +106,6 @@ const createNode = async () => {
     node = { initialized: true, details: result };
   } catch (e) {
     console.error("Error initializing GeniusSDK:", e);
-  }
-
-  //console.log('Balance:', getBalance());
-
-  CheckTransactions();
-  CheckBlocks();
-  //mintTokens(1000, "", "", "");
-  //console.log('Address:', getAddress());
-  const testJsonData = JSON.stringify({
-    data: {
-      type: "https",
-      URL: "https://ipfs.filebase.io/ipfs/QmdHvvEXRUgmyn1q3nkQwf9yE412Vzy5gSuGAukHRLicXA/",
-    },
-    model: {
-      name: "mnnimage",
-      file: "model.mnn",
-    },
-    input: [
-      {
-        image: "data/ballet.data",
-        block_len: 4860000,
-        block_line_stride: 5400,
-        block_stride: 0,
-        chunk_line_stride: 1080,
-        chunk_offset: 0,
-        chunk_stride: 4320,
-        chunk_subchunk_height: 5,
-        chunk_subchunk_width: 5,
-        chunk_count: 25,
-        channels: 4,
-      },
-      {
-        image: "data/frisbee3.data",
-        block_len: 786432,
-        block_line_stride: 1536,
-        block_stride: 0,
-        chunk_line_stride: 384,
-        chunk_offset: 0,
-        chunk_stride: 1152,
-        chunk_subchunk_height: 4,
-        chunk_subchunk_width: 4,
-        chunk_count: 16,
-        channels: 3,
-      },
-    ],
-  });
-
-  // Call the function and log the output
-  const cost = getGeniusSDKCost(testJsonData);
-
-  if (cost !== null) {
-    console.log(`The calculated cost for the provided JSON data is: ${cost}`);
-  } else {
-    console.error("Failed to calculate cost.");
   }
 };
 
