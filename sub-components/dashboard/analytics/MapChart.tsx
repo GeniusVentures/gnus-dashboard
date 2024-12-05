@@ -25,7 +25,9 @@ const MapChart: React.FC<MapChartProps> = ({ setModal }) => {
   return (
     <div>
       <Card className="h-100 text-white px-0 pt-5 item-stretch">
-        <h5 className="ps-4 ps-sm-5 mb-0">Node Locations</h5>
+        <span className="fw-semi-bold text-uppercase text-white fs-6 ps-4">
+          Node Locations
+        </span>
         <div
           className="mx-auto"
           style={{

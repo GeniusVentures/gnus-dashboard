@@ -56,11 +56,11 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
         />
         <Web3Modal>
           <PricesWrapper>
-            {/* <IPFSWrapper> */}
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-            {/* </IPFSWrapper> */}
+            <IPFSWrapper>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </IPFSWrapper>
           </PricesWrapper>
         </Web3Modal>
       </Provider>

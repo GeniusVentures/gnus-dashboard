@@ -15,11 +15,11 @@ const ethersConfig = defaultConfig({
 
 // 5. Create a Web3Modal instance
 createWeb3Modal({
-  chains: [networks.sepolia],
+  chains: [networks.amoy],
   ethersConfig,
   enableOnramp: false,
   enableSwaps: false,
-  defaultChain: networks.sepolia,
+  defaultChain: networks.amoy,
   projectId,
   themeVariables: {
     "--w3m-color-mix": "#00000090",

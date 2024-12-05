@@ -12,14 +12,14 @@ const NetworkInfo: React.FC = () => {
   const [displayer, setDisplayer] = useState<string | null>(null);
   const [aggSpeed, setAggSpeed] = useState<number>(0);
   const speedIntRef = useRef<NodeJS.Timeout | null>(null);
-  const prevSpeedRef = useRef<number>(1.7);
+  const prevSpeedRef = useRef<number>(169.7);
 
   const speedInt = () => {
-    const minSpeedPer = 1.3;
-    const maxSpeedPer = 2;
+    const minSpeedPer = 150.2;
+    const maxSpeedPer = 183.5;
 
     speedIntRef.current = setInterval(() => {
-      const change = Math.random() * 0.05 - 0.03;
+      const change = Math.random() * 0.5 - 0.3;
       let newSpeed = prevSpeedRef.current + change;
       newSpeed = Math.max(minSpeedPer, Math.min(maxSpeedPer, newSpeed));
       setAggSpeed(newSpeed);
@@ -46,12 +46,13 @@ const NetworkInfo: React.FC = () => {
                 minHeight: "250px",
                 maxHeight: "250px",
                 alignContent: "center",
+                height: "100%",
                 width: "95%",
                 maxWidth: "350px",
                 justifyContent: "center",
               }}>
               <GaugeComponent
-                className="py-5"
+                marginInPercent={0.067}
                 type="semicircle"
                 arc={{
                   subArcs: [{ limit: 1, color: "#5c5c5c", showTick: true }],
@@ -61,24 +62,25 @@ const NetworkInfo: React.FC = () => {
                   padding: 0.05,
                 }}
                 minValue={0}
-                maxValue={4}
+                maxValue={1800}
                 value={aggSpeed}
                 labels={{
                   valueLabel: {
-                    style: { fontSize: 40 },
-                    formatTextValue: () => aggSpeed.toFixed(2) + " TH/s",
+                    style: { fontSize: 35 },
+                    formatTextValue: () => aggSpeed.toFixed(2) + " TF/s",
                   },
                   tickLabels: {
                     type: "outer",
                     defaultTickValueConfig: {
-                      formatTextValue: (value) => value + " TH/s",
+                      formatTextValue: (value) => value + " TF/s",
                       style: { fontSize: 10 },
                     },
                     ticks: [
-                      { value: 1 },
-                      { value: 2 },
-                      { value: 3 },
-                      { value: 4 },
+                      { value: 300 },
+                      { value: 600 },
+                      { value: 900 },
+                      { value: 1200 },
+                      { value: 1500 },
                     ],
                   },
                 }}
@@ -105,7 +107,7 @@ const NetworkInfo: React.FC = () => {
                 alignContent: "center",
               }}>
               <GaugeComponent
-                className=""
+                marginInPercent={0.07}
                 type="grafana"
                 arc={{
                   subArcs: [{ limit: 1, showTick: true }],
@@ -114,24 +116,25 @@ const NetworkInfo: React.FC = () => {
                   width: 0.3,
                 }}
                 minValue={0}
-                maxValue={4}
+                maxValue={1800}
                 value={aggSpeed}
                 labels={{
                   valueLabel: {
-                    style: { fontSize: 40 },
-                    formatTextValue: () => aggSpeed.toFixed(2) + " TH/s",
+                    style: { fontSize: 35 },
+                    formatTextValue: () => aggSpeed.toFixed(2) + " TF/s",
                   },
                   tickLabels: {
                     type: "outer",
                     defaultTickValueConfig: {
-                      formatTextValue: (value) => value + " TH/s",
+                      formatTextValue: (value) => value + " TF/s",
                       style: { fontSize: 10 },
                     },
                     ticks: [
-                      { value: 1 },
-                      { value: 2 },
-                      { value: 3 },
-                      { value: 4 },
+                      { value: 300 },
+                      { value: 600 },
+                      { value: 900 },
+                      { value: 1200 },
+                      { value: 1500 },
                     ],
                   },
                 }}
@@ -149,16 +152,17 @@ const NetworkInfo: React.FC = () => {
           <Card className="h-100 text-white px-0 pt-5 text-white">
             <h5 className="ps-4 ps-sm-5 mb-0">Aggregate Speed</h5>
             <div
-              className="mx-auto"
+              className="mx-auto my-auto"
               style={{
                 minHeight: "250px",
                 maxHeight: "250px",
                 width: "95%",
                 maxWidth: "350px",
                 alignContent: "center",
+                justifyContent: "center",
               }}>
               <GaugeComponent
-                className="pt-15 pb-5 mt-n16"
+                marginInPercent={0.063}
                 type="radial"
                 arc={{
                   subArcs: [{ limit: 1, color: "#5c5c5c", showTick: true }],
@@ -168,24 +172,25 @@ const NetworkInfo: React.FC = () => {
                   padding: 0.05,
                 }}
                 minValue={0}
-                maxValue={4}
+                maxValue={1800}
                 value={aggSpeed}
                 labels={{
                   valueLabel: {
-                    style: { fontSize: 40 },
-                    formatTextValue: () => aggSpeed.toFixed(2) + " TH/s",
+                    style: { fontSize: 35 },
+                    formatTextValue: () => aggSpeed.toFixed(2) + " TF/s",
                   },
                   tickLabels: {
                     type: "outer",
                     defaultTickValueConfig: {
-                      formatTextValue: (value) => value + " TH/s",
+                      formatTextValue: (value) => value + " TF/s",
                       style: { fontSize: 10 },
                     },
                     ticks: [
-                      { value: 1 },
-                      { value: 2 },
-                      { value: 3 },
-                      { value: 4 },
+                      { value: 300 },
+                      { value: 600 },
+                      { value: 900 },
+                      { value: 1200 },
+                      { value: 1500 },
                     ],
                   },
                 }}
@@ -203,16 +208,18 @@ const NetworkInfo: React.FC = () => {
           <Card className="h-100 text-white px-0 pt-5 text-white">
             <h5 className="ps-4 ps-sm-5 mb-0">Aggregate Speed</h5>
             <div
-              className="mx-auto"
+              className="mx-auto my-auto"
               style={{
                 minHeight: "250px",
                 maxHeight: "250px",
                 width: "95%",
                 maxWidth: "350px",
                 alignContent: "center",
+                justifyContent: "center",
+                height: "100%",
               }}>
               <GaugeComponent
-                className="py-5"
+                marginInPercent={0.067}
                 type="semicircle"
                 arc={{
                   subArcs: [
@@ -223,24 +230,25 @@ const NetworkInfo: React.FC = () => {
                   gradient: true,
                 }}
                 minValue={0}
-                maxValue={4}
+                maxValue={1800}
                 value={aggSpeed}
                 labels={{
                   valueLabel: {
-                    style: { fontSize: 40 },
-                    formatTextValue: () => aggSpeed.toFixed(2) + " TH/s",
+                    style: { fontSize: 35 },
+                    formatTextValue: () => aggSpeed.toFixed(2) + " TF/s",
                   },
                   tickLabels: {
                     type: "outer",
                     defaultTickValueConfig: {
-                      formatTextValue: (value) => value + " TH/s",
+                      formatTextValue: (value) => value + " TF/s",
                       style: { fontSize: 10 },
                     },
                     ticks: [
-                      { value: 1 },
-                      { value: 2 },
-                      { value: 3 },
-                      { value: 4 },
+                      { value: 300 },
+                      { value: 600 },
+                      { value: 900 },
+                      { value: 1200 },
+                      { value: 1500 },
                     ],
                   },
                 }}

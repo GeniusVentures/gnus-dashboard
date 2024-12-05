@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Image } from "react-bootstrap";
+import { Card } from "react-bootstrap";
 import ApexCharts from "widgets/charts/ApexCharts";
 
 interface DeviceMixProps {
@@ -9,7 +9,9 @@ interface DeviceMixProps {
 const DeviceMix: React.FC<DeviceMixProps> = ({ setModal }) => {
   return (
     <Card className="h-100 text-white px-0 pt-5 item-stretch">
-      <h5 className="ps-4 ps-sm-5 mb-0">Device Mix</h5>
+      <span className="fw-semi-bold text-uppercase text-white fs-6 ps-4">
+        Device Mix
+      </span>
       <div
         className="mx-auto"
         style={{

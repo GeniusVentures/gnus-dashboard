@@ -77,7 +77,7 @@ const Analytics: React.FC = () => {
             </Row>
             <Row className="justify-content-center mt-5">
               <Button
-                onClick={() => router.push("/analytics")}
+                onClick={() => router.push("/")}
                 style={{ width: "350px" }}
                 className="btn btn-gnus fs-3">
                 See Block Explorer

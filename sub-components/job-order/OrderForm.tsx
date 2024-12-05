@@ -11,17 +11,19 @@ import {
   useWeb3ModalAccount,
   useWeb3ModalEvents,
   useWeb3ModalState,
+  useWeb3ModalProvider,
 } from "@web3modal/ethers/react";
 import config from "config/config";
 import Link from "next/link";
+import axios from "axios";
 const OrderForm: React.FC = () => {
   const [parent] = useAutoAnimate();
   const { open, close } = useWeb3Modal();
+  const { walletProvider } = useWeb3ModalProvider();
   const { address, chainId, isConnected } = useWeb3ModalAccount();
   const events = useWeb3ModalEvents();
   const { selectedNetworkId } = useWeb3ModalState();
-  const web3Signer = useRef(null);
-  const web3Address = useRef(null);
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
   const [showSpinner, setShowSpinner] = useState<boolean>(false);
   const [location, setLocation] = useState<string>("");
   const [type, setType] = useState<string>("");
@@ -44,16 +46,20 @@ const OrderForm: React.FC = () => {
     },
   ]);
   const [modalStatus, setModalStatus] = useState<string>("");
+  const [gnusBal, setGNUSBal] = useState<string>("");
+  const tokenAddress = useRef<string | null>(null);
   const pattern = /^[\w_]*\.[a-z]{2,4}$/i;
   const pattern2 = /^[\w_/]*\.[a-z]{2,4}$/i;
-
+  const ERC1155_ABI = [
+    "function balanceOf(address account, uint256 id) view returns (uint256)",
+  ];
   useEffect(() => {
     if (!isConnected) {
       open({ view: "Connect" })
         .then(() => {
           if (
             selectedNetworkId.split(":")[1] !==
-            config.networks.sepolia.chainId.toString()
+            config.networks.amoy.chainId.toString()
           ) {
             open({ view: "Networks" });
           }
@@ -65,21 +71,26 @@ const OrderForm: React.FC = () => {
     } else {
       console.log(
         selectedNetworkId.split(":")[1],
-        config.networks.sepolia.chainId.toString()
+        config.networks.amoy.chainId.toString()
       );
       if (
         selectedNetworkId.split(":")[1] !==
-        config.networks.sepolia.chainId.toString()
+        config.networks.amoy.chainId.toString()
       ) {
         open({ view: "Networks" });
       }
     }
     setModalStatus("closed");
+    tokenAddress.current = config.amoyContract;
   }, []);
 
   useEffect(() => {
     console.log(address, chainId, isConnected);
   }, [address, chainId, isConnected]);
+
+  useEffect(() => {
+    fetchBal();
+  }, [walletProvider]);
 
   useEffect(() => {
     console.log(events.data.event);
@@ -89,8 +100,24 @@ const OrderForm: React.FC = () => {
       setModalStatus("closed");
     } else if (events.data.event === "CONNECT_SUCCESS") {
       setModalStatus("closed");
+      fetchBal();
     }
   }, [events]);
+
+  const fetchBal = async () => {
+    if (walletProvider) {
+      const ethersProvider = new ethers.BrowserProvider(walletProvider);
+      const signerInstance = await ethersProvider.getSigner(); // Fetch the signer
+      setSigner(signerInstance);
+      const tokenContract = new ethers.Contract(
+        tokenAddress.current,
+        ERC1155_ABI,
+        signerInstance
+      );
+      const bal = await tokenContract.balanceOf(address, 0);
+      setGNUSBal((parseInt(bal) / 10 ** 18).toFixed(2));
+    }
+  };
 
   // Function to add a new input section
   const addInputSection = () => {
@@ -274,7 +301,7 @@ const OrderForm: React.FC = () => {
       ) {
         // Create a FileReader to read the contents of the file
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
           try {
             // Parse the file content as JSON
             const { data, model, input } = JSON.parse(
@@ -387,6 +414,21 @@ const OrderForm: React.FC = () => {
               inputErrors.length === 0
             ) {
               console.log("all good");
+              await axios
+                .post("/api/processing/getEstimate", {
+                  jsonRequest: JSON.stringify({ data, model, input }),
+                })
+                .then((response) => {
+                  console.log(response);
+                })
+                .catch((err) => {
+                  toast.error("Something went wrong, please try again.", {
+                    className: "gnus-toast",
+                    icon: (
+                      <Image height={30} src="images/logo/gnus-icon-red.png" />
+                    ),
+                  });
+                });
             } else {
               console.error("Invalid JSON file:");
               toast.error("JSON file has invalid format.", {
@@ -454,6 +496,9 @@ const OrderForm: React.FC = () => {
                   {address}
                 </Link>
               </span>
+            </Row>
+            <Row className="text-center">
+              <p>Your GNUS Balance: {gnusBal}</p>
             </Row>
             <Form.Group
               id="radios"

@@ -35,8 +35,9 @@ const ApexCharts: React.FC<ApexChartsProps> = ({
   height,
 }) => {
   const [windowDefined, setWindowDefined] = useState(false);
-  console.log(type);
   useEffect(() => {
+    console.log(type);
+
     setWindowDefined(true);
   }, []);
 
