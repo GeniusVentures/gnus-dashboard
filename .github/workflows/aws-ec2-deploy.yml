@@ -1,6 +1,12 @@
 name: CI/CD Deploy Genius Dashboard Backend/Frontend
 
 on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
   workflow_dispatch:
 
 jobs:
