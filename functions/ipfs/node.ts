@@ -46,8 +46,9 @@ switch (process.platform) {
 console.log("Library path resolved to:", libraryPath);
 const GeniusSDK = koffi.load(libraryPath);
 
+//Path, Key, Use DHT, Do processing
 const GeniusSDKInit = GeniusSDK.func(
-  "const char* GeniusSDKInit(const char*, const char*)"
+  "const char* GeniusSDKInit(const char*, const char*, int, int)"
 );
 const GeniusSDKProcess = GeniusSDK.func("void GeniusSDKProcess(const char*)");
 const GeniusSDKGetBalance = GeniusSDK.func("uint64_t GeniusSDKGetBalance()");
@@ -95,7 +96,7 @@ const createNode = async () => {
       "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"; // Replace with the actual private key
 
     // Initialize GeniusSDK
-    const result = GeniusSDKInit(basePath, ethPrivateKey);
+    const result = GeniusSDKInit(basePath, ethPrivateKey,1,0);
 
     if (!result) {
       throw new Error("GeniusSDK initialization failed");
