@@ -129,3 +129,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 *.pem
+
+*.so
+
+/data/SuperGNUSNode.TestNet.0x1e8129dea5fca4f6db51a8fbf6392701fd0df43f681138fa76965ac5f8a09e4e/
