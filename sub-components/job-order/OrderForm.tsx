@@ -29,6 +29,7 @@ const OrderForm: React.FC = () => {
   const [type, setType] = useState<string>("");
   const [modelFile, setModelFile] = useState<string>("");
   const [radios, setRadios] = useState<string>("");
+  const [success, setSuccess] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
   const [inputSections, setInputSections] = useState<any[]>([
     {
@@ -93,8 +94,10 @@ const OrderForm: React.FC = () => {
     console.log(events.data.event);
     if (events.data.event === "MODAL_OPEN") {
       setModalStatus("open");
+      setRadios(null);
     } else if (events.data.event === "MODAL_CLOSE") {
       setModalStatus("closed");
+      fetchBal();
     } else if (events.data.event === "CONNECT_SUCCESS") {
       setModalStatus("closed");
       fetchBal();
@@ -441,8 +444,45 @@ const OrderForm: React.FC = () => {
                         ),
                       });
                     });
-
-                  console.log(tx);
+                  if (tx?.hash) {
+                    toast.success("Payment successful, submitting job now...", {
+                      className: "gnus-toast",
+                      icon: (
+                        <Image height={30} src="images/logo/gnus-icon.png" />
+                      ),
+                    });
+                    console.log("attempting processing");
+                    await axios
+                      .post("/api/processing/submitJob", {
+                        jsonRequest: JSON.stringify({ data, model, input }),
+                      })
+                      .then(async (response: any) => {
+                        console.log(response);
+                        toast.success("Job submitted successfully!", {
+                          className: "gnus-toast",
+                          icon: (
+                            <Image
+                              height={30}
+                              src="images/logo/gnus-icon.png"
+                            />
+                          ),
+                        });
+                        fetchBal();
+                        setSuccess(true);
+                      })
+                      .catch((error) => {
+                        console.error(error);
+                        toast.error("Failed to submit job, please try again.", {
+                          className: "gnus-toast",
+                          icon: (
+                            <Image
+                              height={30}
+                              src="images/logo/gnus-icon-red.png"
+                            />
+                          ),
+                        });
+                      });
+                  }
                 })
                 .catch((err) => {
                   toast.error("Something went wrong, please try again.", {
@@ -507,7 +547,7 @@ const OrderForm: React.FC = () => {
             </div>
           </Row>
         )}
-        {modalStatus === "closed" && isConnected && (
+        {modalStatus === "closed" && isConnected && !success && (
           <div>
             <Row className="text-center mb-3">
               <span>
@@ -573,7 +613,7 @@ const OrderForm: React.FC = () => {
             </Form.Group>
           </div>
         )}
-        {radios === "manual" && (
+        {radios === "manual" && modalStatus === "closed" && !success && (
           <Row>
             <Form onSubmit={manualSubmitHandler}>
               <h3 className="text-white">General Data</h3>
@@ -836,7 +876,7 @@ const OrderForm: React.FC = () => {
             </Form>
           </Row>
         )}
-        {radios === "upload" && (
+        {radios === "upload" && !success && (
           <Row>
             <Form onSubmit={fileSubmitHandler}>
               <Form.Group id="file" className="mb-3">
@@ -865,6 +905,24 @@ const OrderForm: React.FC = () => {
                 </Button>
               </Row>
             </Form>
+          </Row>
+        )}
+        {success && (
+          <Row>
+            <p className="text-center fs-4 fw-bold mb-10">
+              Your job was successfully submitted.
+            </p>
+            <Button
+              onClick={() => {
+                setRadios(null);
+                setSuccess(false);
+              }}
+              style={{
+                maxWidth: "350px",
+              }}
+              className="btn-gnus py-2 fs-4 w-100 mx-auto">
+              Submit Another Request
+            </Button>
           </Row>
         )}
       </div>
