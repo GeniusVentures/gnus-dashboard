@@ -1,1 +1,1 @@
-export default [{ name: "Posenet", value: "posenet" }];
+export default [{ name: "MNN Image", value: "mnnimage" }];

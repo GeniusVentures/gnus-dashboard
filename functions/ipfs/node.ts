@@ -48,14 +48,17 @@ const GeniusSDK = koffi.load(libraryPath);
 
 //Path, Key, Use DHT, Do processing
 const GeniusSDKInit = GeniusSDK.func(
-  "const char* GeniusSDKInit(const char*, const char*, int, int)"
+  "const char* GeniusSDKInit(const char*, const char*, int, int, int)"
 );
 const GeniusSDKProcess = GeniusSDK.func("void GeniusSDKProcess(const char*)");
 const GeniusSDKGetBalance = GeniusSDK.func("uint64_t GeniusSDKGetBalance()");
-const GeniusSDKGetTransactions = GeniusSDK.func(
-  "GeniusMatrix GeniusSDKGetTransactions()"
+const GeniusSDKGetOutTransactions = GeniusSDK.func(
+  "GeniusMatrix GeniusSDKGetOutTransactions()"
 );
-const GeniusSDKGetBlocks = GeniusSDK.func("GeniusMatrix GeniusSDKGetBlocks()");
+const GeniusSDKGetInTransactions = GeniusSDK.func(
+  "GeniusMatrix GeniusSDKGetInTransactions()"
+);
+//const GeniusSDKGetBlocks = GeniusSDK.func("GeniusMatrix GeniusSDKGetBlocks()");
 const GeniusSDKFreeTransactions = GeniusSDK.func(
   "void GeniusSDKFreeTransactions(GeniusMatrix)"
 );
@@ -75,8 +78,9 @@ const GeniusSDKGetCost = GeniusSDK.func(
 const initGnus = GeniusSDKInit;
 const processGnus = GeniusSDKProcess;
 const getBalance = GeniusSDKGetBalance;
-const getTransactions = GeniusSDKGetTransactions;
-const getBlocks = GeniusSDKGetBlocks;
+const getOutTransactions = GeniusSDKGetOutTransactions;
+const getInTransactions = GeniusSDKGetInTransactions;
+//const getBlocks = GeniusSDKGetBlocks;
 const freeTransactions = GeniusSDKFreeTransactions;
 const mintTokens = GeniusSDKMintTokens;
 const getAddress = GeniusSDKGetAddress;
@@ -86,7 +90,8 @@ const getCost = GeniusSDKGetCost;
 let node = null;
 
 let requestout = 0;
-let transactionList = [];
+let transactionOutList = [];
+let transactionInList = [];
 let blockList = [];
 const createNode = async () => {
   try {
@@ -96,7 +101,7 @@ const createNode = async () => {
       "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"; // Replace with the actual private key
 
     // Initialize GeniusSDK
-    const result = GeniusSDKInit(basePath, ethPrivateKey,1,0);
+    const result = GeniusSDKInit(basePath, ethPrivateKey,1,0,40001);
 
     if (!result) {
       throw new Error("GeniusSDK initialization failed");
@@ -111,70 +116,104 @@ const createNode = async () => {
 };
 
 function CheckTransactions() {
-  const transactions = getTransactions();
+  //Outgoing
+  const outtransactions = getOutTransactions();
 
   // Decode the GeniusArray collection
-  const geniusArrays = koffi.decode(
-    transactions.ptr,
+  const outgeniusArrays = koffi.decode(
+    outtransactions.ptr,
     GeniusArray,
-    transactions.size
+    outtransactions.size
   );
 
   // Loop through each GeniusArray entry
-  for (let i = 0; i < transactions.size; i++) {
-    const entry = geniusArrays[i]; // Get each GeniusArray entry
+  for (let i = 0; i < outtransactions.size; i++) {
+    const entry = outgeniusArrays[i]; // Get each GeniusArray entry
     const dataBuffer = koffi.decode(entry.ptr, "uint8_t", entry.size); // Decode the raw data
 
     // Check if dataBuffer already exists in transactionList
-    const exists = transactionList.some(
+    const exists = transactionOutList.some(
       (existingBuffer) =>
         existingBuffer.length === dataBuffer.length &&
         existingBuffer.every((value, index) => value === dataBuffer[index])
     );
 
     if (!exists) {
-      transactionList.push(dataBuffer);
+      transactionOutList.push(dataBuffer);
       ParseTransaction(dataBuffer);
     }
   }
-  console.log("Readable Transactions:", transactionList);
+  console.log("Readable Transactions Out:", transactionOutList);
 
   // Free memory for transactions
-  freeTransactions(transactions);
-}
+  freeTransactions(outtransactions);
 
-function CheckBlocks() {
-  const transactions = getBlocks();
+  //Incoming Transactions
+  const intransactions = getInTransactions();
 
   // Decode the GeniusArray collection
-  const geniusArrays = koffi.decode(
-    transactions.ptr,
+  const ingeniusArrays = koffi.decode(
+    intransactions.ptr,
     GeniusArray,
-    transactions.size
+    intransactions.size
   );
 
   // Loop through each GeniusArray entry
-  for (let i = 0; i < transactions.size; i++) {
-    const entry = geniusArrays[i]; // Get each GeniusArray entry
+  for (let i = 0; i < intransactions.size; i++) {
+    const entry = ingeniusArrays[i]; // Get each GeniusArray entry
     const dataBuffer = koffi.decode(entry.ptr, "uint8_t", entry.size); // Decode the raw data
 
     // Check if dataBuffer already exists in transactionList
-    const exists = transactionList.some(
+    const exists = transactionInList.some(
       (existingBuffer) =>
         existingBuffer.length === dataBuffer.length &&
         existingBuffer.every((value, index) => value === dataBuffer[index])
     );
 
     if (!exists) {
-      blockList.push(dataBuffer);
-      ParseBlock(dataBuffer);
+      transactionInList.push(dataBuffer);
+      ParseTransaction(dataBuffer);
     }
   }
-  console.log("Readable Blocks:", blockList);
+  console.log("Readable Transactions:", transactionInList);
 
   // Free memory for transactions
-  freeTransactions(transactions);
+  freeTransactions(intransactions);
+
 }
+
+// function CheckBlocks() {
+//   const transactions = getBlocks();
+
+//   // Decode the GeniusArray collection
+//   const geniusArrays = koffi.decode(
+//     transactions.ptr,
+//     GeniusArray,
+//     transactions.size
+//   );
+
+//   // Loop through each GeniusArray entry
+//   for (let i = 0; i < transactions.size; i++) {
+//     const entry = geniusArrays[i]; // Get each GeniusArray entry
+//     const dataBuffer = koffi.decode(entry.ptr, "uint8_t", entry.size); // Decode the raw data
+
+//     // Check if dataBuffer already exists in transactionList
+//     const exists = transactionList.some(
+//       (existingBuffer) =>
+//         existingBuffer.length === dataBuffer.length &&
+//         existingBuffer.every((value, index) => value === dataBuffer[index])
+//     );
+
+//     if (!exists) {
+//       blockList.push(dataBuffer);
+//       ParseBlock(dataBuffer);
+//     }
+//   }
+//   console.log("Readable Blocks:", blockList);
+
+//   // Free memory for transactions
+//   freeTransactions(transactions);
+// }
 
 function ParseTransaction(transactionData: Uint8Array) {
   //Try Decoding as Mint
@@ -222,22 +261,22 @@ function ParseTransaction(transactionData: Uint8Array) {
   // }
 }
 
-function ParseBlock(transactionData: Uint8Array) {
-  //Try Decoding as Block Header
-  try {
-    const block = BlockHeaderData.fromBinary(transactionData);
-    console.log(" Block Message ");
-    console.log("Parent Hash: " + block.parentHash);
-    console.log("Block Number: " + block.blockNumber);
-    console.log("stateRoot: " + block.stateRoot);
-    console.log("Extrin Root: " + block.extrinsicsRoot);
-    console.log("digest: " + block.digest);
-    blockMsg(block);
-    return;
-  } catch (e) {
-    console.log("Cannot Decode as block tx" + e);
-  }
-}
+// function ParseBlock(transactionData: Uint8Array) {
+//   //Try Decoding as Block Header
+//   try {
+//     const block = BlockHeaderData.fromBinary(transactionData);
+//     console.log(" Block Message ");
+//     console.log("Parent Hash: " + block.parentHash);
+//     console.log("Block Number: " + block.blockNumber);
+//     console.log("stateRoot: " + block.stateRoot);
+//     console.log("Extrin Root: " + block.extrinsicsRoot);
+//     console.log("digest: " + block.digest);
+//     blockMsg(block);
+//     return;
+//   } catch (e) {
+//     console.log("Cannot Decode as block tx" + e);
+//   }
+// }
 
 function runGeniusSDKProcess(jsonData) {
   try {
@@ -282,6 +321,6 @@ export {
   createNode,
   getGeniusSDKCost,
   runGeniusSDKProcess,
-  CheckBlocks,
+  //CheckBlocks,
   CheckTransactions,
 };
