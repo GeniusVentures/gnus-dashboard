@@ -18,7 +18,7 @@ import Link from "next/link";
 import axios from "axios";
 const OrderForm: React.FC = () => {
   const [parent] = useAutoAnimate();
-  const { open, close } = useWeb3Modal();
+  const { open } = useWeb3Modal();
   const { walletProvider } = useWeb3ModalProvider();
   const { address, chainId, isConnected } = useWeb3ModalAccount();
   const events = useWeb3ModalEvents();
