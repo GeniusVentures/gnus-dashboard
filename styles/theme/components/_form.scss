@@ -64,9 +64,9 @@ input::-webkit-inner-spin-button {
   margin-bottom: 20px;
   background-color: #00000060 !important;
   backdrop-filter: blur(10px) !important;
-  color: #fff !important;
+  color: #fff !important; /* Default text color: white */
   border: solid 1px white;
-  box-shadow: 0 0 3px 1px $dark !important;
+  box-shadow: 0 0 3px 1px #222 !important;
 
   transition:
     border-color 0.2s ease,
@@ -77,6 +77,25 @@ input::-webkit-inner-spin-button {
 .form-select:focus {
   border-color: $primary;
   box-shadow: 0 0 5px 2px $primary !important;
+}
+
+/* Placeholder styling */
+.form-control::placeholder,
+.form-select::placeholder {
+  color: gray !important; /* Placeholder color */
+  opacity: 1; /* Ensures full opacity */
+}
+
+/* Change text color to gray when placeholder is visible */
+.form-control:placeholder-shown,
+.form-select:placeholder-shown {
+  color: gray !important;
+}
+
+/* Input text turns white when user types */
+.form-control:not(:placeholder-shown),
+.form-select:not(:placeholder-shown) {
+  color: white !important;
 }
 
 .form-select {

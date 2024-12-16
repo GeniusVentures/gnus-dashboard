@@ -280,6 +280,76 @@ const OrderForm: React.FC = () => {
     }
 
     if (locationGood && typeGood !== undefined && modelFileGood && inputsGood) {
+      console.log("all good");
+      await axios
+        .post("/api/processing/getEstimate", {
+          jsonRequest: JSON.stringify({
+            data: { type: location.split(":")[0], url: location },
+            model: { name: type, file: modelFile },
+            inputSections,
+          }),
+        })
+        .then(async (response: any) => {
+          const tokenContract = new ethers.Contract(
+            tokenAddress.current,
+            ERC1155_ABI,
+            signer
+          );
+          const destChainID = parseInt("deba5edc0de", 16);
+          console.log(response.data, BigInt(response.data * 10 ** 18));
+          const tx = await tokenContract
+            .bridgeOut(
+              BigInt(response.data * 10 ** 18).toString(),
+              0,
+              destChainID
+            )
+            .catch((error) => {
+              console.log(error);
+              toast.error("Payment failed, please try again.", {
+                className: "gnus-toast",
+                icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+              });
+            });
+          if (tx?.hash) {
+            toast.success("Payment successful, submitting job now...", {
+              className: "gnus-toast",
+              icon: <Image height={30} src="images/logo/gnus-icon.png" />,
+            });
+            console.log("attempting processing");
+            await axios
+              .post("/api/processing/submitJob", {
+                jsonRequest: JSON.stringify({
+                  data: { type: location.split(":")[0], url: location },
+                  model: { name: type, file: modelFile },
+                  inputSections,
+                }),
+              })
+              .then(async (response: any) => {
+                console.log(response);
+                toast.success("Job submitted successfully!", {
+                  className: "gnus-toast",
+                  icon: <Image height={30} src="images/logo/gnus-icon.png" />,
+                });
+                fetchBal();
+                setSuccess(true);
+              })
+              .catch((error) => {
+                console.error(error);
+                toast.error("Failed to submit job, please try again.", {
+                  className: "gnus-toast",
+                  icon: (
+                    <Image height={30} src="images/logo/gnus-icon-red.png" />
+                  ),
+                });
+              });
+          }
+        })
+        .catch((err) => {
+          toast.error("Something went wrong, please try again.", {
+            className: "gnus-toast",
+            icon: <Image height={30} src="images/logo/gnus-icon-red.png" />,
+          });
+        });
     } else {
       toast.error(
         "Please fill out all required fields with the proper format",
