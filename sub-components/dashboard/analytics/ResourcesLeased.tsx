@@ -1,6 +1,5 @@
 import { Row, Col, Card, Modal } from "react-bootstrap";
 import { Fragment, useState } from "react";
-import MapChart from "./MapChart";
 import DeviceMix from "./DeviceMix";
 
 const ResourcesLeased: React.FC = () => {
@@ -12,11 +11,7 @@ const ResourcesLeased: React.FC = () => {
         <h2 className="display-7 text-white">Resources Leased</h2>
         <Col style={{ maxWidth: "600px", minWidth: "300px" }} className="mb-4">
           <DeviceMix setModal={setModal} />
-        </Col>
-
-        <Col style={{ maxWidth: "600px", minWidth: "300px" }} className="mb-4">
-          {/* <MapChart setModal={setModal} /> */}
-        </Col>
+        </Col>{" "}
       </Row>
       <Modal show={modal} onHide={() => setModal(false)}>
         <Modal.Header closeButton />
