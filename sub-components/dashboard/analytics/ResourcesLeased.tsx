@@ -15,7 +15,7 @@ const ResourcesLeased: React.FC = () => {
         </Col>
 
         <Col style={{ maxWidth: "600px", minWidth: "300px" }} className="mb-4">
-          <MapChart setModal={setModal} />
+          {/* <MapChart setModal={setModal} /> */}
         </Col>
       </Row>
       <Modal show={modal} onHide={() => setModal(false)}>
