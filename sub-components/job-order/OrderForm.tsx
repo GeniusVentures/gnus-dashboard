@@ -34,16 +34,16 @@ const OrderForm: React.FC = () => {
   const [inputSections, setInputSections] = useState<any[]>([
     {
       image: "",
-      blockLength: "",
-      blockLineStride: "",
-      blockStride: "",
-      chunkLineStride: "",
-      chunkOffset: "",
-      chunkStride: "",
-      subchunkHeight: "",
-      subchunkWidth: "",
-      chunkCount: "",
-      channels: "",
+      block_len: null,
+      block_line_stride: null,
+      block_stride: null,
+      chunk_line_stride: null,
+      chunk_offset: null,
+      chunk_stride: null,
+      chunk_subchunk_height: null,
+      chunk_subchunk_width: null,
+      chunk_count: null,
+      channels: null,
     },
   ]);
   const [modalStatus, setModalStatus] = useState<string>("");
@@ -125,16 +125,16 @@ const OrderForm: React.FC = () => {
       ...inputSections,
       {
         image: "",
-        blockLength: "",
-        blockLineStride: "",
-        blockStride: "",
-        chunkLineStride: "",
-        chunkOffset: "",
-        chunkStride: "",
-        subchunkHeight: "",
-        subchunkWidth: "",
-        chunkCount: "",
-        channels: "",
+        block_len: null,
+        block_line_stride: null,
+        block_stride: null,
+        chunk_line_stride: null,
+        chunk_offset: null,
+        chunk_stride: null,
+        chunk_subchunk_height: null,
+        chunk_subchunk_width: null,
+        chunk_count: null,
+        channels: null,
       },
     ]);
   };
@@ -148,6 +148,22 @@ const OrderForm: React.FC = () => {
     const newInputSections = [...inputSections];
     newInputSections[index][field] = e.target.value;
     setInputSections(newInputSections);
+  };
+
+  const handleInputChangeInt = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number,
+    field: string
+  ) => {
+    if (e.target.value) {
+      const newInputSections = [...inputSections];
+      newInputSections[index][field] = parseInt(e.target.value);
+      setInputSections(newInputSections);
+    } else {
+      const newInputSections = [...inputSections];
+      newInputSections[index][field] = "";
+      setInputSections(newInputSections);
+    }
   };
 
   const manualSubmitHandler = async (e: React.FormEvent) => {
@@ -180,15 +196,15 @@ const OrderForm: React.FC = () => {
     for (let i = 0; i < inputSections.length; i++) {
       const {
         image,
-        blockLength,
-        blockLineStride,
-        blockStride,
-        chunkLineStride,
-        chunkOffset,
-        chunkStride,
-        subchunkHeight,
-        subchunkWidth,
-        chunkCount,
+        block_len,
+        block_line_stride,
+        block_stride,
+        chunk_line_stride,
+        chunk_offset,
+        chunk_stride,
+        chunk_subchunk_height,
+        chunk_subchunk_width,
+        chunk_count,
         channels,
       } = inputSections[i];
 
@@ -199,73 +215,86 @@ const OrderForm: React.FC = () => {
       } else {
         document.getElementById(`image${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(blockLength, { no_symbols: true })) {
-        document.getElementById(`blockLength${i}`).className =
+      if (!validator.isNumeric(block_len.toString(), { no_symbols: true })) {
+        document.getElementById(`block_len${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`blockLength${i}`);
+        inputErrors.push(`block_len${i}`);
       } else {
-        document.getElementById(`blockLength${i}`).className = "form-control";
+        document.getElementById(`block_len${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(blockLineStride, { no_symbols: true })) {
-        document.getElementById(`blockLineStride${i}`).className =
+      if (
+        !validator.isNumeric(block_line_stride.toString(), { no_symbols: true })
+      ) {
+        document.getElementById(`block_line_stride${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`blockLineStride${i}`);
+        inputErrors.push(`block_line_stride${i}`);
       } else {
-        document.getElementById(`blockLineStride${i}`).className =
+        document.getElementById(`block_line_stride${i}`).className =
           "form-control";
       }
-      if (!validator.isNumeric(blockStride, { no_symbols: true })) {
-        document.getElementById(`blockStride${i}`).className =
+      if (!validator.isNumeric(block_stride.toString(), { no_symbols: true })) {
+        document.getElementById(`block_stride${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`blockStride${i}`);
+        inputErrors.push(`block_stride${i}`);
       } else {
-        document.getElementById(`blockStride${i}`).className = "form-control";
+        document.getElementById(`block_stride${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(chunkLineStride, { no_symbols: true })) {
-        document.getElementById(`chunkLineStride${i}`).className =
+      if (
+        !validator.isNumeric(chunk_line_stride.toString(), { no_symbols: true })
+      ) {
+        document.getElementById(`chunk_line_stride${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`chunkLineStride${i}`);
+        inputErrors.push(`chunk_line_stride${i}`);
       } else {
-        document.getElementById(`chunkLineStride${i}`).className =
+        document.getElementById(`chunk_line_stride${i}`).className =
           "form-control";
       }
-      if (!validator.isNumeric(chunkOffset, { no_symbols: true })) {
-        document.getElementById(`chunkOffset${i}`).className =
+      if (!validator.isNumeric(chunk_offset.toString(), { no_symbols: true })) {
+        document.getElementById(`chunk_offset${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`chunkOffset${i}`);
+        inputErrors.push(`chunk_offset${i}`);
       } else {
-        document.getElementById(`chunkOffset${i}`).className = "form-control";
+        document.getElementById(`chunk_offset${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(chunkStride, { no_symbols: true })) {
-        document.getElementById(`chunkStride${i}`).className =
+      if (!validator.isNumeric(chunk_stride.toString(), { no_symbols: true })) {
+        document.getElementById(`chunk_stride${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`chunkStride${i}`);
+        inputErrors.push(`chunk_stride${i}`);
       } else {
-        document.getElementById(`chunkStride${i}`).className = "form-control";
+        document.getElementById(`chunk_stride${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(subchunkHeight, { no_symbols: true })) {
-        document.getElementById(`subchunkHeight${i}`).className =
+      if (
+        !validator.isNumeric(chunk_subchunk_height.toString(), {
+          no_symbols: true,
+        })
+      ) {
+        document.getElementById(`chunk_subchunk_height${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`subchunkHeight${i}`);
+        inputErrors.push(`chunk_subchunk_height${i}`);
       } else {
-        document.getElementById(`subchunkHeight${i}`).className =
+        document.getElementById(`chunk_subchunk_height${i}`).className =
           "form-control";
       }
-      if (!validator.isNumeric(subchunkWidth, { no_symbols: true })) {
-        document.getElementById(`subchunkWidth${i}`).className =
+      if (
+        !validator.isNumeric(chunk_subchunk_width.toString(), {
+          no_symbols: true,
+        })
+      ) {
+        document.getElementById(`chunk_subchunk_width${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`subchunkWidth${i}`);
+        inputErrors.push(`chunk_subchunk_width${i}`);
       } else {
-        document.getElementById(`subchunkWidth${i}`).className = "form-control";
+        document.getElementById(`chunk_subchunk_width${i}`).className =
+          "form-control";
       }
-      if (!validator.isNumeric(chunkCount, { no_symbols: true })) {
-        document.getElementById(`chunkCount${i}`).className =
+      if (!validator.isNumeric(chunk_count.toString(), { no_symbols: true })) {
+        document.getElementById(`chunk_count${i}`).className =
           "form-control is-invalid";
-        inputErrors.push(`chunkCount${i}`);
+        inputErrors.push(`chunk_count${i}`);
       } else {
-        document.getElementById(`chunkCount${i}`).className = "form-control";
+        document.getElementById(`chunk_count${i}`).className = "form-control";
       }
-      if (!validator.isNumeric(channels, { no_symbols: true })) {
+      if (!validator.isNumeric(channels.toString(), { no_symbols: true })) {
         document.getElementById(`channels${i}`).className =
           "form-control is-invalid";
         inputErrors.push(`channels${i}`);
@@ -281,12 +310,19 @@ const OrderForm: React.FC = () => {
 
     if (locationGood && typeGood !== undefined && modelFileGood && inputsGood) {
       console.log("all good");
+      console.log(
+        JSON.stringify({
+          data: { type: location.split(":")[0], URL: location },
+          model: { name: type, file: modelFile },
+          inputSections,
+        })
+      );
       await axios
         .post("/api/processing/getEstimate", {
           jsonRequest: JSON.stringify({
-            data: { type: location.split(":")[0], url: location },
+            data: { type: location.split(":")[0], URL: location },
             model: { name: type, file: modelFile },
-            inputSections,
+            input: inputSections,
           }),
         })
         .then(async (response: any) => {
@@ -321,7 +357,7 @@ const OrderForm: React.FC = () => {
                 jsonRequest: JSON.stringify({
                   data: { type: location.split(":")[0], url: location },
                   model: { name: type, file: modelFile },
-                  inputSections,
+                  input: inputSections,
                 }),
               })
               .then(async (response: any) => {
@@ -406,63 +442,63 @@ const OrderForm: React.FC = () => {
               if (
                 !validator.isNumeric(block_len.toString(), { no_symbols: true })
               ) {
-                inputErrors.push(`blockLength${i}`);
+                inputErrors.push(`block_len${i}`);
               }
               if (
                 !validator.isNumeric(block_line_stride.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`blockLineStride${i}`);
+                inputErrors.push(`block_line_stride${i}`);
               }
               if (
                 !validator.isNumeric(block_stride.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`blockStride${i}`);
+                inputErrors.push(`block_stride${i}`);
               }
               if (
                 !validator.isNumeric(chunk_line_stride.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`chunkLineStride${i}`);
+                inputErrors.push(`chunk_line_stride${i}`);
               }
               if (
                 !validator.isNumeric(chunk_offset.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`chunkOffset${i}`);
+                inputErrors.push(`chunk_offset${i}`);
               }
               if (
                 !validator.isNumeric(chunk_stride.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`chunkStride${i}`);
+                inputErrors.push(`chunk_stride${i}`);
               }
               if (
                 !validator.isNumeric(chunk_subchunk_height.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`subchunkHeight${i}`);
+                inputErrors.push(`chunk_subchunk_height${i}`);
               }
               if (
                 !validator.isNumeric(chunk_subchunk_width.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`subchunkWidth${i}`);
+                inputErrors.push(`chunk_subchunk_width${i}`);
               }
               if (
                 !validator.isNumeric(chunk_count.toString(), {
                   no_symbols: true,
                 })
               ) {
-                inputErrors.push(`chunkCount${i}`);
+                inputErrors.push(`chunk_count${i}`);
               }
               if (
                 !validator.isNumeric(channels.toString(), { no_symbols: true })
@@ -639,16 +675,16 @@ const OrderForm: React.FC = () => {
                 setInputSections([
                   {
                     image: "",
-                    blockLength: "",
-                    blockLineStride: "",
-                    blockStride: "",
-                    chunkLineStride: "",
-                    chunkOffset: "",
-                    chunkStride: "",
-                    subchunkHeight: "",
-                    subchunkWidth: "",
-                    chunkCount: "",
-                    channels: "",
+                    block_len: null,
+                    block_line_stride: null,
+                    block_stride: null,
+                    chunk_line_stride: null,
+                    chunk_offset: null,
+                    chunk_stride: null,
+                    chunk_subchunk_height: null,
+                    chunk_subchunk_width: null,
+                    chunk_count: null,
+                    channels: null,
                   },
                 ]);
                 setFile(null);
@@ -754,13 +790,16 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Block Length</Form.Label>
                           <Form.Control
-                            id={`blockLength${index}`}
+                            id={`block_len${index}`}
                             type="text"
                             placeholder="4860000"
-                            value={section.blockLength}
-                            onChange={(e: any) =>
-                              handleInputChange(e, index, "blockLength")
-                            }
+                            value={section.block_len}
+                            onChange={(e: any) => {
+                              console.log(e);
+                              {
+                                handleInputChangeInt(e, index, "block_len");
+                              }
+                            }}
                           />
                         </Form.Group>
                       </Col>
@@ -768,12 +807,16 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Block Line Stride</Form.Label>
                           <Form.Control
-                            id={`blockLineStride${index}`}
+                            id={`block_line_stride${index}`}
                             type="text"
                             placeholder="5400"
-                            value={section.blockLineStride}
+                            value={section.block_line_stride}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "blockLineStride")
+                              handleInputChangeInt(
+                                e,
+                                index,
+                                "block_line_stride"
+                              )
                             }
                           />
                         </Form.Group>
@@ -782,12 +825,12 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Block Stride</Form.Label>
                           <Form.Control
-                            id={`blockStride${index}`}
+                            id={`block_stride${index}`}
                             type="text"
                             placeholder="0"
-                            value={section.blockStride}
+                            value={section.block_stride}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "blockStride")
+                              handleInputChangeInt(e, index, "block_stride")
                             }
                           />
                         </Form.Group>
@@ -796,12 +839,16 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Chunk Line Stride</Form.Label>
                           <Form.Control
-                            id={`chunkLineStride${index}`}
+                            id={`chunk_line_stride${index}`}
                             type="text"
                             placeholder="5400"
-                            value={section.chunkLineStride}
+                            value={section.chunk_line_stride}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "chunkLineStride")
+                              handleInputChangeInt(
+                                e,
+                                index,
+                                "chunk_line_stride"
+                              )
                             }
                           />
                         </Form.Group>
@@ -812,12 +859,12 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Chunk Offset</Form.Label>
                           <Form.Control
-                            id={`chunkOffset${index}`}
+                            id={`chunk_offset${index}`}
                             type="text"
                             placeholder="0"
-                            value={section.chunkOffset}
+                            value={section.chunk_offset}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "chunkOffset")
+                              handleInputChangeInt(e, index, "chunk_offset")
                             }
                           />
                         </Form.Group>
@@ -826,12 +873,12 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Chunk Stride</Form.Label>
                           <Form.Control
-                            id={`chunkStride${index}`}
+                            id={`chunk_stride${index}`}
                             type="text"
                             placeholder="4320"
-                            value={section.chunkStride}
+                            value={section.chunk_stride}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "chunkStride")
+                              handleInputChangeInt(e, index, "chunk_stride")
                             }
                           />
                         </Form.Group>
@@ -840,12 +887,16 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Subchunk Height</Form.Label>
                           <Form.Control
-                            id={`subchunkHeight${index}`}
+                            id={`chunk_subchunk_height${index}`}
                             type="text"
                             placeholder="5"
-                            value={section.subchunkHeight}
+                            value={section.chunk_subchunk_height}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "subchunkHeight")
+                              handleInputChangeInt(
+                                e,
+                                index,
+                                "chunk_subchunk_height"
+                              )
                             }
                           />
                         </Form.Group>
@@ -854,12 +905,16 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Subchunk Width</Form.Label>
                           <Form.Control
-                            id={`subchunkWidth${index}`}
+                            id={`chunk_subchunk_width${index}`}
                             type="text"
                             placeholder="5"
-                            value={section.subchunkWidth}
+                            value={section.chunk_subchunk_width}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "subchunkWidth")
+                              handleInputChangeInt(
+                                e,
+                                index,
+                                "chunk_subchunk_width"
+                              )
                             }
                           />
                         </Form.Group>
@@ -868,12 +923,12 @@ const OrderForm: React.FC = () => {
                         <Form.Group>
                           <Form.Label>Chunk Count</Form.Label>
                           <Form.Control
-                            id={`chunkCount${index}`}
+                            id={`chunk_count${index}`}
                             type="text"
                             placeholder="25"
-                            value={section.chunkCount}
+                            value={section.chunk_count}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "chunkCount")
+                              handleInputChangeInt(e, index, "chunk_count")
                             }
                           />
                         </Form.Group>
@@ -887,7 +942,7 @@ const OrderForm: React.FC = () => {
                             placeholder="4"
                             value={section.channels}
                             onChange={(e: any) =>
-                              handleInputChange(e, index, "channels")
+                              handleInputChangeInt(e, index, "channels")
                             }
                           />
                         </Form.Group>
