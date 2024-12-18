@@ -11,6 +11,7 @@ import {
 import WorldMap from "data/map/worldMap";
 import { Card } from "react-bootstrap";
 import markers from "data/map/markers";
+
 // Define marker type
 interface MarkerType {
   coordinates: [number, number]; // Tuple for latitude and longitude
