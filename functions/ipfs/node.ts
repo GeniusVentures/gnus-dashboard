@@ -27,6 +27,15 @@ import blockMsg from "../messages/block";
 import escrowMsg from "../messages/escrow";
 import { get } from "http";
 
+// Define additional structs that match the C header
+const GeniusTokenValue = koffi.struct("GeniusTokenValue", {
+  value: koffi.array("char", 22)
+});
+
+const GeniusTokenID = koffi.struct("GeniusTokenID", {
+  data: koffi.array("unsigned char", 32)
+});
+
 let libraryPath;
 const basePath = path.join(process.cwd(), "data"); // Base path relative to project root
 switch (process.platform) {
@@ -46,46 +55,75 @@ switch (process.platform) {
 console.log("Library path resolved to:", libraryPath);
 const GeniusSDK = koffi.load(libraryPath);
 
-//Path, Key, Use DHT, Do processing
+// Init functions
 const GeniusSDKInit = GeniusSDK.func(
-  "const char* GeniusSDKInit(const char*, const char*, int, int, int)"
+  "const char* GeniusSDKInit(const char*, const char*, bool, bool, uint16_t, bool)"
 );
-const GeniusSDKProcess = GeniusSDK.func("void GeniusSDKProcess(const char*)");
-const GeniusSDKGetBalance = GeniusSDK.func("uint64_t GeniusSDKGetBalance()");
-const GeniusSDKGetOutTransactions = GeniusSDK.func(
-  "GeniusMatrix GeniusSDKGetOutTransactions()"
+const GeniusSDKInitSecure = GeniusSDK.func(
+  "const char* GeniusSDKInitSecure(const char*, const char*, const char*, bool, bool, uint16_t, bool)"
 );
-const GeniusSDKGetInTransactions = GeniusSDK.func(
-  "GeniusMatrix GeniusSDKGetInTransactions()"
+const GeniusSDKInitMinimal = GeniusSDK.func(
+  "const char* GeniusSDKInitMinimal(const char*, const char*, uint16_t)"
 );
-//const GeniusSDKGetBlocks = GeniusSDK.func("GeniusMatrix GeniusSDKGetBlocks()");
-const GeniusSDKFreeTransactions = GeniusSDK.func(
-  "void GeniusSDKFreeTransactions(GeniusMatrix)"
+const GeniusSDKShutdown = GeniusSDK.func("void GeniusSDKShutdown()");
+
+// Balance functions
+const GeniusSDKGetBalance = GeniusSDK.func("uint64_t GeniusSDKGetBalance(GeniusTokenID)");
+const GeniusSDKGetBalanceGNUS = GeniusSDK.func("GeniusTokenValue GeniusSDKGetBalanceGNUS()");
+const GeniusSDKGetBalanceGNUSString = GeniusSDK.func("const char* GeniusSDKGetBalanceGNUSString()");
+const GeniusSDKGetGNUSPrice = GeniusSDK.func("double GeniusSDKGetGNUSPrice()");
+
+// Address and transaction functions
+const GeniusSDKGetAddress = GeniusSDK.func("GeniusAddress GeniusSDKGetAddress()");
+const GeniusSDKGetInTransactions = GeniusSDK.func("GeniusMatrix GeniusSDKGetInTransactions()");
+const GeniusSDKGetOutTransactions = GeniusSDK.func("GeniusMatrix GeniusSDKGetOutTransactions()");
+const GeniusSDKFreeTransactions = GeniusSDK.func("void GeniusSDKFreeTransactions(GeniusMatrix)");
+
+// Mint functions
+const GeniusSDKMint = GeniusSDK.func(
+  "void GeniusSDKMint(uint64_t, const char*, const char*, GeniusTokenID)"
 );
-const GeniusSDKMintTokens = GeniusSDK.func(
-  "void GeniusSDKMintTokens(uint64_t, const char*, const char*, const char*)"
-);
-const GeniusSDKGetAddress = GeniusSDK.func(
-  "GeniusAddress GeniusSDKGetAddress()"
-);
-const GeniusSDKTransferTokens = GeniusSDK.func(
-  "bool GeniusSDKTransferTokens(uint64_t, GeniusAddress*)"
-);
-const GeniusSDKGetCost = GeniusSDK.func(
-  "uint64_t GeniusSDKGetCost(const char*)"
+const GeniusSDKMintGNUS = GeniusSDK.func(
+  "void GeniusSDKMintGNUS(const GeniusTokenValue*, const char*, const char*)"
 );
 
+// Transfer functions
+const GeniusSDKTransfer = GeniusSDK.func(
+  "bool GeniusSDKTransfer(uint64_t, GeniusAddress*, GeniusTokenID)"
+);
+const GeniusSDKTransferGNUS = GeniusSDK.func(
+  "bool GeniusSDKTransferGNUS(const GeniusTokenValue*, GeniusAddress*)"
+);
+
+// Pay dev function
+const GeniusSDKPayDev = GeniusSDK.func("bool GeniusSDKPayDev(uint64_t, GeniusTokenID)");
+
+// Cost and processing functions
+const GeniusSDKGetCost = GeniusSDK.func("uint64_t GeniusSDKGetCost(const char*)");
+const GeniusSDKGetCostGNUS = GeniusSDK.func("GeniusTokenValue GeniusSDKGetCostGNUS(const char*)");
+const GeniusSDKProcess = GeniusSDK.func("void GeniusSDKProcess(const char*)");
+
+// Create convenient aliases
 const initGnus = GeniusSDKInit;
+const initGnusSecure = GeniusSDKInitSecure;
+const initGnusMinimal = GeniusSDKInitMinimal;
+const shutdownGnus = GeniusSDKShutdown;
 const processGnus = GeniusSDKProcess;
 const getBalance = GeniusSDKGetBalance;
+const getBalanceGNUS = GeniusSDKGetBalanceGNUS;
+const getBalanceGNUSString = GeniusSDKGetBalanceGNUSString;
+const getGNUSPrice = GeniusSDKGetGNUSPrice;
 const getOutTransactions = GeniusSDKGetOutTransactions;
 const getInTransactions = GeniusSDKGetInTransactions;
-//const getBlocks = GeniusSDKGetBlocks;
 const freeTransactions = GeniusSDKFreeTransactions;
-const mintTokens = GeniusSDKMintTokens;
+const mintTokens = GeniusSDKMint;
+const mintTokensGNUS = GeniusSDKMintGNUS;
 const getAddress = GeniusSDKGetAddress;
-const transferTokens = GeniusSDKTransferTokens;
+const transferTokens = GeniusSDKTransfer;
+const transferTokensGNUS = GeniusSDKTransferGNUS;
+const payDev = GeniusSDKPayDev;
 const getCost = GeniusSDKGetCost;
+const getCostGNUS = GeniusSDKGetCostGNUS;
 
 let node = null;
 
@@ -93,6 +131,7 @@ let requestout = 0;
 let transactionOutList = [];
 let transactionInList = [];
 let blockList = [];
+
 const createNode = async () => {
   try {
     // Set up the required base path and Ethereum private key
@@ -100,8 +139,9 @@ const createNode = async () => {
     const ethPrivateKey =
       "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"; // Replace with the actual private key
 
-    // Initialize GeniusSDK
-    const result = GeniusSDKInit(basePath, ethPrivateKey,1,0,40001);
+    // Initialize GeniusSDK with updated parameters
+    // Parameters: base_path, eth_private_key, autodht, process, baseport, is_full_node
+    const result = GeniusSDKInit(basePath, ethPrivateKey, true, false, 40001, true);
 
     if (!result) {
       throw new Error("GeniusSDK initialization failed");
@@ -114,6 +154,7 @@ const createNode = async () => {
     console.error("Error initializing GeniusSDK:", e);
   }
 };
+
 
 function CheckTransactions() {
   //Outgoing
@@ -179,41 +220,7 @@ function CheckTransactions() {
 
   // Free memory for transactions
   freeTransactions(intransactions);
-
 }
-
-// function CheckBlocks() {
-//   const transactions = getBlocks();
-
-//   // Decode the GeniusArray collection
-//   const geniusArrays = koffi.decode(
-//     transactions.ptr,
-//     GeniusArray,
-//     transactions.size
-//   );
-
-//   // Loop through each GeniusArray entry
-//   for (let i = 0; i < transactions.size; i++) {
-//     const entry = geniusArrays[i]; // Get each GeniusArray entry
-//     const dataBuffer = koffi.decode(entry.ptr, "uint8_t", entry.size); // Decode the raw data
-
-//     // Check if dataBuffer already exists in transactionList
-//     const exists = transactionList.some(
-//       (existingBuffer) =>
-//         existingBuffer.length === dataBuffer.length &&
-//         existingBuffer.every((value, index) => value === dataBuffer[index])
-//     );
-
-//     if (!exists) {
-//       blockList.push(dataBuffer);
-//       ParseBlock(dataBuffer);
-//     }
-//   }
-//   console.log("Readable Blocks:", blockList);
-
-//   // Free memory for transactions
-//   freeTransactions(transactions);
-// }
 
 function ParseTransaction(transactionData: Uint8Array) {
   //Try Decoding as Mint
@@ -249,36 +256,9 @@ function ParseTransaction(transactionData: Uint8Array) {
   } catch (e) {
     console.log("Cannot Decode as transfer" + e);
   }
-  //Try Decoding as Block TX
-  // try{
-  // 	const block = BlockPayloadData.fromBinary(transactionData);
-  // 	blockMsg(block);
-  // 	return;
-  // }
-  // catch(e)
-  // {
-  // 	console.log("Cannot Decode as block tx" + e)
-  // }
 }
 
-// function ParseBlock(transactionData: Uint8Array) {
-//   //Try Decoding as Block Header
-//   try {
-//     const block = BlockHeaderData.fromBinary(transactionData);
-//     console.log(" Block Message ");
-//     console.log("Parent Hash: " + block.parentHash);
-//     console.log("Block Number: " + block.blockNumber);
-//     console.log("stateRoot: " + block.stateRoot);
-//     console.log("Extrin Root: " + block.extrinsicsRoot);
-//     console.log("digest: " + block.digest);
-//     blockMsg(block);
-//     return;
-//   } catch (e) {
-//     console.log("Cannot Decode as block tx" + e);
-//   }
-// }
-
-function runGeniusSDKProcess(jsonData) {
+function runGeniusSDKProcess(jsonData: string) {
   try {
     // Ensure parameters are valid
     if (typeof jsonData !== "string") {
@@ -286,7 +266,7 @@ function runGeniusSDKProcess(jsonData) {
     }
 
     // Call the GeniusSDKProcess C function
-    GeniusSDKProcess(jsonData); // Convert amount to BigInt if needed for C compatibility
+    GeniusSDKProcess(jsonData);
 
     console.log(`Processed successfully: JSON Data=${jsonData}`);
   } catch (error) {
@@ -317,10 +297,105 @@ function getGeniusSDKCost(jsonData: string): bigint | null {
   }
 }
 
+// New function to get cost in GNUS format
+function getGeniusSDKCostGNUS(jsonData: string): string | null {
+  try {
+    if (typeof jsonData !== "string") {
+      throw new Error("Invalid arguments: jsonData must be a string");
+    }
+
+    const cost = GeniusSDKGetCostGNUS(jsonData);
+    const costString = koffi.decode(cost.value, "char", 22).join('').replace(/\0.*$/, '');
+
+    console.log(`Processed successfully: JSON Data=${jsonData}, Cost=${costString} GNUS`);
+    return costString;
+  } catch (error) {
+    console.error(`Error running GeniusSDKGetCostGNUS: ${error.message}`);
+    return null;
+  }
+}
+
+// New helper functions for balance operations
+function getBalanceMinions(tokenId: any): bigint | null {
+  try {
+    const balance = GeniusSDKGetBalance(tokenId);
+    return BigInt(balance);
+  } catch (error) {
+    console.error(`Error getting balance: ${error.message}`);
+    return null;
+  }
+}
+
+function getBalanceGNUSValue(): string | null {
+  try {
+    const balance = GeniusSDKGetBalanceGNUS();
+    return koffi.decode(balance.value, "char", 22).join('').replace(/\0.*$/, '');
+  } catch (error) {
+    console.error(`Error getting GNUS balance: ${error.message}`);
+    return null;
+  }
+}
+
+function getBalanceGNUSAsString(): string | null {
+  try {
+    const balance = GeniusSDKGetBalanceGNUSString();
+    return balance;
+  } catch (error) {
+    console.error(`Error getting GNUS balance string: ${error.message}`);
+    return null;
+  }
+}
+
+function getCurrentGNUSPrice(): number | null {
+  try {
+    const price = GeniusSDKGetGNUSPrice();
+    return price;
+  } catch (error) {
+    console.error(`Error getting GNUS price: ${error.message}`);
+    return null;
+  }
+}
+
+// Helper function to create GeniusTokenID
+function createTokenID(data: Uint8Array): any {
+  if (data.length !== 32) {
+    throw new Error("Token ID must be exactly 32 bytes");
+  }
+  return { data: Array.from(data) };
+}
+
+// Helper function to create GeniusTokenValue
+function createTokenValue(value: string): any {
+  if (value.length >= 22) {
+    throw new Error("Token value string too long (max 21 characters)");
+  }
+  const valueArray = new Array(22).fill(0);
+  for (let i = 0; i < value.length; i++) {
+    valueArray[i] = value.charCodeAt(i);
+  }
+  return { value: valueArray };
+}
+
 export {
   createNode,
+  shutdownGnus,
   getGeniusSDKCost,
+  getGeniusSDKCostGNUS,
   runGeniusSDKProcess,
-  //CheckBlocks,
   CheckTransactions,
+  getBalanceMinions,
+  getBalanceGNUSValue,
+  getBalanceGNUSAsString,
+  getCurrentGNUSPrice,
+  mintTokens,
+  mintTokensGNUS,
+  transferTokens,
+  transferTokensGNUS,
+  payDev,
+  createTokenID,
+  createTokenValue,
+  // Export the raw SDK functions as well for advanced usage
+  GeniusSDK,
+  GeniusTokenValue,
+  GeniusTokenID
 };
