@@ -7,7 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "now-build": "next build"
+    "now-build": "next build",
+
+    "test": "node scripts/test-runner.js --type all",
+    "test:watch": "node scripts/test-runner.js --type all --watch",
+    "test:coverage": "node scripts/test-runner.js --type all --coverage",
+    "test:changed": "node scripts/test-runner.js --changed",
+    "test:parallel": "node scripts/test-runner.js --type all --parallel",
+
+    "test:unit": "node scripts/test-runner.js --type unit",
+    "test:unit:watch": "node scripts/test-runner.js --type unit --watch",
+    "test:unit:coverage": "node scripts/test-runner.js --type unit --coverage",
+
+    "test:integration": "node scripts/test-runner.js --type integration",
+    "test:integration:watch": "node scripts/test-runner.js --type integration --watch",
+
+    "test:e2e": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e'",
+    "test:e2e:open": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --watch'",
+    "test:e2e:parallel": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --parallel'",
+
+    "test:ci": "node scripts/test-runner.js --type all --coverage --parallel --bail",
+    "test:quick": "node scripts/test-runner.js --type unit --parallel",
+    "test:full": "node scripts/test-runner.js --type all --coverage --verbose"
   },
   "dependencies": {
     "@bufbuild/protobuf": "^1.8.0",
@@ -92,7 +113,12 @@
   },
   "devDependencies": {
     "@protobuf-ts/plugin": "^2.9.4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.12.7",
+    "cypress": "^14.5.3",
     "eslint": "^8.39.0",
     "eslint-config-next": "^13.3.1",
     "eslint-config-prettier": "^8.4.0",
@@ -101,7 +127,13 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-promise": "^5.2.0",
+    "jest": "^30.0.5",
+    "jest-axe": "^10.0.0",
+    "jest-environment-jsdom": "^30.0.5",
+    "node-mocks-http": "^1.17.2",
     "protons": "^7.5.0",
+    "react-test-renderer": "^19.1.1",
+    "start-server-and-test": "^2.0.13",
     "typescript": "^5.7.2"
   }
 }
