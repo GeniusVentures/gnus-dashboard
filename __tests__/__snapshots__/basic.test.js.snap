@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Jest Configuration Jest Matchers should support snapshot testing 1`] = `
+{
+  "features": [
+    "blockchain",
+    "analytics",
+    "job-orders",
+  ],
+  "name": "GNUS Dashboard",
+  "version": "0.0.1",
+}
+`;
