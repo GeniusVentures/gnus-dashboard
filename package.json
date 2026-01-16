@@ -8,24 +8,19 @@
     "start": "next start",
     "lint": "next lint",
     "now-build": "next build",
-
     "test": "node scripts/test-runner.js --type all",
     "test:watch": "node scripts/test-runner.js --type all --watch",
     "test:coverage": "node scripts/test-runner.js --type all --coverage",
     "test:changed": "node scripts/test-runner.js --changed",
     "test:parallel": "node scripts/test-runner.js --type all --parallel",
-
     "test:unit": "node scripts/test-runner.js --type unit",
     "test:unit:watch": "node scripts/test-runner.js --type unit --watch",
     "test:unit:coverage": "node scripts/test-runner.js --type unit --coverage",
-
     "test:integration": "node scripts/test-runner.js --type integration",
     "test:integration:watch": "node scripts/test-runner.js --type integration --watch",
-
     "test:e2e": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e'",
     "test:e2e:open": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --watch'",
     "test:e2e:parallel": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --parallel'",
-
     "test:ci": "node scripts/test-runner.js --type all --coverage --parallel --bail",
     "test:quick": "node scripts/test-runner.js --type unit --parallel",
     "test:full": "node scripts/test-runner.js --type all --coverage --verbose"
@@ -62,6 +57,7 @@
     "@multiformats/multiaddr": "^12.2.1",
     "@multiformats/multiaddr-matcher": "^1.2.0",
     "@pathofdev/react-tag-input": "^1.0.7",
+    "@protobuf-ts/runtime": "^2.11.1",
     "@reduxjs/toolkit": "^2.2.1",
     "@reown/appkit": "^1.4.1",
     "@reown/appkit-adapter-ethers": "^1.4.1",
@@ -112,7 +108,7 @@
     "validator": "^13.12.0"
   },
   "devDependencies": {
-    "@protobuf-ts/plugin": "^2.9.4",
+    "@protobuf-ts/plugin": "^2.11.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
@@ -135,5 +131,6 @@
     "react-test-renderer": "^19.1.1",
     "start-server-and-test": "^2.0.13",
     "typescript": "^5.7.2"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
