@@ -13,7 +13,7 @@ const {
   TransferOutput,
   TransferUTXOInput,
 } = require("data/protobuf/SGTransaction");
-const { Delta, Element } = require("data/protobuf/delta");
+const { Delta, Element } = require("data/protobuf/crdt/delta");
 const {
   BlockID,
   BlockHashData,

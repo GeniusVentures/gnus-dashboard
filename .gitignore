@@ -133,4 +133,4 @@ dist
 
 data/SuperGNUSNode*
 
-*.so
+*.sopackage-lock.json
