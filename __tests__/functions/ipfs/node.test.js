@@ -7,9 +7,14 @@ jest.mock('data/protobuf/SGTransaction', () => ({
   TransferUTXOInput: { create: jest.fn() },
 }), { virtual: true });
 
-jest.mock('data/protobuf/delta', () => ({
+jest.mock('data/protobuf/crdt/delta', () => ({
   Delta: { create: jest.fn() },
   Element: { create: jest.fn() },
+}), { virtual: true });
+
+jest.mock('data/protobuf/crdt/bcast', () => ({
+  CRDTBroadcast: { create: jest.fn() },
+  Head: { create: jest.fn() },
 }), { virtual: true });
 
 jest.mock('data/protobuf/SGBlocks', () => ({
@@ -28,7 +33,7 @@ describe('IPFS Node Functions', () => {
   it('should have mocked protobuf dependencies', () => {
     // Test that the protobuf mocks are working
     expect(jest.isMockFunction(require('data/protobuf/SGTransaction').MintTx.create)).toBe(true);
-    expect(jest.isMockFunction(require('data/protobuf/delta').Delta.create)).toBe(true);
+    expect(jest.isMockFunction(require('data/protobuf/crdt/delta').Delta.create)).toBe(true);
     expect(jest.isMockFunction(require('data/protobuf/SGBlocks').BlockID.create)).toBe(true);
   });
 
