@@ -136,8 +136,16 @@ const createNode = async () => {
   try {
     // Set up the required base path and Ethereum private key
     const basePath = path.join(process.cwd(), "data") + "/";
-    const ethPrivateKey =
-      "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"; // Replace with the actual private key
+    const ethPrivateKey = process.env.ETH_PRIVATE_KEY;
+
+    if (!ethPrivateKey) {
+      throw new Error("ETH_PRIVATE_KEY environment variable is required");
+    }
+
+    // Validate private key format (basic check)
+    if (!/^[0-9a-fA-F]{64}$/.test(ethPrivateKey)) {
+      throw new Error("Invalid private key format");
+    }
 
     // Initialize GeniusSDK with updated parameters
     // Parameters: base_path, eth_private_key, autodht, process, baseport, is_full_node
@@ -147,11 +155,11 @@ const createNode = async () => {
       throw new Error("GeniusSDK initialization failed");
     }
 
-    console.log("GeniusSDK initialized successfully:", result);
+    console.info("GeniusSDK initialized successfully");
 
     node = { initialized: true, details: result };
   } catch (e) {
-    console.error("Error initializing GeniusSDK:", e);
+    console.error("Error initializing GeniusSDK:", e instanceof Error ? e.message : 'Unknown error');
   }
 };
 
@@ -260,25 +268,50 @@ function ParseTransaction(transactionData: Uint8Array) {
 
 function runGeniusSDKProcess(jsonData: string) {
   try {
-    // Ensure parameters are valid
+    // Validate input parameters
     if (typeof jsonData !== "string") {
       throw new Error("Invalid arguments: jsonData must be a string");
+    }
+
+    // Validate JSON format
+    try {
+      JSON.parse(jsonData);
+    } catch {
+      throw new Error("Invalid JSON format");
+    }
+
+    // Additional security: limit JSON size
+    if (jsonData.length > 10000) {
+      throw new Error("JSON data too large");
     }
 
     // Call the GeniusSDKProcess C function
     GeniusSDKProcess(jsonData);
 
-    console.log(`Processed successfully: JSON Data=${jsonData}`);
+    console.info("SDK processing completed successfully");
   } catch (error) {
-    console.error(`Error running GeniusSDKProcess: ${error.message}`);
+    console.error("Error running GeniusSDKProcess:", error instanceof Error ? error.message : 'Unknown error');
+    throw error;
   }
 }
 
 function getGeniusSDKCost(jsonData: string): bigint | null {
   try {
-    // Ensure parameters are valid
+    // Validate input parameters
     if (typeof jsonData !== "string") {
       throw new Error("Invalid arguments: jsonData must be a string");
+    }
+
+    // Validate JSON format
+    try {
+      JSON.parse(jsonData);
+    } catch {
+      throw new Error("Invalid JSON format");
+    }
+
+    // Additional security: limit JSON size
+    if (jsonData.length > 10000) {
+      throw new Error("JSON data too large");
     }
 
     // Call the GeniusSDKGetCost C function and capture the result
@@ -287,12 +320,10 @@ function getGeniusSDKCost(jsonData: string): bigint | null {
     // Convert the result to BigInt if it's not already one (Koffi should handle this)
     const costBigInt = BigInt(cost);
 
-    console.log(
-      `Processed successfully: JSON Data=${jsonData}, Cost=${costBigInt}`
-    );
+    console.info("SDK cost calculation completed successfully");
     return costBigInt;
   } catch (error) {
-    console.error(`Error running GeniusSDKGetCost: ${error.message}`);
+    console.error("Error running GeniusSDKGetCost:", error instanceof Error ? error.message : 'Unknown error');
     return null; // Return null in case of error
   }
 }
