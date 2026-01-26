@@ -2,15 +2,15 @@ export default {
   metadata: {
     name: "GNUS Dashboard",
     description: "GNUS Dashboard",
-    url: "https://dashboard.gnus.ai/job-orders",
+    url: process.env.NEXT_PUBLIC_BASE_URL || "https://dashboard.gnus.ai/job-orders",
     icons: ["images/logo/gnus-icon.png"],
   },
   reown: {
-    projectId: "e708ac0da00e7831cdfd3d97feff279f",
+    projectId: process.env.WALLETCONNECT_PROJECT_ID || "",
   },
 
-  amoyContract: "0xeC20bDf2f9f77dc37Ee8313f719A3cbCFA0CD1eB",
-  sepoliaContract: "0x9af8050220D8C355CA3c6dC00a78B474cd3e3c70",
+  amoyContract: process.env.AMOY_CONTRACT || "0xeC20bDf2f9f77dc37Ee8313f719A3cbCFA0CD1eB",
+  sepoliaContract: process.env.SEPOLIA_CONTRACT || "0x9af8050220D8C355CA3c6dC00a78B474cd3e3c70",
 
   networks: {
     sepolia: {
