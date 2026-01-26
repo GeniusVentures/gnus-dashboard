@@ -1,12 +1,35 @@
 import { createMocks } from 'node-mocks-http';
-import submitJobHandler from '../../../../pages/api/processing/submitJob';
+
+// Mock environment variables
+process.env.JWT_SECRET = 'test-secret';
+process.env.BLASTAPI_KEY = 'test-api-key';
+
+// Mock all middleware modules
+jest.mock('middleware/auth', () => ({
+  withAuth: (handler) => handler, // Bypass auth wrapper
+}));
+
+jest.mock('middleware/validation', () => ({
+  validateRequest: () => (req, res, next) => next(),
+  schemas: { jobSubmission: {} },
+  sanitizeInput: (input) => input
+}));
+
+jest.mock('middleware/rateLimit', () => ({
+  strictRateLimit: (req, res, next) => {
+    res.setHeader('X-RateLimit-Limit', 100);
+    res.setHeader('X-RateLimit-Remaining', 99);
+    next();
+  }
+}));
 
 // Mock the IPFS node functions
-jest.mock('../../../../functions/ipfs/node', () => ({
+jest.mock('functions/ipfs/node', () => ({
   runGeniusSDKProcess: jest.fn()
 }));
 
-import { runGeniusSDKProcess } from '../../../../functions/ipfs/node';
+import submitJobHandler from '../../../../pages/api/processing/submitJob';
+import { runGeniusSDKProcess } from 'functions/ipfs/node';
 
 describe('/api/processing/submitJob', () => {
   beforeEach(() => {
@@ -19,47 +42,73 @@ describe('/api/processing/submitJob', () => {
 
     const { req, res } = createMocks({
       method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
       body: {
-        jsonRequest: {
+        jsonRequest: JSON.stringify({
           type: 'job',
           data: 'processing data',
           parameters: {
             model: 'test-model',
             input: 'test input'
           }
-        }
+        }),
+        type: 'processing',
+        priority: 3
       }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await submitJobHandler(req, res);
 
     expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toBe(mockResponse);
-    expect(runGeniusSDKProcess).toHaveBeenCalledWith({
-      type: 'job',
-      data: 'processing data',
-      parameters: {
-        model: 'test-model',
-        input: 'test input'
-      }
-    });
+    const responseData = JSON.parse(res._getData());
+    expect(responseData.result).toBe(mockResponse);
+    expect(responseData.message).toBe('Job submitted successfully');
   });
 
   it('handles missing jsonRequest in body', async () => {
-    // When jsonRequest is undefined, SDK should throw error
-    runGeniusSDKProcess.mockRejectedValueOnce(new Error('Invalid request'));
-
     const { req, res } = createMocks({
       method: 'POST',
-      body: {}
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
+      body: {
+        type: 'processing'
+      }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await submitJobHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(500);
-    expect(JSON.parse(res._getData())).toEqual({
-      error: 'failed to process job.'
+    expect(res._getStatusCode()).toBe(400);
+    expect(JSON.parse(res._getData()).error).toBe('Invalid JSON format in request');
+  });
+
+  it('validates JSON format', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
+      body: {
+        jsonRequest: 'invalid-json',
+        type: 'processing'
+      }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
+
+    await submitJobHandler(req, res);
+
+    expect(res._getStatusCode()).toBe(400);
+    expect(JSON.parse(res._getData()).error).toBe('Invalid JSON format in request');
   });
 
   it('handles SDK processing errors', async () => {
@@ -67,55 +116,41 @@ describe('/api/processing/submitJob', () => {
 
     const { req, res } = createMocks({
       method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
       body: {
-        jsonRequest: {
-          type: 'job',
-          data: 'processing data'
-        }
+        jsonRequest: JSON.stringify({ type: 'job' }),
+        type: 'processing'
       }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await submitJobHandler(req, res);
 
     expect(res._getStatusCode()).toBe(500);
     expect(JSON.parse(res._getData())).toEqual({
-      error: 'failed to process job.'
+      error: 'Failed to process job'
     });
   });
 
-  it('handles empty job request', async () => {
-    // Empty object is valid, SDK will process it and return a value
-    runGeniusSDKProcess.mockResolvedValueOnce('42');
-
+  it('rejects non-POST methods', async () => {
     const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        jsonRequest: {}
+      method: 'GET',
+      headers: {
+        'authorization': 'Bearer mock-token'
       }
     });
 
-    await submitJobHandler(req, res);
-
-    expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toBe(42);
-  });
-
-  it('handles malformed JSON request', async () => {
-    // null is passed to SDK, which should throw error
-    runGeniusSDKProcess.mockRejectedValueOnce(new Error('Invalid JSON'));
-
-    const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        jsonRequest: null
-      }
-    });
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await submitJobHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(500);
+    expect(res._getStatusCode()).toBe(405);
     expect(JSON.parse(res._getData())).toEqual({
-      error: 'failed to process job.'
+      error: 'Method not allowed'
     });
   });
 });

@@ -29,6 +29,20 @@ const customJestConfig = {
     '^@/styles/(.*)$': '<rootDir>/styles/$1',
     '^@/data/(.*)$': '<rootDir>/data/$1',
 
+    // Absolute imports (matching tsconfig baseUrl)
+    '^middleware/(.*)$': '<rootDir>/middleware/$1',
+    '^functions/(.*)$': '<rootDir>/functions/$1',
+    '^pages/(.*)$': '<rootDir>/pages/$1',
+    '^utils/(.*)$': '<rootDir>/utils/$1',
+    '^context/(.*)$': '<rootDir>/context/$1',
+    '^hooks/(.*)$': '<rootDir>/hooks/$1',
+    '^sub-components/(.*)$': '<rootDir>/sub-components/$1',
+    '^widgets/(.*)$': '<rootDir>/widgets/$1',
+    '^layouts/(.*)$': '<rootDir>/layouts/$1',
+    '^store/(.*)$': '<rootDir>/store/$1',
+    '^styles/(.*)$': '<rootDir>/styles/$1',
+    '^data/(.*)$': '<rootDir>/data/$1',
+
     // Test utilities
     '^@/test-utils$': '<rootDir>/__tests__/utils',
     '^@/test-mocks$': '<rootDir>/__tests__/mocks',
