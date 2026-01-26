@@ -1,6 +1,7 @@
 import { createMocks } from 'node-mocks-http';
 import gasPriceHandler from '../../../../pages/api/gas/gasPrice';
 import axios from 'axios';
+import { mockAuthEnv } from '../../../utils/authTestHelper';
 
 // Mock axios
 jest.mock('axios');
@@ -19,6 +20,7 @@ jest.mock('ethers', () => ({
 describe('/api/gas/gasPrice', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAuthEnv();
   });
 
   it('returns gas price successfully', async () => {
@@ -37,9 +39,26 @@ describe('/api/gas/gasPrice', () => {
 
     expect(res._getStatusCode()).toBe(200);
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      'https://eth-mainnet.blastapi.io/bb92548d-1cc2-4d2a-b477-cb1473694cbd',
-      { jsonrpc: '2.0', id: 0, method: 'eth_gasPrice' }
+      'https://eth-mainnet.blastapi.io/test-api-key',
+      { jsonrpc: '2.0', id: 0, method: 'eth_gasPrice' },
+      { timeout: 5000 }
     );
+  });
+
+  it('handles missing API key', async () => {
+    // Remove API key from environment
+    delete process.env.BLASTAPI_KEY;
+
+    const { req, res } = createMocks({
+      method: 'POST'
+    });
+
+    await gasPriceHandler(req, res);
+
+    expect(res._getStatusCode()).toBe(500);
+    expect(JSON.parse(res._getData())).toEqual({
+      error: 'API configuration error'
+    });
   });
 
   it('handles API errors gracefully', async () => {
@@ -52,7 +71,9 @@ describe('/api/gas/gasPrice', () => {
     await gasPriceHandler(req, res);
 
     expect(res._getStatusCode()).toBe(500);
-    expect(JSON.parse(res._getData())).toBe('Error fetching gas price.');
+    expect(JSON.parse(res._getData())).toEqual({
+      error: 'Failed to fetch gas price'
+    });
   });
 
   it('handles invalid response format', async () => {
@@ -79,5 +100,8 @@ describe('/api/gas/gasPrice', () => {
     await gasPriceHandler(req, res);
 
     expect(res._getStatusCode()).toBe(500);
+    expect(JSON.parse(res._getData())).toEqual({
+      error: 'Failed to fetch gas price'
+    });
   });
 });

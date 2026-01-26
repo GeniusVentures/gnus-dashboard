@@ -1,12 +1,35 @@
 import { createMocks } from 'node-mocks-http';
-import getEstimateHandler from '../../../../pages/api/processing/getEstimate';
+
+// Mock environment variables
+process.env.JWT_SECRET = 'test-secret';
+process.env.BLASTAPI_KEY = 'test-api-key';
+
+// Mock all middleware modules
+jest.mock('middleware/auth', () => ({
+  withAuth: (handler) => handler, // Bypass auth wrapper
+}));
+
+jest.mock('middleware/validation', () => ({
+  validateRequest: () => (req, res, next) => next(),
+  schemas: { jobSubmission: {} },
+  sanitizeInput: (input) => input
+}));
+
+jest.mock('middleware/rateLimit', () => ({
+  defaultRateLimit: (req, res, next) => {
+    res.setHeader('X-RateLimit-Limit', 100);
+    res.setHeader('X-RateLimit-Remaining', 99);
+    next();
+  }
+}));
 
 // Mock the IPFS node functions
-jest.mock('../../../../functions/ipfs/node', () => ({
+jest.mock('functions/ipfs/node', () => ({
   getGeniusSDKCost: jest.fn()
 }));
 
-import { getGeniusSDKCost } from '../../../../functions/ipfs/node';
+import getEstimateHandler from '../../../../pages/api/processing/getEstimate';
+import { getGeniusSDKCost } from 'functions/ipfs/node';
 
 describe('/api/processing/getEstimate', () => {
   beforeEach(() => {
@@ -14,87 +37,119 @@ describe('/api/processing/getEstimate', () => {
   });
 
   it('returns cost estimate successfully', async () => {
-    const mockEstimate = 1500;
+    const mockEstimate = 5000;
     getGeniusSDKCost.mockResolvedValueOnce(mockEstimate);
 
     const { req, res } = createMocks({
       method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
       body: {
-        jsonRequest: {
-          type: 'processing',
-          data: 'test data'
-        }
+        jsonRequest: JSON.stringify({
+          type: 'estimation',
+          data: 'processing data',
+          parameters: {
+            model: 'test-model',
+            complexity: 'medium'
+          }
+        }),
+        type: 'estimation'
       }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await getEstimateHandler(req, res);
 
     expect(res._getStatusCode()).toBe(200);
-    expect(JSON.parse(res._getData())).toBe(mockEstimate);
-    expect(getGeniusSDKCost).toHaveBeenCalledWith({
-      type: 'processing',
-      data: 'test data'
-    });
+    const responseData = JSON.parse(res._getData());
+    expect(responseData.estimate).toBe(mockEstimate);
+    expect(responseData.currency).toBe('GNUS');
   });
 
   it('handles missing jsonRequest in body', async () => {
-    // When jsonRequest is undefined, SDK might throw or return undefined
-    // Let's make it throw to trigger the catch block
-    getGeniusSDKCost.mockRejectedValueOnce(new Error('Invalid request'));
-
     const { req, res } = createMocks({
       method: 'POST',
-      body: {}
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
+      body: {
+        type: 'estimation'
+      }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await getEstimateHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(500);
-    expect(JSON.parse(res._getData())).toEqual({
-      error: 'Failed to get estimate.'
+    expect(res._getStatusCode()).toBe(400);
+    expect(JSON.parse(res._getData()).error).toBe('Invalid JSON format in request');
+  });
+
+  it('validates JSON format', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
+      body: {
+        jsonRequest: 'invalid-json',
+        type: 'estimation'
+      }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
+
+    await getEstimateHandler(req, res);
+
+    expect(res._getStatusCode()).toBe(400);
+    expect(JSON.parse(res._getData()).error).toBe('Invalid JSON format in request');
   });
 
   it('handles SDK errors gracefully', async () => {
-    getGeniusSDKCost.mockRejectedValueOnce(new Error('SDK error'));
+    getGeniusSDKCost.mockRejectedValueOnce(new Error('Cost calculation failed'));
 
     const { req, res } = createMocks({
       method: 'POST',
+      headers: {
+        'authorization': 'Bearer mock-token',
+        'content-type': 'application/json'
+      },
       body: {
-        jsonRequest: {
-          type: 'processing',
-          data: 'test data'
-        }
+        jsonRequest: JSON.stringify({ type: 'estimation' }),
+        type: 'estimation'
       }
     });
+
+    req.socket = { remoteAddress: '127.0.0.1' };
 
     await getEstimateHandler(req, res);
 
     expect(res._getStatusCode()).toBe(500);
     expect(JSON.parse(res._getData())).toEqual({
-      error: 'Failed to get estimate.'
+      error: 'Failed to get estimate'
     });
   });
 
-  it('handles non-numeric estimate response', async () => {
-    getGeniusSDKCost.mockResolvedValueOnce('invalid');
-
+  it('rejects non-POST methods', async () => {
     const { req, res } = createMocks({
-      method: 'POST',
-      body: {
-        jsonRequest: {
-          type: 'processing',
-          data: 'test data'
-        }
+      method: 'GET',
+      headers: {
+        'authorization': 'Bearer mock-token'
       }
     });
 
+    req.socket = { remoteAddress: '127.0.0.1' };
+
     await getEstimateHandler(req, res);
 
-    expect(res._getStatusCode()).toBe(200);
-    // parseInt('invalid') returns NaN, but JSON.parse(NaN) throws error
-    // So we need to check the raw response
-    const responseData = res._getData();
-    expect(responseData).toBe('null'); // JSON.stringify(NaN) returns 'null'
+    expect(res._getStatusCode()).toBe(405);
+    expect(JSON.parse(res._getData())).toEqual({
+      error: 'Method not allowed'
+    });
   });
 });
