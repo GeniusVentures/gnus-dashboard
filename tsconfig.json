@@ -4,18 +4,25 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": false,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "module": "esnext",
     "moduleResolution": "node",
-    "jsx": "preserve", // this line
+    "jsx": "preserve",
     "esModuleInterop": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
       "@/components/*": ["components/*"],
       "@/lib/*": ["lib/*"],
-      "@/styles/*": ["styles/*"]
+      "@/styles/*": ["styles/*"],
+      "@/middleware/*": ["middleware/*"],
+      "@/utils/*": ["utils/*"]
     },
     "noEmit": true,
     "incremental": true,
