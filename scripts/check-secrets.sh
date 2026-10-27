@@ -40,6 +40,13 @@ check_out() {
     echo "$found"
     bad=1
   fi
+  # Scan from inside out/ so the ^out/ path allowlist in .gitleaks.toml does not match.
+  local rc=0
+  (cd out && "$GL" dir . --config ../.gitleaks.toml --redact --no-banner --exit-code 1) || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "FAIL out-scan: gitleaks reported findings (exit $rc)"
+    bad=1
+  fi
   local checks=(
     "blastapi|blastapi"
     "sgns_key|sgns_key"
@@ -95,7 +102,7 @@ self_test() {
   "$GL" version >/dev/null 2>&1 || { echo "SETUP: gitleaks not found" >&2; exit 2; }
   local dir hex token
   dir=$(mktemp -d ./secret-selftest-XXXXXX)
-  trap "rm -rf '$dir' out/secret-selftest-key.js out/bridge-test.html" EXIT
+  trap "rm -rf '$dir' out/secret-selftest-key.js out/secret-selftest-rpc.js out/bridge-test.html" EXIT
   hex=$(rand_hex 32)
   token=$(rand_hex 18)
 
@@ -111,13 +118,17 @@ self_test() {
   expect_red "64-hex string in out/" "$hex" check_out
   rm -f out/secret-selftest-key.js
 
+  printf 'var u="https://mainnet.infura.io/v3/%s";\n' "$token" >out/secret-selftest-rpc.js
+  expect_red "keyed RPC URL in out/" "$token" check_out
+  rm -f out/secret-selftest-rpc.js
+
   : >out/bridge-test.html
   expect_red "bridge-test page in out/" "$token" check_out
   rm -f out/bridge-test.html
 
   rmdir "$dir"
   run_both
-  echo "secret self-test passed: 4 fixtures detected, clean tree passes"
+  echo "secret self-test passed: 5 fixtures detected, clean tree passes"
 }
 
 case "${1:-}" in
