@@ -14,7 +14,7 @@ The `gnus_*` contract is owned by GeniusWallet (`research/gnus-rpc-contract.md`)
 - [ ] **SHELL-03**: The network explorer is deleted: block, transaction and address pages, the analytics gauges, the map, the random "live" tables, their data folders, and their navigation entries.
 - [ ] **SHELL-04**: The old pay-and-submit path is deleted: Web3Modal/AppKit, `OrderForm.tsx`, `data/orderForm/*` and the dashboard-side `bridgeOut` call; no source file calls `bridgeOut` or `/api/processing/*`.
 - [ ] **SHELL-05**: The GNUS price and gas pill (`usePrices.tsx`, the CoinGecko and CoinPaprika calls) is deleted.
-- [ ] **SHELL-06**: Redux (`@reduxjs/toolkit`, `react-redux`, `store/`) is removed, and the theme skin it held keeps working.
+- [ ] **SHELL-06**: Redux (`@reduxjs/toolkit`, `react-redux`, `store/`) is removed, and the theme renders as today (revised 2026-10-27 overnight: no switch exists).
 - [ ] **SHELL-07**: Dead dependencies are pruned in groups with the build and tests green between groups; `package-lock.json` is deleted, `yarn.lock` is the only lockfile, CI installs with `--frozen-lockfile`, and `.nvmrc` plus `engines` pin the Node version.
 - [ ] **SHELL-08**: Each v1 route (`/`, `/submit`, `/jobs`, `/jobs/detail`, `/earnings`) exists in the export as a placeholder page, and an unknown path shows a custom 404 page.
 - [ ] **SHELL-09**: Jest and Cypress run green on the slimmed app, with the test counts recorded before and after the teardown.

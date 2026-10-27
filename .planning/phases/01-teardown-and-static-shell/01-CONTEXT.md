@@ -25,7 +25,7 @@ live EC2 app on a static build. No new feature code: the contract client is phas
 - **D-04:** Tests that only cover deleted code are deleted with it, and the plan lists them by name so the before/after count difference is explained, never silently dropped.
 
 ### Theme without Redux
-- **D-05:** Replace the Redux `skin` slice with a tiny module or React context that reads and writes the same `document` attribute/class `changeSkin` sets today and persists in `localStorage` (try/catch around storage). No new dependency.
+- **D-05:** Redux is deleted; nothing switches the theme today, so no theme module, no persistence, no test; the theme renders as today. (revised 2026-10-27 overnight: no switch exists. `changeSkin` was never dispatched and no stylesheet selects on `data-theme`.)
 
 ### Secrets and CI gates
 - **D-06:** Remove the literal key, `data/secure_storage.json` and the keyed RPC URL from the tree in the same group that deletes their code. Do not rewrite git history (that is a human decision tied to key rotation, DEP-04); note in VERIFICATION that the key stays in history.

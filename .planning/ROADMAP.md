@@ -36,11 +36,17 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Requirements**: SHELL-01, SHELL-02, SHELL-03, SHELL-04, SHELL-05, SHELL-06, SHELL-07, SHELL-08, SHELL-09, SEC-01, SEC-02, SEC-03, DEP-01
 **Success Criteria** (what must be TRUE):
   1. `yarn build` writes `out/`, and a plain static file server shows every v1 placeholder route and the custom 404 page, with no Node process, API route, koffi or native SDK file in the source or the build.
-  2. The explorer, Web3Modal, OrderForm, the price and gas pill and Redux are gone from the source and the navigation, the theme still switches, and a search of the source finds no `bridgeOut` or `/api/processing/` call.
+  2. The explorer, Web3Modal, OrderForm, the price and gas pill and Redux are gone from the source and the navigation, the theme renders as today (revised 2026-10-27 overnight: no switch exists), and a search of the source finds no `bridgeOut` or `/api/processing/` call.
   3. The private key, the account key and the keyed RPC URL are gone from source, and CI goes red on a planted key in the source or in `out/` and on a high advisory not in the allowlist.
   4. The workflow at the branch head has no EC2 `pm2 restart` path, so merging the branch to `main` cannot restart the live app on a static export; the live EC2 app keeps serving the old build.
   5. Jest and Cypress pass on the slimmed app, with the test counts before and after the teardown written down.
-**Plans**: TBD
+**Plans**: 6 plans
+- [ ] 01-01-PLAN.md - Baseline counts, explorer teardown (tracer, group 1), EC2 deploy guard
+- [ ] 01-02-PLAN.md - Delete the server SDK path with its secrets (group 2), then Web3Modal and OrderForm (group 3)
+- [ ] 01-03-PLAN.md - Delete the price and gas pill (group 4), delete Redux (group 5)
+- [ ] 01-04-PLAN.md - Prune dead dependencies in batches, one lockfile, Node 22 and Next 14.2.35 pins (group 6)
+- [ ] 01-05-PLAN.md - Static export with placeholder routes and a 404 page, Cypress over out/ (group 7)
+- [ ] 01-06-PLAN.md - Secret gate, audit gate with allowlist, CI workflow proven locally
 
 ### Phase 2: Contract client and mock wallet
 **Goal**: The dashboard has one typed client for the `gnus_*` contract, with transport detection and a mock wallet that behaves like the real one, faults included, so every later phase builds and tests without a wallet.
