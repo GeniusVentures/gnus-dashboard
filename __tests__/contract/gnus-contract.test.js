@@ -4,6 +4,7 @@
 const path = require("path");
 const { createGnusClient } = require("../../lib/gnus/client");
 const { normalizeError } = require("../../lib/gnus/errors");
+const { spendAllowed, newKey } = require("./factories/spend");
 
 const factory = process.env.GNUS_CONTRACT_FACTORY
   ? require(path.resolve(process.cwd(), process.env.GNUS_CONTRACT_FACTORY))
@@ -15,6 +16,10 @@ if (probe) {
   probe.transport.close();
 }
 const itControls = hasControls ? it : it.skip;
+// Cases that submit a job burn real GNUS on a real wallet; see factories/spend.js.
+const canSpend = spendAllowed(factory);
+const itSpends = canSpend ? it : it.skip;
+const itControlsSpend = hasControls && canSpend ? it : it.skip;
 const SKIP_NOTE = "[needs controls]";
 
 const JOB = factory.exampleJob;
@@ -23,9 +28,6 @@ const HASH = /^0x[0-9a-f]{64}$/;
 const SDK = /^0x[0-9a-f]{128}$/;
 const EVM = /^0x[0-9a-f]{40}$/;
 const DIGITS = /^\d+$/;
-
-let keyCount = 0;
-const newKey = () => `contract-${Date.now()}-${(keyCount += 1)}`;
 
 const targets = [];
 function fresh() {
@@ -87,7 +89,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(e.gas === null || /^\d+(\.\d+)?$/.test(e.gas.gasPriceGwei)).toBe(true);
     });
 
-    test("submitJob keys the job on the node account, not the payer", async () => {
+    itSpends("submitJob keys the job on the node account, not the payer", async () => {
       const { client } = fresh();
       const accounts = await client.getAccounts();
       const r = await client.submitJob({ job: JOB, idempotencyKey: newKey() });
@@ -97,7 +99,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(r.sdkAddress).not.toBe(accounts.payer.evmAddress);
     });
 
-    test("replaying a submit returns the first result and leaves one job", async () => {
+    itSpends("replaying a submit returns the first result and leaves one job", async () => {
       const { client } = fresh();
       const key = newKey();
       const first = await client.submitJob({ job: JOB, idempotencyKey: key });
@@ -107,7 +109,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(walked.filter((job) => job.idempotencyKey === key)).toHaveLength(1);
     });
 
-    test("the same key with another job is idempotencyKeyReused", async () => {
+    itSpends("the same key with another job is idempotencyKeyReused", async () => {
       const { client } = fresh();
       const key = newKey();
       await client.submitJob({ job: JOB, idempotencyKey: key });
@@ -115,7 +117,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(err.kind).toBe("idempotencyKeyReused");
     });
 
-    test("two concurrent submits give one result and one submitInFlight", async () => {
+    itSpends("two concurrent submits give one result and one submitInFlight", async () => {
       const { client } = fresh();
       const results = await Promise.allSettled([
         client.submitJob({ job: JOB, idempotencyKey: newKey() }),
@@ -127,7 +129,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(rejected[0].reason.kind).toBe("submitInFlight");
     });
 
-    test("listJobs is newest first and a limit-1 cursor walk reaches the end", async () => {
+    itSpends("listJobs is newest first and a limit-1 cursor walk reaches the end", async () => {
       const { client } = fresh();
       const first = newKey();
       const second = newKey();
@@ -138,7 +140,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(keys.indexOf(second)).toBeLessThan(keys.indexOf(first));
     });
 
-    test("getJob finds the same job by hash, key and id, and null for an unknown hash", async () => {
+    itSpends("getJob finds the same job by hash, key and id, and null for an unknown hash", async () => {
       const { client } = fresh();
       const key = newKey();
       const sent = await client.submitJob({ job: JOB, idempotencyKey: key });
@@ -167,8 +169,8 @@ describe(`gnus contract (${factory.name})`, () => {
   describe("invalid parameters", () => {
     const hash = "0x" + "1".repeat(64);
     const cases = [
-      ["submitJob with a string job", "gnus_submitJob", { job: "x", idempotencyKey: "k" }],
-      ["submitJob with the old model/input shape", "gnus_submitJob", { job: { model: "m", input: {} }, idempotencyKey: "k" }],
+      ["submitJob with a string job", "gnus_submitJob", { job: "x", idempotencyKey: newKey() }],
+      ["submitJob with the old model/input shape", "gnus_submitJob", { job: { model: "m", input: {} }, idempotencyKey: newKey() }],
       ["submitJob without a key", "gnus_submitJob", { job: JOB }],
       ["estimate with a string job", "gnus_estimate", { job: "x" }],
       ["listJobs limit 0", "gnus_listJobs", { limit: 0 }],
@@ -189,7 +191,7 @@ describe(`gnus contract (${factory.name})`, () => {
   });
 
   describe("events", () => {
-    itControls(`${SKIP_NOTE} gnus_accountsChanged after switchAccount; the new account has no jobs`, async () => {
+    itControlsSpend(`${SKIP_NOTE} gnus_accountsChanged after switchAccount; the new account has no jobs`, async () => {
       const { client, controls } = fresh();
       const before = await client.getAccounts();
       await client.submitJob({ job: JOB, idempotencyKey: newKey() });
@@ -210,7 +212,7 @@ describe(`gnus contract (${factory.name})`, () => {
       expect(events.mismatches).toHaveLength(0);
     });
 
-    itControls(`${SKIP_NOTE} gnus_jobUpdated with the advanced status after advanceJob`, async () => {
+    itControlsSpend(`${SKIP_NOTE} gnus_jobUpdated with the advanced status after advanceJob`, async () => {
       const { client, controls } = fresh();
       const sent = await client.submitJob({ job: JOB, idempotencyKey: newKey() });
       const events = listen(client, "gnus_jobUpdated");

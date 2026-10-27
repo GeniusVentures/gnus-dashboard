@@ -4,10 +4,16 @@ const path = require("path");
 const { createGnusClient } = require("../../lib/gnus/client");
 const { GnusError, GnusContractMismatchError } = require("../../lib/gnus/errors");
 const { formatAmount } = require("../../lib/gnus/amount");
+const { spendAllowed, newKey } = require("./factories/spend");
 
 const factory = process.env.GNUS_CONTRACT_FACTORY
   ? require(path.resolve(process.cwd(), process.env.GNUS_CONTRACT_FACTORY))
   : require("./factories/mock");
+
+const canSpend = spendAllowed(factory);
+const itSpends = canSpend ? it : it.skip;
+// Marks a row whose call submits a valid job: on a real wallet that burns GNUS, so it needs the opt-in.
+const spends = (call) => Object.assign(call, { spends: true });
 
 const JOB = factory.exampleJob;
 const OTHER_JOB = { ...JOB, name: `${JOB.name}-other` };
@@ -81,56 +87,57 @@ const ROWS = [
     "4001",
     "rejectConfirm",
     "rejected",
-    async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" }),
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => expect((await client.listJobs()).jobs).toEqual([]),
   ],
   ["4100", "originRevoked", "unauthorized", async ({ client }) => client.getAccounts()],
   ["4200", "methodUnsupported", "unsupportedMethod", async ({ client }) => client.getEarnings()],
   ["4900", "sdkStarting", "notReady", async ({ client }) => client.getAccounts(), null, true],
-  ["-32602", "today", "invalidParams", async ({ client }) => client.submitJob({ job: "not an object", idempotencyKey: "k" })],
+  ["-32602", "today", "invalidParams", async ({ client }) => client.submitJob({ job: "not an object", idempotencyKey: newKey() })],
   [
     "-32602:idempotency_key_reused",
     "today",
     "idempotencyKeyReused",
-    async ({ client }) => {
-      await client.submitJob({ job: JOB, idempotencyKey: "k" });
-      return client.submitJob({ job: OTHER_JOB, idempotencyKey: "k" });
-    },
+    spends(async ({ client }) => {
+      const key = newKey();
+      await client.submitJob({ job: JOB, idempotencyKey: key });
+      return client.submitJob({ job: OTHER_JOB, idempotencyKey: key });
+    }),
   ],
   ["-32603", "internalError", "internal", async ({ client }) => client.estimate({ job: JOB })],
   [
     "-32603:balance_unavailable",
     "balanceUnavailable",
     "internal",
-    async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" }),
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => expect((await client.estimate({ job: JOB })).balance).toBeNull(),
   ],
-  ["-32005:confirm_open", "confirmOpen", "confirmOpen", async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" })],
+  ["-32005:confirm_open", "confirmOpen", "confirmOpen", spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() }))],
   ["-32010", "costUnavailable", "costUnavailable", async ({ client }) => client.estimate({ job: JOB })],
-  ["-32010", "costUnavailable", "costUnavailable", async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" })],
+  ["-32010", "costUnavailable", "costUnavailable", spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() }))],
   [
     "-32011",
     "insufficientBalance",
     "insufficientBalance",
-    async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" }),
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => {
       const estimate = await client.estimate({ job: JOB });
       expect(BigInt(estimate.balance)).toBeLessThan(BigInt(estimate.cost));
     },
   ],
-  ["-32012", "payerCannotSign", "payerCannotSign", async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" })],
+  ["-32012", "payerCannotSign", "payerCannotSign", spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() }))],
   [
     "-32013",
     "bridgeFailed",
     "bridgeFailed",
-    async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" }),
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => expect((await client.listJobs()).jobs).toEqual([]),
   ],
   [
     "-32014",
     "bridgedNotProcessedError",
     "bridgedNotProcessed",
-    async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: "k" }),
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }, err) => {
       const { jobs } = await client.listJobs();
       expect(jobs).toHaveLength(1);
@@ -142,7 +149,7 @@ const ROWS = [
 
 describe(`gnus error conformance (${factory.name})`, () => {
   describe.each(ROWS)("row %s from %s", (id, profile, kind, call, after, fakeTimers) => {
-    const run = available(profile) ? it : it.skip;
+    const run = available(profile) && (canSpend || !call.spends) ? it : it.skip;
     run("arrives as its typed error", async () => {
       if (fakeTimers) {
         jest.useFakeTimers();
@@ -166,15 +173,15 @@ describe(`gnus error conformance (${factory.name})`, () => {
     await expect(first).resolves.toBeDefined();
   });
 
-  (available("slowConfirm") ? it : it.skip)("row -32005:submit_in_flight and a three-minute confirm from slowConfirm", async () => {
+  (available("slowConfirm") ? itSpends : it.skip)("row -32005:submit_in_flight and a three-minute confirm from slowConfirm", async () => {
     jest.useFakeTimers();
     const { client } = open("slowConfirm");
     let settled = false;
-    const first = client.submitJob({ job: JOB, idempotencyKey: "a" }).finally(() => {
+    const first = client.submitJob({ job: JOB, idempotencyKey: newKey() }).finally(() => {
       settled = true;
     });
     await jest.advanceTimersByTimeAsync(10000);
-    const err = await rejection(client.submitJob({ job: JOB, idempotencyKey: "b" }));
+    const err = await rejection(client.submitJob({ job: JOB, idempotencyKey: newKey() }));
     recordRow("-32005:submit_in_flight", err, "submitInFlight");
     await jest.advanceTimersByTimeAsync(169000);
     expect(settled).toBe(false);
@@ -200,12 +207,12 @@ describe(`gnus error conformance (${factory.name})`, () => {
     await expect(client.estimate({ job: JOB })).resolves.toBeDefined();
   });
 
-  (available("slowConfirm", true) ? it : it.skip)(
+  (available("slowConfirm", true) ? itSpends : it.skip)(
     "[needs controls] row -32015:account_changed from slowConfirm and switchAccount",
     async () => {
       jest.useFakeTimers();
       const { client, controls } = open("slowConfirm");
-      const pending = rejection(client.submitJob({ job: JOB, idempotencyKey: "a" }));
+      const pending = rejection(client.submitJob({ job: JOB, idempotencyKey: newKey() }));
       await jest.advanceTimersByTimeAsync(10000);
       controls.switchAccount();
       recordRow("-32015:account_changed", await pending, "switching");
@@ -213,9 +220,9 @@ describe(`gnus error conformance (${factory.name})`, () => {
     },
   );
 
-  (available("bridgedNotProcessedStatus") ? it : it.skip)("paid but not processed as a result keeps the status", async () => {
+  (available("bridgedNotProcessedStatus") ? itSpends : it.skip)("paid but not processed as a result keeps the status", async () => {
     const { client } = open("bridgedNotProcessedStatus");
-    const result = await client.submitJob({ job: JOB, idempotencyKey: "k" });
+    const result = await client.submitJob({ job: JOB, idempotencyKey: newKey() });
     expect(result.status).toBe("bridgedNotProcessed");
     expect(result.jobId).toBeNull();
     const { jobs } = await client.listJobs();
