@@ -1,4 +1,4 @@
-import { MOCK_MARKER } from "../../lib/gnus/mock/provider";
+import { MOCK_MARKER } from "../../lib/gnus/mock/marker";
 
 jest.mock("../../layouts/DefaultLayout", () => ({
   __esModule: true,

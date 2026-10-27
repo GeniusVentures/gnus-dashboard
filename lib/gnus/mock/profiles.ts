@@ -1,3 +1,5 @@
+import "./marker";
+
 export type WireError = { code: number; message: string; data?: Record<string, unknown> };
 
 const wire = (code: number, message: string, reason?: string): WireError =>

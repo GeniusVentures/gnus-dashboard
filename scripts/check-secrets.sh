@@ -7,9 +7,9 @@ cd "$(dirname "$0")/.."
 GL="${GITLEAKS:-gitleaks}"
 
 # The marker is written once, in the mock source; the gate reads it from there.
-MOCK_MARKER=$(sed -n 's/.*MOCK_MARKER = "\([^"]*\)".*/\1/p' lib/gnus/mock/provider.ts)
+MOCK_MARKER=$(sed -n 's/.*MOCK_MARKER = "\([^"]*\)".*/\1/p' lib/gnus/mock/marker.ts)
 if [ -z "$MOCK_MARKER" ]; then
-  echo "SETUP: mock marker not found in lib/gnus/mock/provider.ts" >&2
+  echo "SETUP: mock marker not found in lib/gnus/mock/marker.ts" >&2
   exit 2
 fi
 # Each character in its own bracket expression, so the marker is matched as a fixed string.
@@ -170,7 +170,12 @@ mock_import_test() {
   "$GL" version >/dev/null 2>&1 || { echo "SETUP: gitleaks not found" >&2; exit 2; }
   [ ! -e "$PROBE" ] || { echo "SETUP: $PROBE already exists" >&2; exit 2; }
   trap "rm -f '$PROBE'" EXIT
-  cat >"$PROBE" <<'PROBE_EOF'
+  local name out rc
+  # One build per way of importing the mock: the whole install path, only the profile table, only the option parser.
+  # Each must trip the marker gate on its own, because a page can import any one of them.
+  for name in install profiles options; do
+    case "$name" in
+      install) cat >"$PROBE" <<'PROBE_EOF' ;;
 import { useEffect } from "react";
 import { installMock } from "../lib/gnus/mock/install";
 
@@ -181,13 +186,30 @@ export default function MockImportProbe() {
   return null;
 }
 PROBE_EOF
-  build_without_flag
-  local out rc=0
-  out=$(check_out 2>&1) || rc=$?
-  if [ "$rc" -ne 1 ] || ! printf '%s' "$out" | grep -q 'mock-marker'; then
-    echo "mock import test FAILED: planted import not detected" >&2
-    return 1
-  fi
+      profiles) cat >"$PROBE" <<'PROBE_EOF' ;;
+import { MOCK_PROFILES, isMockProfileName } from "../lib/gnus/mock/profiles";
+
+export default function MockImportProbe() {
+  return <p>{isMockProfileName("today") ? Object.keys(MOCK_PROFILES).join(",") : ""}</p>;
+}
+PROBE_EOF
+      options) cat >"$PROBE" <<'PROBE_EOF' ;;
+import { mockOptionsFromSearch } from "../lib/gnus/mock/install";
+
+export default function MockImportProbe() {
+  return <p>{mockOptionsFromSearch("?gnusMock=today").profile}</p>;
+}
+PROBE_EOF
+    esac
+    build_without_flag
+    rc=0
+    out=$(check_out 2>&1) || rc=$?
+    if [ "$rc" -ne 1 ] || ! printf '%s' "$out" | grep -q 'mock-marker'; then
+      echo "mock import test FAILED: planted $name import not detected" >&2
+      return 1
+    fi
+    echo "  detected: planted $name import"
+  done
   rm -f "$PROBE"
   build_without_flag
   rc=0
@@ -196,7 +218,7 @@ PROBE_EOF
     echo "mock import test FAILED: clean build did not pass (exit $rc)" >&2
     return 1
   fi
-  echo "mock import test passed: planted import detected, clean build passes"
+  echo "mock import test passed: 3 planted imports detected, clean build passes"
 }
 
 case "${1:-}" in

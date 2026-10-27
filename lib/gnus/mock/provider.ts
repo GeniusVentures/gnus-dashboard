@@ -1,8 +1,7 @@
 import type { Accounts, Earnings, Estimate, Job, JobStatus } from "../schema";
 import { DEFAULT_PROFILE, MOCK_PROFILES, MockProfile, WireError, isMockProfileName } from "./profiles";
 import type { InjectedProvider, Listener, RequestArgs } from "../transport/types";
-
-export const MOCK_MARKER = "__GNUS_MOCK__";
+import { MOCK_MARKER } from "./marker";
 
 export interface MockControls {
   emit(event: string, payload: unknown): void;

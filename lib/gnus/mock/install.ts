@@ -1,6 +1,7 @@
 // Dev and test only; the production-export gate lives in the mock entry point, not here.
 import { INITIALIZED_EVENT } from "../schema";
 import type { WindowLike } from "../transport/types";
+import "./marker";
 import { MockProvider, createMockProvider } from "./provider";
 
 export interface MockWindow extends WindowLike {
