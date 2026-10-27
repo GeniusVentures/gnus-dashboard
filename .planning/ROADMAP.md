@@ -19,7 +19,7 @@ v1 turns the Next.js app with a Node/koffi server into a static SPA that asks Ge
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Teardown and static shell** - The app exports to static files with no server, no secrets and no old payment path, and a merge to main cannot break the live site
-- [ ] **Phase 2: Contract client and mock wallet** - One typed `gnus_*` client and a mock wallet with real faults, so every later phase builds and tests without a wallet
+- [x] **Phase 2: Contract client and mock wallet** - One typed `gnus_*` client and a mock wallet with real faults, so every later phase builds and tests without a wallet
 - [ ] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
 - [ ] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
 - [ ] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Teardown and static shell | 6/6 | Verified locally; remote CI not run (no push) | 2026-10-27 |
-| 2. Contract client and mock wallet | 0/7 | Planned | - |
+| 2. Contract client and mock wallet | 7/7 | Verified locally (human_needed: real-wallet conformance run, dev-server browser check) | 2026-10-27 |
 | 3. Connect and identity | 0/TBD | Not started | - |
 | 4. Submit a job | 0/TBD | Not started | - |
 | 5. My jobs and earnings | 0/TBD | Not started | - |

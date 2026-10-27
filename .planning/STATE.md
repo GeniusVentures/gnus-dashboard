@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Static dashboard on the gnus_* contract
-current_phase: 2
-current_phase_name: "Contract client and mock wallet"
-status: planning
-stopped_at: "2026-10-27 overnight: Phase 1 executed 6/6, reviewed (CR-01 + 4 warnings fixed), verified human_needed (remote CI not run, nothing pushed). Phase 2 next."
+current_phase: 3
+current_phase_name: "Connect and identity"
+status: ready_to_plan
+stopped_at: "2026-10-27 overnight: Phases 1 and 2 executed, reviewed (all critical/warning findings fixed) and verified human_needed. Phase 3 (connect UI) not started: first user-facing UI, wants Braian. Nothing pushed."
 last_updated: "2026-10-26T23:59:00.000Z"
 last_activity: 2026-10-26
 last_activity_desc: Requirements and roadmap defined (overnight auto mode)
 progress:
   total_phases: 8
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
-  percent: 12
+  completed_phases: 2
+  total_plans: 13
+  completed_plans: 13
+  percent: 25
 resume_file: null
 ---
 
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 ## Current Position
 
-Phase: 2 of 8 (Contract client and mock wallet)
+Phase: 3 of 8 (Connect and identity)
 Plan: 0 of TBD in current phase
-Status: Planning (Phase 1 done 6/6, verified locally, remote CI not run)
-Last activity: 2026-10-27 - Phase 1 executed, reviewed and verified overnight
+Status: Ready to plan (Phases 1-2 done, verified locally, remote CI not run)
+Last activity: 2026-10-27 - Phase 2 executed, reviewed and verified overnight
 
 Progress: [..........] 0%
 
