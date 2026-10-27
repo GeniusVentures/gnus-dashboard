@@ -6,8 +6,6 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import DefaultLayout from "../layouts/DefaultLayout";
 import { NextSeo } from "next-seo";
-import { Provider } from "react-redux";
-import { store } from "../store/store";
 import { ToastContainer } from "react-toastify";
 import type { AppProps } from "next/app";
 
@@ -40,18 +38,16 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
           ],
         }}
       />
-      <Provider store={store}>
-        <ToastContainer
-          pauseOnHover={true}
-          autoClose={3000}
-          hideProgressBar={false}
-          closeOnClick={true}
-          draggable={false}
-        />
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
-      </Provider>
+      <ToastContainer
+        pauseOnHover={true}
+        autoClose={3000}
+        hideProgressBar={false}
+        closeOnClick={true}
+        draggable={false}
+      />
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
     </>
   );
 };
