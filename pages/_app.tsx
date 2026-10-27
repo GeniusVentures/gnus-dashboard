@@ -1,4 +1,3 @@
-import "dotenv/config";
 import "../styles/theme.scss";
 import "react-tooltip/dist/react-tooltip.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -10,7 +9,6 @@ import DefaultLayout from "../layouts/DefaultLayout";
 import { NextSeo } from "next-seo";
 import { Provider } from "react-redux";
 import { store } from "../store/store";
-import { IPFSWrapper } from "../context/ipfs/IPFSContext";
 import { ToastContainer } from "react-toastify";
 import type { AppProps } from "next/app";
 import { Web3Modal } from "context/wallet/Web3Modal";
@@ -56,11 +54,9 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
         />
         <Web3Modal>
           <PricesWrapper>
-            <IPFSWrapper>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
-            </IPFSWrapper>
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
           </PricesWrapper>
         </Web3Modal>
       </Provider>
