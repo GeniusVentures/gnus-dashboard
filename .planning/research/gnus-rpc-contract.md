@@ -42,14 +42,21 @@ Rules:
   the dashboard waits for the `gnus#initialized` window event if `window.gnus` is absent at load,
   for up to 3 s, before falling back to the browser path. Windows and Linux inject at document start.
 - `window.gnus.version` = contract version string, `"1"`.
+- The wallet's WebView user agent ends with ` GeniusWallet/<app version> gnus/<contract version>`, so the
+  page knows it is inside the wallet before `window.gnus` arrives and waits for `gnus#initialized`
+  instead of guessing.
 - WalletConnect (D): the `gnus_*` methods and events ride the `eip155` namespace as
   **optional** methods/events, on chain `eip155:80002` (Polygon Amoy, where `bridgeOut` lives)
   plus the wallet's GNUS chains. The wallet approves a session only if the proposal asks for
   `gnus_*` methods it implements. Payload is identical to the injected path:
-  `session_request` with `{ method, params }`; events go out as `session_event`.
+  `session_request` with `{ method, params }`; events go out as `session_event` on chain `eip155:80002`
+  (sign-client silently drops events whose chainId the session did not approve). `params` is the same
+  JSON object as on the injected path.
 - Over WalletConnect a request can time out (wallet closed, phone backgrounded). The dashboard shows
-  a "wallet offline" state on timeout, not a spinner. Suggested timeout: 60 s for reads, none for
-  `gnus_submitJob` (it waits on a human confirm).
+  a "wallet offline" state on timeout, not a spinner. WalletConnect requests need an expiry between
+  300 s and 7 days: use 60 s on the page side for reads (request expiry 300 s) and a 900 s expiry for
+  `gnus_submitJob` and the first connect call (they wait on a human). A submit that expires on the page
+  may still complete in the wallet: recover it with `gnus_getJob({ idempotencyKey })`.
 
 ## 3. Methods
 
@@ -67,7 +74,9 @@ Params: none. Result:
   },
   "payer": { "evmAddress": "0x<40 hex> | null", "canSign": true },
   "switching": false,
-  "network": { "sdk": "<SDK network name, e.g. staging>", "evmChainId": 80002 }
+  "network": { "sdk": "<SDK network name, e.g. staging>", "evmChainId": 80002 },
+  "version": "1",
+  "unit": { "symbol": "GNUS", "decimals": 18 }
 }
 ```
 
@@ -75,6 +84,10 @@ Params: none. Result:
   pays ("Sending from"). They can differ by design.
 - `payoutAddress` is intentionally absent: the SDK has no getter (SDK dependency SDK-PAYOUT).
 - Replaces the spike's `gnus_getAddress`, which is retired.
+- `version` is the contract version on every transport (over WalletConnect there is no `window.gnus.version`).
+- `unit` describes every amount in this contract: amounts are integer base units as decimal strings;
+  display = amount / 10^decimals. `decimals` is the GNUS token decimals the wallet uses for `bridgeOut`
+  (the example value is illustrative; read it, never hardcode it).
 
 ### `gnus_estimate` (read, no prompt)
 
@@ -87,7 +100,7 @@ Result:
 
 ```json
 {
-  "cost": "<decimal string: the exact amount the wallet would burn, SDK units>",
+  "cost": "<decimal string: the exact amount the wallet would burn, base units>",
   "gas": { "amount": "<decimal string>", "symbol": "<native coin symbol>" } ,
   "balance": "<decimal string: payer's GNUS balance, same units as cost>",
   "network": { "sdk": "...", "evmChainId": 80002 }
@@ -98,7 +111,7 @@ Result:
 - A zero or failed SDK cost is an error (`-32010`), never `cost: "0"`.
 - Open question U1: the wallet burns the SDK cost integer as-is; the current dashboard multiplies the
   estimate by 1e18. Until the SDK documents its unit, the wallet's behaviour (burn as-is) is the
-  reference and the dashboard must display `cost` with the wallet's decimals, not re-scale it.
+  reference: `cost` is in base units and the dashboard displays it with `unit.decimals`, never re-scaled.
 
 ### `gnus_submitJob` (spend, native confirm every time)
 
@@ -124,7 +137,10 @@ Result:
 - `bridgedNotProcessed`: the burn succeeded and Process failed. Funds are spent. The dashboard shows
   a recoverable state keyed by `burnTxHash`; the wallet keeps the record.
 - Same `idempotencyKey` within 24 h returns the first call's result instead of burning again (covers
-  reloads and double clicks). Two concurrent calls from one origin: the second gets `-32005`.
+  reloads, double clicks and WalletConnect requests that time out on the page but still reach the
+  wallet). Generate the key when the user reaches the review step and persist it before calling, not
+  per click. Same key with a different job body: `-32602` with `data.reason: "idempotency_key_reused"`.
+- A second submit from one origin while one is in flight: `-32005` with `data.reason: "submit_in_flight"`.
 - Rejected confirm: `4001`.
 
 ### `gnus_listJobs` (read, no prompt)
@@ -140,6 +156,7 @@ Job = {
   "burnTxHash": "0x...",
   "sdkAddress": "0x<128 hex>",
   "origin": "<origin that submitted it>",
+  "idempotencyKey": "<the key the submit carried>",
   "submittedAt": "<ISO 8601>",
   "cost": "<decimal string>",
   "status": "submitted | queued | processing | completed | failed | bridgedNotProcessed | unknown"
@@ -150,7 +167,8 @@ Job = {
 
 ### `gnus_getJob` (read, no prompt)
 
-Params: `{ "jobId": string }` or `{ "burnTxHash": string }`. Result: `Job` plus
+Params: exactly one of `{ "jobId": string }`, `{ "burnTxHash": string }`, `{ "idempotencyKey": string }`
+(the last lets a reloaded page find a submit whose response it never saw). Result: `Job` plus
 `{ "result": { "cids": [string], "data"?: object } | null, "error"?: string }`.
 Needs SDK-JOBID and SDK-STATUS/SDK-RESULT; until then it returns the wallet's own record with
 `result: null`.
@@ -190,16 +208,16 @@ Params: `{ "includeChildren"?: false }`. Result:
 | 4001 | User rejected the confirm |
 | 4100 | Origin not allowed, or permission not granted for this origin |
 | 4200 | Method not supported |
-| 4900 | Wallet not ready (SDK not initialized) |
-| 4901 | Account switch in progress (`switching: true`); retry after `gnus_accountsChanged` |
+| 4900 | Wallet not ready (SDK not initialized). Same meaning family as EIP-1193 "Disconnected" |
 | -32602 | Invalid params (bad job schema, bad address, out-of-range limit) |
 | -32603 | Internal error |
-| -32005 | Rate limited, or a confirm for this origin is already open |
+| -32005 | Busy. `data.reason` is `rate_limited`, `confirm_open` or `submit_in_flight` |
 | -32010 | Cost unavailable (SDK returned 0 or failed; `data.reason` when the SDK provides one) |
 | -32011 | Insufficient GNUS balance for `cost` |
 | -32012 | Payer cannot sign (watch-only, `sgnus` row, or child without key) |
 | -32013 | Bridge (burn) failed; nothing spent |
 | -32014 | Burn succeeded, Process failed; `data.burnTxHash` set (same as `status: bridgedNotProcessed`) |
+| -32015 | Account switch in progress (`switching: true`); retry after `gnus_accountsChanged`. Not 4901, which EIP-1193 reserves for "chain disconnected" |
 
 ## 6. Security rules the wallet enforces (dashboard can rely on them)
 
@@ -210,7 +228,10 @@ Params: `{ "includeChildren"?: false }`. Result:
 - Top-level navigation is locked to the allowlist; popups and `target=_blank` open in the system
   browser.
 - Per-origin permission: the first call from an origin asks the user to connect (like
-  `eth_requestAccounts`). Reads after that need no prompt; every `gnus_submitJob` prompts.
+  `eth_requestAccounts`). Reads after that need no prompt; every `gnus_submitJob` prompts. So the
+  dashboard's first call (normally `gnus_getAccounts`) can wait on a human: give it no timeout and show a
+  "confirm in your wallet" state. Rejecting the connect prompt returns `4001`; an origin the user
+  revoked returns `4100` until it connects again.
 - No method returns keys, mnemonics or anything derived from them.
 
 ## 7. SDK dependencies (not wallet work)
@@ -235,3 +256,8 @@ Params: `{ "includeChildren"?: false }`. Result:
   sides.
 - U4: who mints a given burn on the SuperGenius side (which account a payment credits). Today the
   wallet's bridge mints to the node's selected SDK account; the contract assumes that.
+- U5: recovering `bridgedNotProcessed`. Repeating `gnus_submitJob` with the same idempotency key returns
+  the first result and never re-runs Process. Whether Process can be re-run for an existing burn is
+  unknown (wallet todo 2026-07-29 "can requestGeniusSDKProcess be recalled after a successful bridge").
+  If it can, v1 adds `gnus_retryProcess({ burnTxHash })` with its own confirm; until then the dashboard
+  shows the burn hash and points the user to the wallet.
