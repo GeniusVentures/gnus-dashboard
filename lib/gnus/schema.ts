@@ -24,14 +24,18 @@ export const EVENTS = {
   disconnect: "disconnect",
 } as const;
 
+// Wire strings are bounded at the trust boundary; anything longer is a contract mismatch.
+const shortString = z.string().max(256);
+const idString = z.string().min(1).max(256);
+
 export const networkSchema = z.object({
-  sdk: z.string().min(1),
+  sdk: shortString.min(1),
   evmChainId: z.number().int().positive(),
 });
 export type Network = z.infer<typeof networkSchema>;
 
 export const unitSchema = z.object({
-  symbol: z.string().min(1),
+  symbol: shortString.min(1),
   decimals: decimalsSchema,
 });
 
@@ -57,14 +61,14 @@ export type JobDefinition = Record<string, unknown>;
 
 export const estimateSchema = z.object({
   cost: baseUnitsSchema,
-  gas: z.object({ gasPriceGwei: decimalSchema, symbol: z.string().min(1) }).nullable(),
+  gas: z.object({ gasPriceGwei: decimalSchema, symbol: shortString.min(1) }).nullable(),
   balance: baseUnitsSchema.nullable(),
   network: networkSchema,
 });
 export type Estimate = z.infer<typeof estimateSchema>;
 
 export const submitResultSchema = z.object({
-  jobId: z.string().min(1).nullable(),
+  jobId: idString.nullable(),
   burnTxHash: txHashSchema,
   sdkAddress: sdkAddressSchema,
   status: z.enum(["submitted", "bridgedNotProcessed"]),
@@ -87,16 +91,16 @@ function toJobStatus(value: string): JobStatus {
 }
 
 // An unseen status string is a rendered state, not a crash; a non-string is still a mismatch.
-const jobStatusSchema = z.string().transform(toJobStatus);
+const jobStatusSchema = shortString.transform(toJobStatus);
 
 const isoTimestampSchema = z.iso.datetime({ offset: true });
 
 export const jobSchema = z.object({
-  jobId: z.string().min(1).nullable(),
+  jobId: idString.nullable(),
   burnTxHash: txHashSchema,
   sdkAddress: sdkAddressSchema,
-  origin: z.string(),
-  idempotencyKey: z.string(),
+  origin: shortString,
+  idempotencyKey: shortString,
   submittedAt: isoTimestampSchema,
   cost: baseUnitsSchema,
   status: jobStatusSchema,
@@ -107,17 +111,17 @@ export type Job = z.infer<typeof jobSchema>;
 export const jobDetailSchema = jobSchema.extend({
   result: z
     .object({
-      cids: z.array(z.string().min(1)),
+      cids: z.array(idString).max(1000),
       data: z.record(z.string(), z.unknown()).optional(),
     })
     .nullable(),
-  error: z.string().optional(),
+  error: z.string().max(2000).optional(),
 });
 export type JobDetail = z.infer<typeof jobDetailSchema>;
 
 export const jobListSchema = z.object({
-  jobs: z.array(jobSchema),
-  nextCursor: z.string().nullable(),
+  jobs: z.array(jobSchema).max(100),
+  nextCursor: z.string().max(512).nullable(),
 });
 export type JobList = z.infer<typeof jobListSchema>;
 
@@ -131,7 +135,7 @@ export const earningsSchema = z.object({
   earned: z.object({
     total: baseUnitsSchema.nullable(),
     history: z
-      .array(z.object({ at: isoTimestampSchema, amount: baseUnitsSchema, jobId: z.string() }))
+      .array(z.object({ at: isoTimestampSchema, amount: baseUnitsSchema, jobId: idString }))
       .nullable(),
   }),
 });
@@ -139,7 +143,7 @@ export type Earnings = z.infer<typeof earningsSchema>;
 
 export const disconnectSchema = z.object({
   code: z.number().int(),
-  message: z.string(),
+  message: z.string().max(2000),
 });
 
 export const eventSchemas = {

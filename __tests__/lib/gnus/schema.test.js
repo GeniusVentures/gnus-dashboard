@@ -151,3 +151,26 @@ describe("shape handling", () => {
     expect(eventSchemas.gnus_jobUpdated).toBe(jobSchema);
   });
 });
+
+describe("payload bounds", () => {
+  test("amounts stop at 78 digits", () => {
+    ok(estimateSchema, estimate({ cost: "9".repeat(78) }));
+    bad(estimateSchema, estimate({ cost: "9".repeat(79) }));
+    bad(estimateSchema, estimate({ cost: "" }));
+  });
+  test("strings are capped", () => {
+    ok(jobSchema, job({ origin: "o".repeat(256) }));
+    bad(jobSchema, job({ origin: "o".repeat(257) }));
+    bad(jobSchema, job({ idempotencyKey: "k".repeat(257) }));
+    bad(jobSchema, job({ jobId: "j".repeat(257) }));
+    bad(networkSchema, { sdk: "s".repeat(257), evmChainId: 1 });
+    bad(jobDetailSchema, detail({ error: "e".repeat(2001) }));
+    bad(jobListSchema, list({ nextCursor: "c".repeat(513) }));
+    bad(disconnectSchema, { code: 1, message: "m".repeat(2001) });
+  });
+  test("lists are capped", () => {
+    ok(jobListSchema, list({ jobs: Array.from({ length: 100 }, () => job()) }));
+    bad(jobListSchema, list({ jobs: Array.from({ length: 101 }, () => job()) }));
+    bad(jobDetailSchema, detail({ result: { cids: Array.from({ length: 1001 }, () => "Qm1") } }));
+  });
+});

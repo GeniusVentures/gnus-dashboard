@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 // Every GNUS amount and count in the contract: integer base units of unit.decimals, as a digit string.
-export const baseUnitsSchema = z.string().regex(/^\d+$/);
+// 78 digits is the u256 ceiling; a longer string would only cost BigInt time on every render.
+export const baseUnitsSchema = z.string().regex(/^\d{1,78}$/);
 
 // gas.gasPriceGwei: digits with an optional fraction, formatted by the wallet (gnus_amounts.dart, \d+(\.\d+)?).
 // Not a GNUS amount, so it is not held to the base-units rule.
