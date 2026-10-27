@@ -9,7 +9,7 @@
     "test": "jest",
     "serve:out": "node scripts/serve-out.js",
     "cy:run": "cypress run",
-    "test:e2e": "start-server-and-test serve:out http://127.0.0.1:4173 cy:run"
+    "test:e2e": "node scripts/serve-out.js yarn cy:run"
   },
   "dependencies": {
     "@types/react": "^18.2.79",
@@ -33,7 +33,6 @@
     "jest": "^30.0.5",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.0.5",
-    "start-server-and-test": "^2.0.13",
     "typescript": "^5.7.2"
   },
   "engines": {

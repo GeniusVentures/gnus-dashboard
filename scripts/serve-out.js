@@ -1,4 +1,5 @@
 // Plain static server for out/: exact file, then .html, then /index.html, else the 404 page.
+// With a command (node scripts/serve-out.js yarn cy:run) it runs that command against the server, then stops and exits with the command's code.
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -63,7 +64,7 @@ const send = (res, status, file, head) => {
   res.end(head ? undefined : body);
 };
 
-http
+const server = http
   .createServer((req, res) => {
     if (req.method !== "GET" && req.method !== "HEAD") {
       res.writeHead(405, { Allow: "GET, HEAD", "X-Content-Type-Options": "nosniff" });
@@ -88,4 +89,14 @@ http
   })
   .listen(port, "127.0.0.1", () => {
     console.log(`serving out/ on http://127.0.0.1:${port}`);
+    const command = process.argv.slice(2).join(" ");
+    if (command) {
+      // Async spawn: the server must keep answering while the command runs.
+      require("child_process")
+        .spawn(command, { stdio: "inherit", shell: true })
+        .on("exit", (code) => {
+          server.close();
+          process.exit(code ?? 1);
+        });
+    }
   });
