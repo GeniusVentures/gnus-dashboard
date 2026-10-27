@@ -1,0 +1,34 @@
+title = "GNUS dashboard gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "hex-private-key"
+description = "64-hex value assigned to a key-like name"
+regex = '''(?i)(priv(ate)?[_-]?key|privkey|secret|mnemonic|seed)["']?\s*[:=]\s*["'](0x)?[0-9a-f]{64}["']'''
+
+[[rules]]
+id = "sgns-key"
+description = "SuperGenius account key"
+regex = '''sgns_key["']?\s*[:=]\s*["'][0-9a-fA-F]{32,}'''
+
+[[rules]]
+id = "keyed-rpc-url"
+description = "RPC endpoint URL carrying an API token"
+regex = '''(?i)https?://[a-z0-9.-]*(blastapi\.io|infura\.io/v3|alchemy\.com/v2|quiknode\.pro)/[a-z0-9_-]{16,}'''
+
+# Build and dependency output only. Source directories and .planning are never listed here.
+[allowlist]
+description = "build and dependency output"
+paths = [
+  '''^(\./)?node_modules([\/]|$)''',
+  '''^(\./)?\.next([\/]|$)''',
+  '''^(\./)?out([\/]|$)''',
+  '''^(\./)?coverage([\/]|$)''',
+  '''^(\./)?\.git([\/]|$)''',
+  '''^(\./)?\.yarn[\/]releases([\/]|$)''',
+  '''^(\./)?cypress[\/]screenshots([\/]|$)''',
+  '''^(\./)?cypress[\/]videos([\/]|$)''',
+  '''^(\./)?yarn\.lock$''',
+]
