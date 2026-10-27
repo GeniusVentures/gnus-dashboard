@@ -39,3 +39,4 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 --log-opts="$BASE_SHA..HEAD"
       - run: node scripts/check-audit.js
+      - run: bash scripts/check-secrets.sh --mock-import-test

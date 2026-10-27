@@ -6,6 +6,15 @@ cd "$(dirname "$0")/.."
 
 GL="${GITLEAKS:-gitleaks}"
 
+# The marker is written once, in the mock source; the gate reads it from there.
+MOCK_MARKER=$(sed -n 's/.*MOCK_MARKER = "\([^"]*\)".*/\1/p' lib/gnus/mock/provider.ts)
+if [ -z "$MOCK_MARKER" ]; then
+  echo "SETUP: mock marker not found in lib/gnus/mock/provider.ts" >&2
+  exit 2
+fi
+# Each character in its own bracket expression, so the marker is matched as a fixed string.
+MOCK_MARKER_ERE=$(printf '%s' "$MOCK_MARKER" | sed 's/./[&]/g')
+
 check_source() {
   if ! "$GL" version >/dev/null 2>&1; then
     echo "SETUP: gitleaks not found (set GITLEAKS or put gitleaks on PATH)" >&2
@@ -53,6 +62,7 @@ check_out() {
     "pem-private-key|BEGIN [A-Z ]*PRIVATE KEY"
     "bridge-test-content|bridge-test"
     "quoted-64-hex|[\"'](0x)?[0-9a-fA-F]{64}[\"']"
+    "mock-marker|$MOCK_MARKER_ERE"
   )
   local spec
   for spec in "${checks[@]}"; do
@@ -104,7 +114,7 @@ self_test() {
   # Separate words, so this file holds no quoted 12-word phrase for the gate to flag.
   local words=(abandon ability able about above absent absorb abstract absurd abuse access accident)
   dir=$(mktemp -d ./secret-selftest-XXXXXX)
-  trap "rm -rf '$dir' out/secret-selftest-key.js out/secret-selftest-rpc.js out/bridge-test.html" EXIT
+  trap "rm -rf '$dir' out/secret-selftest-key.js out/secret-selftest-rpc.js out/secret-selftest-mock.js out/bridge-test.html" EXIT
   hex=$(rand_hex 32)
   token=$(rand_hex 18)
 
@@ -132,13 +142,66 @@ self_test() {
   expect_red "bridge-test page in out/" "$token" check_out
   rm -f out/bridge-test.html
 
+  printf 'var m="%s";\n' "$MOCK_MARKER" >out/secret-selftest-mock.js
+  expect_red "mock marker in out/" "$MOCK_MARKER" check_out
+  rm -f out/secret-selftest-mock.js
+
   rmdir "$dir"
   run_both
-  echo "secret self-test passed: 6 fixtures detected, clean tree passes"
+  echo "secret self-test passed: 7 fixtures detected, clean tree passes"
+}
+
+PROBE=pages/mock-import-probe.tsx
+
+# Build with the mock flag removed, so only an unguarded import can put the mock in out/.
+build_without_flag() {
+  local log
+  log=$(mktemp)
+  if ! env -u NEXT_PUBLIC_GNUS_MOCK yarn build >"$log" 2>&1; then
+    tail -n 30 "$log" >&2
+    rm -f "$log"
+    echo "SETUP: yarn build failed" >&2
+    exit 2
+  fi
+  rm -f "$log"
+}
+
+mock_import_test() {
+  "$GL" version >/dev/null 2>&1 || { echo "SETUP: gitleaks not found" >&2; exit 2; }
+  [ ! -e "$PROBE" ] || { echo "SETUP: $PROBE already exists" >&2; exit 2; }
+  trap "rm -f '$PROBE'" EXIT
+  cat >"$PROBE" <<'PROBE_EOF'
+import { useEffect } from "react";
+import { installMock } from "../lib/gnus/mock/install";
+
+export default function MockImportProbe() {
+  useEffect(() => {
+    installMock(window as never);
+  }, []);
+  return null;
+}
+PROBE_EOF
+  build_without_flag
+  local out rc=0
+  out=$(check_out 2>&1) || rc=$?
+  if [ "$rc" -ne 1 ] || ! printf '%s' "$out" | grep -q 'mock-marker'; then
+    echo "mock import test FAILED: planted import not detected" >&2
+    return 1
+  fi
+  rm -f "$PROBE"
+  build_without_flag
+  rc=0
+  check_out >/dev/null 2>&1 || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    echo "mock import test FAILED: clean build did not pass (exit $rc)" >&2
+    return 1
+  fi
+  echo "mock import test passed: planted import detected, clean build passes"
 }
 
 case "${1:-}" in
   "") run_both ;;
   --self-test) self_test ;;
-  *) echo "usage: $0 [--self-test]" >&2; exit 2 ;;
+  --mock-import-test) mock_import_test ;;
+  *) echo "usage: $0 [--self-test | --mock-import-test]" >&2; exit 2 ;;
 esac
