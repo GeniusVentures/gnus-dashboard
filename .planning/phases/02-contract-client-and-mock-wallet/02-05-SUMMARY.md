@@ -40,7 +40,7 @@ today (SDK gaps null), populated, allNulls (payer cannot sign, submit is -32012 
 
 ## Deviations from Plan
 
-None in scope. Run sequentially after 02-04 and before 02-07 at the orchestrator's request. The mock's `submitJob` also rejects -32012 with reason `view_only` when the payer has an EVM address but cannot sign (no profile produces that yet; it keeps the code and reason pair valid).
+None in scope. Run sequentially after 02-04 and before 02-07 at the orchestrator's request. The mock's `submitJob` also rejects -32012 when the payer cannot sign: reason `no_wallet` when the payer has no EVM address, no reason otherwise (changed from `view_only` in 02-06 so the bare -32012 contract row is observable).
 
 ## Known Stubs
 
