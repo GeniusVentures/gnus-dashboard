@@ -411,3 +411,208 @@ describe("controls and events", () => {
     expect(fresh).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("fault profiles", () => {
+  const { installMock, mockOptionsFromSearch } = require("../../../lib/gnus/mock/install");
+  const FAULTS = [
+    "connectRejected", "rejectConfirm", "originRevoked", "methodUnsupported", "sdkStarting", "internalError",
+    "rateLimited", "confirmOpen", "costUnavailable", "insufficientBalance", "payerCannotSign", "balanceUnavailable",
+    "bridgeFailed", "bridgedNotProcessedStatus", "bridgedNotProcessedError", "switching", "slowConfirm",
+    "malformedNumericAmount", "malformedSwappedAddress", "malformedMissingField",
+  ];
+  const GET_ACCOUNTS = { method: "gnus_getAccounts" };
+  const ESTIMATE = { method: "gnus_estimate", params: { job: JOB } };
+  const submit = (key) => ({ method: "gnus_submitJob", params: { job: JOB, idempotencyKey: key } });
+  const LIST = { method: "gnus_listJobs" };
+  const tick = (ms) => jest.advanceTimersByTimeAsync(ms);
+
+  afterEach(() => jest.useRealTimers());
+
+  function expectWire(err, code, reason) {
+    expect(err).not.toBeInstanceOf(Error);
+    expect(err.code).toBe(code);
+    expect(err.data?.reason).toBe(reason);
+  }
+
+  test("there is one profile per fault, and every name installs", () => {
+    for (const name of FAULTS) {
+      expect(Object.keys(MOCK_PROFILES)).toContain(name);
+    }
+    for (const name of Object.keys(MOCK_PROFILES)) {
+      expect(() => createMockProvider({ profile: name })).not.toThrow();
+      const win = new EventTarget();
+      installMock(win, mockOptionsFromSearch(`?gnusMock=${name}`));
+      expect(win.gnus.isGeniusWallet).toBe(true);
+    }
+  });
+
+  test("connectRejected rejects the first call only", async () => {
+    const { mock } = make("connectRejected");
+    expectWire(await wireError(mock.request(GET_ACCOUNTS)), 4001);
+    await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
+  });
+
+  test("originRevoked rejects every call", async () => {
+    const { mock } = make("originRevoked");
+    expectWire(await wireError(mock.request(GET_ACCOUNTS)), 4100);
+    expectWire(await wireError(mock.request(ESTIMATE)), 4100);
+    expectWire(await wireError(mock.request({ method: "gnus_nope" })), 4100);
+  });
+
+  test("methodUnsupported refuses only getEarnings", async () => {
+    const { mock } = make("methodUnsupported");
+    expectWire(await wireError(mock.request({ method: "gnus_getEarnings" })), 4200);
+    await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
+  });
+
+  test("sdkStarting is 4900 for 5 s", async () => {
+    jest.useFakeTimers();
+    const { mock } = make("sdkStarting");
+    expectWire(await wireError(mock.request(GET_ACCOUNTS)), 4900);
+    await tick(4900);
+    expectWire(await wireError(mock.request(GET_ACCOUNTS)), 4900);
+    await tick(100);
+    await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
+  });
+
+  test("internalError fails estimate only", async () => {
+    const { mock } = make("internalError");
+    expectWire(await wireError(mock.request(ESTIMATE)), -32603);
+    await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
+  });
+
+  test("rateLimited refuses a second concurrent estimate", async () => {
+    jest.useFakeTimers();
+    const { mock } = make("rateLimited");
+    const first = mock.request(ESTIMATE);
+    expectWire(await wireError(mock.request(ESTIMATE)), -32005, "rate_limited");
+    await tick(1000);
+    await expect(first).resolves.toBeDefined();
+    const again = mock.request(ESTIMATE);
+    await tick(1000);
+    await expect(again).resolves.toBeDefined();
+  });
+
+  test("confirmOpen refuses submit", async () => {
+    const { mock, controls } = make("confirmOpen");
+    expectWire(await wireError(mock.request(submit("k"))), -32005, "confirm_open");
+    expect(controls.burnCount()).toBe(0);
+  });
+
+  test("costUnavailable refuses estimate and submit", async () => {
+    const { mock } = make("costUnavailable");
+    expectWire(await wireError(mock.request(ESTIMATE)), -32010);
+    expectWire(await wireError(mock.request(submit("k"))), -32010);
+  });
+
+  test("insufficientBalance shows both amounts and refuses submit", async () => {
+    const { mock, controls } = make("insufficientBalance");
+    const estimate = await mock.request(ESTIMATE);
+    expect(BigInt(estimate.balance)).toBeLessThan(BigInt(estimate.cost));
+    expectWire(await wireError(mock.request(submit("k"))), -32011);
+    expect(controls.burnCount()).toBe(0);
+  });
+
+  test("payerCannotSign refuses submit", async () => {
+    const { mock, controls } = make("payerCannotSign");
+    expect((await mock.request(GET_ACCOUNTS)).payer.canSign).toBe(false);
+    expectWire(await wireError(mock.request(submit("k"))), -32012);
+    expect(controls.burnCount()).toBe(0);
+  });
+
+  test("balanceUnavailable: estimate balance null, submit fails closed", async () => {
+    const { mock, controls } = make("balanceUnavailable");
+    expect((await mock.request(ESTIMATE)).balance).toBeNull();
+    expectWire(await wireError(mock.request(submit("k"))), -32603, "balance_unavailable");
+    expect(controls.burnCount()).toBe(0);
+  });
+
+  test.each([
+    ["rejectConfirm", 4001],
+    ["bridgeFailed", -32013],
+  ])("%s burns nothing and records no job", async (profile, code) => {
+    const { mock, controls } = make(profile);
+    expectWire(await wireError(mock.request(submit("k"))), code);
+    expect(controls.burnCount()).toBe(0);
+    expect((await mock.request(LIST)).jobs).toEqual([]);
+  });
+
+  test("bridgedNotProcessedError: -32014 with the burn hash, job listed, replay burns once", async () => {
+    const { mock, controls } = make("bridgedNotProcessedError");
+    const err = await wireError(mock.request(submit("k")));
+    expectWire(err, -32014);
+    expect(err.data.burnTxHash).toMatch(/^0x[0-9a-f]{64}$/);
+    const { jobs } = await mock.request(LIST);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0].status).toBe("bridgedNotProcessed");
+    expect(jobs[0].burnTxHash).toBe(err.data.burnTxHash);
+    const replay = await wireError(mock.request(submit("k")));
+    expect(replay).toEqual(err);
+    expect(controls.burnCount()).toBe(1);
+  });
+
+  test("bridgedNotProcessedStatus resolves with that status and a null jobId", async () => {
+    const { mock } = make("bridgedNotProcessedStatus");
+    const result = await mock.request(submit("k"));
+    expect(result.status).toBe("bridgedNotProcessed");
+    expect(result.jobId).toBeNull();
+    const { jobs } = await mock.request(LIST);
+    expect(jobs.map((j) => j.status)).toEqual(["bridgedNotProcessed"]);
+    expect(await mock.request(submit("k"))).toEqual(result);
+  });
+
+  test("switching: -32015 inside the window, a new account at 2 s", async () => {
+    jest.useFakeTimers();
+    const { mock, client } = make("switching");
+    const events = collect(client, "gnus_accountsChanged");
+    const during = await mock.request(GET_ACCOUNTS);
+    expect(during.switching).toBe(true);
+    expectWire(await wireError(mock.request(ESTIMATE)), -32015);
+    await tick(1999);
+    expectWire(await wireError(mock.request(ESTIMATE)), -32015);
+    await tick(1);
+    const last = events.seen[events.seen.length - 1];
+    expect(last.switching).toBe(false);
+    expect(last.node.sdkAddress).not.toBe(during.node.sdkAddress);
+    expect(events.mismatches).toHaveLength(0);
+    await expect(mock.request(ESTIMATE)).resolves.toBeDefined();
+  });
+
+  test("slowConfirm waits three minutes and guards the second submit", async () => {
+    jest.useFakeTimers();
+    const { mock, controls } = make("slowConfirm");
+    let settled = false;
+    const first = mock.request(submit("a")).finally(() => {
+      settled = true;
+    });
+    await tick(10000);
+    expectWire(await wireError(mock.request(submit("b"))), -32005, "submit_in_flight");
+    await tick(169000);
+    expect(settled).toBe(false);
+    await tick(1000);
+    await expect(first).resolves.toMatchObject({ status: "submitted" });
+    expect(controls.burnCount()).toBe(1);
+  });
+
+  test("an account change during the confirm is account_changed and burns nothing", async () => {
+    jest.useFakeTimers();
+    const { mock, controls } = make("slowConfirm");
+    const pending = wireError(mock.request(submit("a")));
+    await tick(10000);
+    controls.switchAccount();
+    expectWire(await pending, -32015, "account_changed");
+    expect(controls.burnCount()).toBe(0);
+    expect((await mock.request(LIST)).jobs).toEqual([]);
+  });
+
+  test("malformed profiles break exactly one reply shape", async () => {
+    const numeric = make("malformedNumericAmount").mock;
+    expect(typeof (await numeric.request(ESTIMATE)).cost).toBe("number");
+    const swapped = await make("malformedSwappedAddress").mock.request(GET_ACCOUNTS);
+    expect(swapped.node.sdkAddress).toMatch(/^0x[0-9a-f]{40}$/);
+    expect(swapped.payer.evmAddress).toMatch(/^0x[0-9a-f]{128}$/);
+    const missing = await make("malformedMissingField").mock.request(GET_ACCOUNTS);
+    expect("unit" in missing).toBe(false);
+    expect(missing.version).toBe("1");
+  });
+});
