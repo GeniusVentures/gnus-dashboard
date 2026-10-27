@@ -5,30 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint",
-    "now-build": "next build",
-    "test": "node scripts/test-runner.js --type all",
-    "test:watch": "node scripts/test-runner.js --type all --watch",
-    "test:coverage": "node scripts/test-runner.js --type all --coverage",
-    "test:changed": "node scripts/test-runner.js --changed",
-    "test:parallel": "node scripts/test-runner.js --type all --parallel",
-    "test:unit": "node scripts/test-runner.js --type unit",
-    "test:unit:watch": "node scripts/test-runner.js --type unit --watch",
-    "test:unit:coverage": "node scripts/test-runner.js --type unit --coverage",
-    "test:integration": "node scripts/test-runner.js --type integration",
-    "test:integration:watch": "node scripts/test-runner.js --type integration --watch",
-    "test:e2e": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e'",
-    "test:e2e:open": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --watch'",
-    "test:e2e:parallel": "start-server-and-test dev http://localhost:3000 'node scripts/test-runner.js --type e2e --parallel'",
-    "test:ci": "node scripts/test-runner.js --type all --coverage --parallel --bail",
-    "test:quick": "node scripts/test-runner.js --type unit --parallel",
-    "test:full": "node scripts/test-runner.js --type all --coverage --verbose"
+    "test": "jest"
   },
   "dependencies": {
     "@types/react": "^18.2.79",
     "bootstrap": "^5.2.3",
-    "next": "^14.0.3",
+    "next": "14.2.35",
     "react": "^18.2.0",
     "react-bootstrap": "^2.7.4",
     "react-dom": "^18.2.0",
@@ -43,11 +26,14 @@
     "@types/node": "^20.12.7",
     "cypress": "^14.5.3",
     "eslint": "^8.39.0",
-    "eslint-config-next": "^13.3.1",
+    "eslint-config-next": "14.2.35",
     "jest": "^30.0.5",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.0.5",
     "start-server-and-test": "^2.0.13",
     "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=22 <23"
   }
 }
