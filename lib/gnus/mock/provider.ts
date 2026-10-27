@@ -11,7 +11,7 @@ export interface MockControls {
   /** New node sdkAddress; emits gnus_accountsChanged with the new accounts. */
   switchAccount(): void;
   /** Emits gnus_networkChanged. */
-  setNetwork(network: { sdk: string; evmChainId: number }): void;
+  setNetwork(network: { sdk: string | null; evmChainId: number | null }): void;
   /** Moves a job to the next status (submitted, queued, processing, completed) or to the given one; emits gnus_jobUpdated. */
   advanceJob(burnTxHash: string, status?: string): void;
   /** Emits disconnect { code, message }; the code defaults to 4900. */

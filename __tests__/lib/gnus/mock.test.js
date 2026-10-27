@@ -368,6 +368,15 @@ describe("controls and events", () => {
     expect((await client.estimate({ job: JOB })).network).toEqual({ sdk: "main", evmChainId: 137 });
   });
 
+  test("setNetwork accepts the contract's null network fields", async () => {
+    const { client, controls } = make();
+    const events = collect(client, "gnus_networkChanged");
+    controls.setNetwork({ sdk: null, evmChainId: null });
+    expect(events.seen).toEqual([{ sdk: null, evmChainId: null }]);
+    expect(events.mismatches).toHaveLength(0);
+    expect((await client.getAccounts()).network).toEqual({ sdk: null, evmChainId: null });
+  });
+
   test("advanceJob walks the statuses and emits jobUpdated", async () => {
     const { client, controls } = make();
     const sent = await client.submitJob({ job: JOB, idempotencyKey: "k" });

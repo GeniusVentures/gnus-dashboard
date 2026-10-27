@@ -29,8 +29,8 @@ const shortString = z.string().max(256);
 const idString = z.string().min(1).max(256);
 
 export const networkSchema = z.object({
-  sdk: shortString.min(1),
-  evmChainId: z.number().int().positive(),
+  sdk: shortString.min(1).nullable(),
+  evmChainId: z.number().int().positive().nullable(),
 });
 export type Network = z.infer<typeof networkSchema>;
 

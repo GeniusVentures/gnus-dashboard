@@ -75,6 +75,9 @@ describe("valid examples parse", () => {
     ["earnings all null", earningsSchema, earnings({ processing: { isProcessing: false, jobsProcessed: null }, earned: { total: null, history: null } })],
     ["disconnect", disconnectSchema, { code: 4900, message: "closing" }],
     ["networkChanged", networkSchema, network()],
+    ["networkChanged with no EVM network", networkSchema, { sdk: "staging", evmChainId: null }],
+    ["networkChanged with unknown SDK network", networkSchema, { sdk: null, evmChainId: 80002 }],
+    ["estimate with null network fields", estimateSchema, estimate({ network: { sdk: null, evmChainId: null } })],
   ])("%s", (_name, schema, value) => ok(schema, value));
 });
 
@@ -149,6 +152,14 @@ describe("shape handling", () => {
     expect(Object.keys(eventSchemas).sort()).toEqual(["disconnect", "gnus_accountsChanged", "gnus_jobUpdated", "gnus_networkChanged"]);
     expect(eventSchemas.gnus_accountsChanged).toBe(accountsSchema);
     expect(eventSchemas.gnus_jobUpdated).toBe(jobSchema);
+  });
+});
+
+describe("network nulls", () => {
+  test("accounts accept null chain id and sdk, but not zero or missing", () => {
+    ok(accountsSchema, { ...accounts(), network: { sdk: null, evmChainId: null } });
+    bad(accountsSchema, { ...accounts(), network: { sdk: "staging", evmChainId: 0 } });
+    bad(accountsSchema, { ...accounts(), network: { sdk: "staging" } });
   });
 });
 
