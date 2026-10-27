@@ -1,16 +1,3 @@
-import { v4 as uuid } from "uuid";
-
-const NavbarDefaultRoutes = [
-  {
-    id: uuid(),
-    menuitem: "Job Orders",
-    link: "/job-orders",
-  },
-  {
-    id: uuid(),
-    menuitem: "Wallet",
-    link: "/wallet",
-  },
-];
+const NavbarDefaultRoutes = [];
 
 export default NavbarDefaultRoutes;

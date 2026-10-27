@@ -11,7 +11,6 @@ import { Provider } from "react-redux";
 import { store } from "../store/store";
 import { ToastContainer } from "react-toastify";
 import type { AppProps } from "next/app";
-import { Web3Modal } from "context/wallet/Web3Modal";
 import { PricesWrapper } from "context/prices/PricesContext";
 import { Tooltip } from "react-tooltip";
 
@@ -52,13 +51,11 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
           closeOnClick={true}
           draggable={false}
         />
-        <Web3Modal>
-          <PricesWrapper>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </PricesWrapper>
-        </Web3Modal>
+        <PricesWrapper>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </PricesWrapper>
       </Provider>
       <Tooltip
         id="price-gas-tooltip"
