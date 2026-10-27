@@ -99,3 +99,22 @@ describe("tracer: gnus_getAccounts end to end", () => {
     });
   });
 });
+
+describe("mock profiles", () => {
+  const { isMockProfileName } = require("../../../lib/gnus/mock/profiles");
+
+  test("default and today behave the same", async () => {
+    const a = await createMockProvider().request({ method: "gnus_getAccounts" });
+    const b = await createMockProvider({ profile: "today" }).request({ method: "gnus_getAccounts" });
+    expect(b).toEqual(a);
+  });
+
+  test("an unknown profile throws and lists the known names", () => {
+    expect(() => createMockProvider({ profile: "nope" })).toThrow(/nope.*today/);
+  });
+
+  test("isMockProfileName checks own keys only", () => {
+    expect(isMockProfileName("today")).toBe(true);
+    expect(isMockProfileName("toString")).toBe(false);
+  });
+});

@@ -1,4 +1,5 @@
 import type { Accounts } from "../schema";
+import { DEFAULT_PROFILE, MOCK_PROFILES, MockProfile, isMockProfileName } from "./profiles";
 import type { InjectedProvider, Listener, RequestArgs } from "../transport/types";
 
 export const MOCK_MARKER = "__GNUS_MOCK__";
@@ -16,6 +17,7 @@ export interface MockProvider extends InjectedProvider {
 }
 
 interface MockState {
+  profile: MockProfile;
   accounts: Accounts;
   calls: Array<{ method: string; params?: unknown }>;
 }
@@ -75,8 +77,11 @@ function createFacade(state: MockState): MockProvider {
   };
 }
 
-// The profile option is accepted and ignored until profiles exist.
-export function createMockProvider(_options?: { profile?: string }): MockProvider {
-  const state: MockState = { accounts: initialAccounts(), calls: [] };
+export function createMockProvider(options?: { profile?: string }): MockProvider {
+  const name = options?.profile ?? DEFAULT_PROFILE;
+  if (!isMockProfileName(name)) {
+    throw new Error(`Unknown mock profile "${name}". Known profiles: ${Object.keys(MOCK_PROFILES).join(", ")}`);
+  }
+  const state: MockState = { profile: MOCK_PROFILES[name], accounts: initialAccounts(), calls: [] };
   return createFacade(state);
 }
