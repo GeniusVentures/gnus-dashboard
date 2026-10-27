@@ -5,7 +5,6 @@ import { Image, Navbar, Nav, Container } from "react-bootstrap";
 import NavDropdownMain from "../../sub-components/navbar/NavDropdownMain";
 import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
-import Search from "../../sub-components/navbar/Search";
 import ToggleSwitch from "widgets/forms/ToggleSwitch";
 import Price from "sub-components/navbar/Price";
 
@@ -77,9 +76,6 @@ const NavbarDefault: React.FC = () => {
                 return <NavDropdownMain href="" item={item} key={index} />;
               }
             })}
-          </Nav>
-          <Nav className="">
-            <Search />
           </Nav>
           <Nav className="">
             <Price />
