@@ -186,7 +186,9 @@ describe(`gnus error conformance (${factory.name})`, () => {
     jest.useFakeTimers();
     const { client } = open("switching");
     const events = [];
-    client.on("gnus_accountsChanged", (accounts) => events.push(accounts));
+    client.on("gnus_accountsChanged", (accounts) => events.push(accounts), (err) => {
+      throw err;
+    });
     const during = await client.getAccounts();
     expect(during.switching).toBe(true);
     const err = await rejection(client.estimate({ job: JOB }));

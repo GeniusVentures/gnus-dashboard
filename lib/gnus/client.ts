@@ -33,11 +33,14 @@ export interface GnusClient {
   listJobs(params?: { limit?: number; cursor?: string }): Promise<JobList>;
   getJob(params: GetJobParams): Promise<JobDetail | null>;
   getEarnings(params?: { includeChildren?: false }): Promise<Earnings>;
-  /** Returns an unsubscribe function. */
+  /**
+   * Returns an unsubscribe function. onMismatch is required: a payload that fails its schema
+   * must reach the caller, because the page would otherwise keep showing stale state.
+   */
   on<E extends GnusEventName>(
     event: E,
     handler: (payload: GnusEventPayload<E>) => void,
-    onMismatch?: (err: GnusContractMismatchError) => void,
+    onMismatch: (err: GnusContractMismatchError) => void,
   ): () => void;
   close(): void;
 }
@@ -92,7 +95,7 @@ export function createGnusClient(transport: Transport): GnusClient {
         if (parsed.success) {
           handler(parsed.data as GnusEventPayload<typeof event>);
         } else {
-          onMismatch?.(new GnusContractMismatchError(event, lastVersion));
+          onMismatch(new GnusContractMismatchError(event, lastVersion));
         }
       };
       transport.on(event, wrapper);

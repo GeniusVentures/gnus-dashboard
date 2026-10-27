@@ -160,12 +160,15 @@ describe("events", () => {
     expect(transport.removeListener).toHaveBeenCalledWith("gnus_jobUpdated", wrapper);
   });
 
-  test("an invalid payload without onMismatch is dropped quietly", () => {
+  test("an invalid payload is reported to onMismatch, never dropped silently", () => {
     const transport = fakeTransport();
     const handler = jest.fn();
-    createGnusClient(transport).on("gnus_networkChanged", handler);
+    const onMismatch = jest.fn();
+    createGnusClient(transport).on("gnus_networkChanged", handler, onMismatch);
     transport.on.mock.calls[0][1]({ sdk: "" });
     expect(handler).not.toHaveBeenCalled();
+    expect(onMismatch).toHaveBeenCalledTimes(1);
+    expect(onMismatch.mock.calls[0][0]).toBeInstanceOf(GnusContractMismatchError);
   });
 
   test("an accountsChanged payload updates the remembered version", () => {
