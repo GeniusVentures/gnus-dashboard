@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { decimalsSchema } from "./amount";
 import { evmAddressSchema, sdkAddressSchema } from "./address";
 
 // zod's compiled parsers use `new Function`, which the planned script-src 'self' CSP blocks and reports.
@@ -29,10 +30,9 @@ export const networkSchema = z.object({
 });
 export type Network = z.infer<typeof networkSchema>;
 
-// The 0..36 bound keeps a hostile value from driving a huge power of ten in formatting.
 export const unitSchema = z.object({
   symbol: z.string().min(1),
-  decimals: z.number().int().min(0).max(36),
+  decimals: decimalsSchema,
 });
 
 export const accountsSchema = z.object({
