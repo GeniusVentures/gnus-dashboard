@@ -5,6 +5,11 @@
     "noEmit": true,
     "incremental": false
   },
-  "include": ["lib/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "lib/**/*.ts",
+    "sub-components/shared/Amount.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

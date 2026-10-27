@@ -9,3 +9,19 @@ export const decimalSchema = z.string().regex(/^\d+(\.\d+)?$/);
 
 // unit.decimals; the 0..36 bound stops a hostile value from driving a huge power of ten in formatting.
 export const decimalsSchema = z.number().int().min(0).max(36);
+
+// Exact decimal rendering of base units. Null in, null out: an unknown amount must never read as 0.
+// Bad input is a programming error (the client already parsed wallet values), so it throws.
+export function formatAmount(base: string | null, decimals: number): string | null {
+  if (base === null) {
+    return null;
+  }
+  if (!baseUnitsSchema.safeParse(base).success || !decimalsSchema.safeParse(decimals).success) {
+    throw new RangeError("formatAmount: invalid base units or decimals");
+  }
+  const scale = BigInt(10) ** BigInt(decimals);
+  const value = BigInt(base);
+  const whole = (value / scale).toString();
+  const fraction = decimals === 0 ? "" : (value % scale).toString().padStart(decimals, "0").replace(/0+$/, "");
+  return fraction === "" ? whole : `${whole}.${fraction}`;
+}
