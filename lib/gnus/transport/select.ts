@@ -5,6 +5,19 @@ export const WALLET_WAIT_MS = 3000;
 
 export type TransportChoice = "injected" | "walletconnect";
 
+export interface WalletMarker {
+  appVersion: string;
+  contractVersion: string;
+}
+
+const MARKER = / GeniusWallet\/(\S+) gnus\/(\S+)$/;
+
+/** Matches the contract's suffix " GeniusWallet/<app version> gnus/<contract version>" at the end of the UA. */
+export function parseWalletMarker(userAgent: string): WalletMarker | null {
+  const match = MARKER.exec(userAgent);
+  return match ? { appVersion: match[1], contractVersion: match[2] } : null;
+}
+
 export interface DetectEnv {
   userAgent: string;
   win: WindowLike;
@@ -13,54 +26,93 @@ export interface DetectEnv {
 }
 
 export interface Detection {
+  /** The first decision. */
   readonly choice: Promise<TransportChoice>;
+  /** Null while waiting. */
   current(): TransportChoice | null;
+  /** Fires once if a late injection takes over from walletconnect. Returns unsubscribe. */
+  onSwitch(handler: (choice: "injected") => void): () => void;
   dispose(): void;
 }
 
 export function detectTransport(
   env: DetectEnv,
-  _options: { hasActiveWalletConnectSession(): boolean },
+  options: { hasActiveWalletConnectSession(): boolean },
 ): Detection {
+  const insideWallet = parseWalletMarker(env.userAgent) !== null;
+  const switchHandlers = new Set<(choice: "injected") => void>();
   let current: TransportChoice | null = null;
   let timer: unknown = null;
+  let listening = false;
   let resolveChoice: (choice: TransportChoice) => void = () => {};
   const choice = new Promise<TransportChoice>((resolve) => {
     resolveChoice = resolve;
   });
 
-  const isWallet = () => env.win.gnus?.isGeniusWallet === true;
+  const isWallet = (): boolean => env.win.gnus?.isGeniusWallet === true;
 
-  function settle(value: TransportChoice): void {
-    if (current !== null) {
-      return;
-    }
-    current = value;
-    dispose();
-    resolveChoice(value);
-  }
-
-  function onInitialized(): void {
-    if (isWallet()) {
-      settle("injected");
+  function stopListening(): void {
+    if (listening) {
+      env.win.removeEventListener(INITIALIZED_EVENT, onInitialized);
+      listening = false;
     }
   }
 
-  function dispose(): void {
-    env.win.removeEventListener(INITIALIZED_EVENT, onInitialized);
+  function stopTimer(): void {
     if (timer !== null) {
       env.clearTimeout(timer);
       timer = null;
     }
   }
 
-  // Listener first, then the read: an event fired between the two would otherwise be lost.
-  env.win.addEventListener(INITIALIZED_EVENT, onInitialized);
-  if (isWallet()) {
-    settle("injected");
-  } else {
-    timer = env.setTimeout(() => settle("walletconnect"), WALLET_WAIT_MS);
+  function onInitialized(): void {
+    if (!isWallet()) {
+      return;
+    }
+    if (current === null) {
+      current = "injected";
+      stopTimer();
+      stopListening();
+      resolveChoice("injected");
+    } else if (current === "walletconnect") {
+      // The one allowed change: a late injection, and only while no WalletConnect session exists.
+      stopListening();
+      if (!options.hasActiveWalletConnectSession()) {
+        current = "injected";
+        for (const handler of [...switchHandlers]) {
+          handler("injected");
+        }
+      }
+    }
   }
 
-  return { choice, current: () => current, dispose };
+  // Listener first, then the read: an announcement between the two would otherwise be lost.
+  env.win.addEventListener(INITIALIZED_EVENT, onInitialized);
+  listening = true;
+  onInitialized();
+  if (current === null && !insideWallet) {
+    timer = env.setTimeout(() => {
+      timer = null;
+      if (current === null) {
+        current = "walletconnect";
+        resolveChoice("walletconnect");
+      }
+    }, WALLET_WAIT_MS);
+  }
+
+  return {
+    choice,
+    current: () => current,
+    onSwitch(handler) {
+      switchHandlers.add(handler);
+      return () => {
+        switchHandlers.delete(handler);
+      };
+    },
+    dispose() {
+      stopListening();
+      stopTimer();
+      switchHandlers.clear();
+    },
+  };
 }

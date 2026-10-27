@@ -6,6 +6,8 @@ export const MOCK_MARKER = "__GNUS_MOCK__";
 
 export interface MockControls {
   emit(event: string, payload: unknown): void;
+  /** A new facade over the same state with no listeners; older facades stop receiving events. */
+  reinject(): MockProvider;
   readonly calls: Array<{ method: string; params?: unknown }>;
 }
 
@@ -20,6 +22,7 @@ interface MockState {
   profile: MockProfile;
   accounts: Accounts;
   calls: Array<{ method: string; params?: unknown }>;
+  deliver: (event: string, payload: unknown) => void;
 }
 
 // Hex values are built from short patterns so no long high-entropy literal sits in source.
@@ -41,6 +44,11 @@ function initialAccounts(): Accounts {
 
 function createFacade(state: MockState): MockProvider {
   const listeners = new Map<string, Set<Listener>>();
+  state.deliver = (event, payload) => {
+    for (const listener of [...(listeners.get(event) ?? [])]) {
+      listener(payload);
+    }
+  };
 
   async function request(args: RequestArgs): Promise<unknown> {
     state.calls.push(args.params === undefined ? { method: args.method } : { method: args.method, params: args.params });
@@ -67,11 +75,8 @@ function createFacade(state: MockState): MockProvider {
       listeners.get(event)?.delete(listener);
     },
     controls: {
-      emit(event, payload) {
-        for (const listener of [...(listeners.get(event) ?? [])]) {
-          listener(payload);
-        }
-      },
+      emit: (event, payload) => state.deliver(event, payload),
+      reinject: () => createFacade(state),
       calls: state.calls,
     },
   };
@@ -82,6 +87,6 @@ export function createMockProvider(options?: { profile?: string }): MockProvider
   if (!isMockProfileName(name)) {
     throw new Error(`Unknown mock profile "${name}". Known profiles: ${Object.keys(MOCK_PROFILES).join(", ")}`);
   }
-  const state: MockState = { profile: MOCK_PROFILES[name], accounts: initialAccounts(), calls: [] };
+  const state: MockState = { profile: MOCK_PROFILES[name], accounts: initialAccounts(), calls: [], deliver: () => {} };
   return createFacade(state);
 }
