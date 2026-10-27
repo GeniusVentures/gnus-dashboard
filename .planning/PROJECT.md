@@ -4,6 +4,8 @@
 
 gnus-dashboard is the GNUS processing dashboard: a user submits compute jobs to the SuperGenius network, sees each job's status and results, and sees what their own node processed and earned. One static build runs in two places: inside GeniusWallet, in a WebView that injects a `window.gnus` bridge to the wallet's GeniusSDK, and in a normal desktop browser, talking to GeniusWallet over WalletConnect. Today it is a Next.js 14 app with a Node server that wraps a native SDK through koffi; v1 turns it into a static SPA that asks the wallet for everything.
 
+The dashboard will also become the wallet-facing management UI for the separately specified GCS OpenAI-compatible developer API in a later milestone: native prepaid API funding, wallet-authorized credentials, balance/usage visibility and refunds. That service's public HTTPS-to-WebSocket transport, privileged API handler registry, job orchestration and native settlement belong to GCS, SuperGenius and Cloudflare Workers/Durable Objects, not to a runtime dashboard server.
+
 ## Core Value
 
 A user can submit a job and see what happened to it, with the wallet paying and processing in one confirmed call, and never a fake or misleading number on screen.
@@ -38,6 +40,7 @@ A user can submit a job and see what happened to it, with the wallet paying and 
 - Two devices as one identity (phone pays, desktop earns) — needs an account-link step signed on both sides that nothing supports yet
 - Bundling the export into the wallet behind a custom scheme — the wallet loads a pinned https origin instead
 - Running the dashboard's own SDK node or any custodial processing for users — the wallet owns identity, payment and processing
+- API funding pool creation, API credential management, and public API metering UI — planned for a post-v1 milestone after GCS and SuperGenius implement their respective contracts; they do not block the current eight-phase v1 roadmap
 
 ## Context
 
@@ -53,7 +56,7 @@ A user can submit a job and see what happened to it, with the wallet paying and 
 - **Static only**: nothing in v1 may need a Node server at runtime. Dynamic routes need a static-export-compatible shape.
 - **Two address formats**: SDK address `0x` + 128 hex, EVM address `0x` + 40 hex; never mixed, never converted.
 - **Amounts**: decimal strings end to end; no JS `Number` for token amounts.
-- **Security**: the repo is public and has a literal private key in `functions/ipfs/node.ts`. It leaves source in v1; rotating it is a human action outside this project.
+- **Security**: the repo previously exposed a literal private key in `functions/ipfs/node.ts`; it is removed from current source but remains in public history. Confirm whether it was limited to disposable testing and whether it still controls assets, funded accounts, services or permissions. Treat the key as disclosed; rotate/revoke and move funds if it remains consequential. Verification and any necessary rotation are human release-gate actions.
 - **WebView**: the page must work when `window.gnus` arrives late (`gnus#initialized`), must not mount Web3Modal when `window.gnus` exists, and must open external links and downloads in the system browser.
 
 ## Key Decisions
@@ -62,9 +65,25 @@ A user can submit a job and see what happened to it, with the wallet paying and 
 |----------|-----------|---------|
 | Static SPA behind one `request()` interface, `window.gnus` in the wallet and WalletConnect in a browser (Braian, 2026-10-26) | The wallet already holds the user's keys, SDK and node; a server that runs its own SDK key gives free unauthenticated compute and no per-user identity | — Pending |
 | The wallet owns the `gnus_*` contract (Braian, 2026-10-26) | One implementation of identity, payment and processing; the dashboard is a client of it | — Pending |
-| `gnus_submitJob` is atomic in the wallet; the dashboard never calls `bridgeOut` (D, overnight 2026-10-26) | Splitting pay and submit across providers is how the current app lets payment and job drift apart | — Pending |
+| Use Reown WalletConnect Sign Client for the normal-browser connection to GeniusWallet; no AppKit or separate EVM signing layer is required (confirmed 2026-10-27) | GeniusWallet already supports ordinary EVM signing and the custom `gnus_*` RPC workflow; Sign Client provides the session transport. Keep the dashboard's injected `window.gnus` path inside the wallet. Any new funding or signing method is implemented and authorized in GeniusWallet, with an explicit versioned RPC contract | Approved product direction |
+| Keep future developer API funding separate from direct wallet-mediated manual job submission (confirmed 2026-10-27) | The wallet signs native funding-pool creation and restrictions, while the separate decentralized GCS API consumes bounded authorizations; no dashboard backend, browser-side native signing key or custodial gateway is introduced | Approved architectural direction |
+| `gnus_submitJob` is one wallet-orchestrated, confirmed operation; the dashboard never calls `bridgeOut` (D, clarified 2026-10-27) | The wallet owns confirmation, bridge burn, job submission and idempotent recovery. Bridge burn and native `GeniusSDKProcess` are sequential and not an atomic cross-chain transaction; `bridgedNotProcessed` remains a required recovery state | Clarified |
 | Network explorer out of v1 (Braian, 2026-10-26) | Today's explorer data is fake; the SDK read side is not ready | — Pending |
 | Planning run in auto mode overnight; choices marked (D) in STATE.md (2026-10-26) | Braian asked for both repos to run on GSD overnight with the session answering its own questions | — Pending |
+
+## Future Milestone: GCS OpenAI-Compatible API Funding (post-v1)
+
+The public GCS API uses `https://api.gnus.ai/v1`, Cloudflare Workers and sharded Durable Objects to reach outbound-WebSocket-connected GCS nodes authorized by a quorum-governed `PrivilegedAPIHandlerRegistry`. Every GCS node retains API capability, but only high-reputation authorized nodes may handle untrusted public requests. SuperGenius remains the authority for native UTXO funds and job escrow. This architecture is a separate GCS/SuperGenius PTDS and is **planned**, not part of this PR's implemented wallet RPC contract.
+
+When those protocol components are ready, plan a new dashboard milestone covering:
+
+- Wallet-mediated deposit of EVM GNUS to the chosen native destination, native mint confirmation, and wallet-signed creation/top-up of a restricted `APIFundingEscrow`.
+- Wallet-approved API credential creation, expiration, scoped spending limits, rotation and revocation, without exposing private keys or delegated unrestricted transfers in the SPA.
+- Authoritative native available/reserved balance and refund views, plus signed GCS usage, job history and reconciliation. Never show unknown balances or costs as zero.
+- EVM and native signatures requested through GeniusWallet using the existing injected or WalletConnect Sign Client session, with any additional `gnus_*` methods versioned and specified by the wallet team.
+- No dashboard runtime API server, centralized custodial funding account, or browser-held native signing secrets. Public API transport and load balancing stay within the GCS/Cloudflare workstream.
+
+This future scope does not delay v1 manual job submission and must be tracked in a later GSD milestone with explicit SuperGenius, GCS and GeniusWallet dependencies.
 
 ## Evolution
 
@@ -84,4 +103,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-26 after initialization*
+*Last updated: 2026-10-27 after architectural alignment review for PR #36*
