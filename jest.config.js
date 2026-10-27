@@ -44,6 +44,7 @@ const customJestConfig = {
     '<rootDir>/node_modules/',
     '<rootDir>/__tests__/utils/jest.polyfills.js',
     '<rootDir>/__tests__/mocks/',
+    '<rootDir>/__tests__/contract/factories/',
     '<rootDir>/__tests__/README.md'
   ],
 
