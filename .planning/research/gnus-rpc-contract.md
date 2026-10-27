@@ -82,8 +82,14 @@ Params: none. Result:
 
 - `node` is the account the node runs as ("Earn with this account"). `payer` is the wallet that
   pays ("Sending from"). They can differ by design.
+- `payer.canSign` is false exactly when `gnus_submitJob` would refuse the payer with `-32012`. It says
+  nothing about the balance (`-32011`).
 - `payoutAddress` is intentionally absent: the SDK has no getter (SDK dependency SDK-PAYOUT).
 - Replaces the spike's `gnus_getAddress`, which is retired.
+- `network.evmChainId` is `null` when the wallet has no EVM network selected; `network.sdk` is `null` when the
+  SDK network is unknown. The same holds in `gnus_estimate` and `gnus_networkChanged`.
+- In-wallet detection: with the GeniusWallet user-agent marker the page waits for `gnus#initialized` without
+  falling back to WalletConnect, but after 10 s it shows a "wallet not ready" state while it keeps waiting.
 - `version` is the contract version on every transport (over WalletConnect there is no `window.gnus.version`).
 - `unit` describes every amount in this contract: amounts are integer base units as decimal strings;
   display = amount / 10^decimals. `decimals` is the GNUS token decimals the wallet uses for `bridgeOut`
@@ -94,7 +100,8 @@ Params: none. Result:
 Params: `{ "job": <processing-definition object> }`. The job object is the SDK's current
 processing-definition schema (`inputs`/`outputs`/`passes`, see SuperGenius
 `test/src/processing_schema/posenet-processing-job.json`), passed as an object, not a string. The old
-`data/model/input` shape is not accepted.
+`data/model/input` shape is not accepted. A job larger than 5 MiB encoded, or nested deeper than 32
+levels, is `-32602`.
 
 Result:
 
@@ -149,7 +156,7 @@ Result:
   wallet). Generate the key when the user reaches the review step and persist it before calling, not
   per click. Same key with a different job body: `-32602` with `data.reason: "idempotency_key_reused"`.
 - A second submit from one origin while one is in flight: `-32005` with `data.reason: "submit_in_flight"`.
-- Rejected confirm: `4001`.
+- Rejected confirm: `4001`. A confirm left unanswered for 10 minutes is a rejection too, nothing burned.
 - (D, 2026-10-27) The wallet writes the job record at burn time as `bridgedNotProcessed` and moves it to
   `submitted` when Process succeeds, so a wallet killed mid-submit shows the recoverable state.
 
@@ -225,7 +232,7 @@ Params: `{ "includeChildren"?: false }`. Result:
 | -32602 | Invalid params (bad job schema, bad address, out-of-range limit) |
 | -32603 | Internal error |
 | -32005 | Busy. `data.reason` is `rate_limited`, `confirm_open` or `submit_in_flight` |
-| -32010 | Cost unavailable (SDK returned 0 or failed; `data.reason` when the SDK provides one) |
+| -32010 | Cost unavailable (SDK returned 0 or failed; `data.reason` when the SDK provides one). On `gnus_submitJob` also when the burn's gas estimate fails, before any confirm |
 | -32011 | Insufficient GNUS balance for `cost` |
 | -32012 | Payer cannot sign (watch-only, `sgnus` row, or child without key) |
 | -32013 | Bridge (burn) failed; nothing spent |
