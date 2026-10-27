@@ -101,14 +101,20 @@ self_test() {
   [ -d out ] || { echo "SETUP: out/ is missing: run yarn build first" >&2; exit 2; }
   "$GL" version >/dev/null 2>&1 || { echo "SETUP: gitleaks not found" >&2; exit 2; }
   local dir hex token
+  # Separate words, so this file holds no quoted 12-word phrase for the gate to flag.
+  local words=(abandon ability able about above absent absorb abstract absurd abuse access accident)
   dir=$(mktemp -d ./secret-selftest-XXXXXX)
   trap "rm -rf '$dir' out/secret-selftest-key.js out/secret-selftest-rpc.js out/bridge-test.html" EXIT
   hex=$(rand_hex 32)
   token=$(rand_hex 18)
 
-  printf 'export const ethPrivateKey = "%s";\n' "$hex" >"$dir/key.ts"
-  expect_red "private-key literal in source" "$hex" check_source
+  printf 'export const payload = "%s";\n' "$hex" >"$dir/key.ts"
+  expect_red "64-hex literal in source" "$hex" check_source
   rm -f "$dir/key.ts"
+
+  printf 'export const phrase = "%s";\n' "${words[*]}" >"$dir/phrase.ts"
+  expect_red "12-word phrase in source" "${words[0]} ${words[1]}" check_source
+  rm -f "$dir/phrase.ts"
 
   printf 'export const rpc = "https://eth-mainnet.blastapi.io/%s";\n' "$token" >"$dir/rpc.ts"
   expect_red "keyed RPC URL in source" "$token" check_source
@@ -128,7 +134,7 @@ self_test() {
 
   rmdir "$dir"
   run_both
-  echo "secret self-test passed: 5 fixtures detected, clean tree passes"
+  echo "secret self-test passed: 6 fixtures detected, clean tree passes"
 }
 
 case "${1:-}" in

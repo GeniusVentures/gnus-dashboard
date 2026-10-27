@@ -5,8 +5,13 @@ useDefault = true
 
 [[rules]]
 id = "hex-private-key"
-description = "64-hex value assigned to a key-like name"
-regex = '''(?i)(priv(ate)?[_-]?key|privkey|secret|mnemonic|seed)["']?\s*[:=]\s*["'](0x)?[0-9a-f]{64}["']'''
+description = "64-hex value, quoted or assigned, whatever its name"
+regex = '''(?i)(["'`](0x)?[0-9a-f]{64}["'`]|[:=]\s*(0x)?[0-9a-f]{64}\b)'''
+
+[[rules]]
+id = "mnemonic-phrase"
+description = "Quoted 12 or 24 word lowercase phrase (BIP-39 shape)"
+regex = '''["'`]([a-z]{3,8} ){11}(([a-z]{3,8} ){12})?[a-z]{3,8}["'`]'''
 
 [[rules]]
 id = "sgns-key"
@@ -31,4 +36,9 @@ paths = [
   '''^(\./)?cypress[\/]screenshots([\/]|$)''',
   '''^(\./)?cypress[\/]videos([\/]|$)''',
   '''^(\./)?yarn\.lock$''',
+]
+# Exact public values only: SHA-256 checksums of the pinned gitleaks release archives.
+regexes = [
+  '''551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb''',
+  '''d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e''',
 ]
