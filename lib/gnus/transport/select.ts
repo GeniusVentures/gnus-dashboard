@@ -2,6 +2,8 @@ import { INITIALIZED_EVENT } from "../schema";
 import type { WindowLike } from "./types";
 
 export const WALLET_WAIT_MS = 3000;
+/** Inside the wallet the page keeps waiting, but says so after this long. */
+export const WALLET_NOT_READY_MS = 10000;
 
 export type TransportChoice = "injected" | "walletconnect";
 
@@ -32,6 +34,14 @@ export interface Detection {
   current(): TransportChoice | null;
   /** Fires once if a late injection takes over from walletconnect. Returns unsubscribe. */
   onSwitch(handler: (choice: "injected") => void): () => void;
+  /**
+   * True once the wallet user-agent marker has been seen for WALLET_NOT_READY_MS without an
+   * injection. Detection keeps waiting (current() stays null) and drops back to false if the
+   * wallet finally arrives, so the page can show a "wallet not ready" state instead of a spinner.
+   */
+  notReady(): boolean;
+  /** Fires once when notReady() turns true. Returns unsubscribe. */
+  onNotReady(handler: () => void): () => void;
   dispose(): void;
 }
 
@@ -41,6 +51,8 @@ export function detectTransport(
 ): Detection {
   const insideWallet = parseWalletMarker(env.userAgent) !== null;
   const switchHandlers = new Set<(choice: "injected") => void>();
+  const notReadyHandlers = new Set<() => void>();
+  let stalled = false;
   let current: TransportChoice | null = null;
   let timer: unknown = null;
   let listening = false;
@@ -98,6 +110,17 @@ export function detectTransport(
         resolveChoice("walletconnect");
       }
     }, WALLET_WAIT_MS);
+  } else if (current === null) {
+    // Inside the wallet WalletConnect stays off; only the report of the stall is new.
+    timer = env.setTimeout(() => {
+      timer = null;
+      if (current === null) {
+        stalled = true;
+        for (const handler of [...notReadyHandlers]) {
+          handler();
+        }
+      }
+    }, WALLET_NOT_READY_MS);
   }
 
   return {
@@ -109,10 +132,18 @@ export function detectTransport(
         switchHandlers.delete(handler);
       };
     },
+    notReady: () => stalled && current === null,
+    onNotReady(handler) {
+      notReadyHandlers.add(handler);
+      return () => {
+        notReadyHandlers.delete(handler);
+      };
+    },
     dispose() {
       stopListening();
       stopTimer();
       switchHandlers.clear();
+      notReadyHandlers.clear();
     },
   };
 }

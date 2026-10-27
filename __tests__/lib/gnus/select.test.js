@@ -1,4 +1,4 @@
-import { detectTransport, parseWalletMarker, WALLET_WAIT_MS } from "../../../lib/gnus/transport/select";
+import { detectTransport, parseWalletMarker, WALLET_NOT_READY_MS, WALLET_WAIT_MS } from "../../../lib/gnus/transport/select";
 import { createInjectedTransport } from "../../../lib/gnus/transport/injected";
 import { createGnusClient } from "../../../lib/gnus/client";
 import { installMock, mockOptionsFromSearch, installMockFromLocation } from "../../../lib/gnus/mock/install";
@@ -108,14 +108,48 @@ describe("detection table", () => {
     expect(switched).toHaveBeenCalledTimes(1);
   });
 
-  test("marker UA and no injection never settles", async () => {
+  test("marker UA and no injection keeps waiting but reports not ready after 10 s", async () => {
     const win = new EventTarget();
     const detection = detectTransport(env(win, WALLET_UA), noSession);
     const settled = jest.fn();
+    const notReady = jest.fn();
     detection.choice.then(settled);
+    detection.onNotReady(notReady);
+    await jest.advanceTimersByTimeAsync(WALLET_NOT_READY_MS - 1);
+    expect(detection.notReady()).toBe(false);
+    expect(notReady).not.toHaveBeenCalled();
+    await jest.advanceTimersByTimeAsync(1);
+    expect(detection.notReady()).toBe(true);
+    expect(notReady).toHaveBeenCalledTimes(1);
     await jest.advanceTimersByTimeAsync(60000);
     expect(detection.current()).toBeNull();
     expect(settled).not.toHaveBeenCalled();
+    expect(notReady).toHaveBeenCalledTimes(1);
+  });
+
+  test("a wallet that arrives after the not-ready report still takes over", async () => {
+    const win = new EventTarget();
+    const detection = detectTransport(env(win, WALLET_UA), noSession);
+    await jest.advanceTimersByTimeAsync(WALLET_NOT_READY_MS);
+    expect(detection.notReady()).toBe(true);
+    installMock(win, { injectAfterMs: 0 });
+    expect(detection.current()).toBe("injected");
+    expect(detection.notReady()).toBe(false);
+    await expect(detection.choice).resolves.toBe("injected");
+  });
+
+  test("a plain browser never reports not ready; an early injection cancels the timer", async () => {
+    const plain = detectTransport(env(new EventTarget(), PLAIN_UA), noSession);
+    const early = new EventTarget();
+    installMock(early, { injectAfterMs: 500 });
+    const inside = detectTransport(env(early, WALLET_UA), noSession);
+    const notReady = jest.fn();
+    plain.onNotReady(notReady);
+    inside.onNotReady(notReady);
+    await jest.advanceTimersByTimeAsync(60000);
+    expect(plain.notReady()).toBe(false);
+    expect(inside.notReady()).toBe(false);
+    expect(notReady).not.toHaveBeenCalled();
   });
 });
 
