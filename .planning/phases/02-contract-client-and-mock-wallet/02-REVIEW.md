@@ -45,6 +45,7 @@ findings:
   info: 12
   total: 19
 status: issues_found
+fix_status: warnings_fixed (WR-01..WR-07); info items open
 ---
 
 # Phase 2: Code Review Report
@@ -96,17 +97,23 @@ cids: z.array(z.string().min(1).max(256)).max(1000),
 origin: shortString, idempotencyKey: shortString, error: z.string().max(2000).optional(),
 ```
 
+**Status:** fixed in `959e044`. Sizes are bounded in zod: amounts `{1,78}` digits, strings 256, `error`/`message` 2000, `jobs` 100, `cids` 1000, `nextCursor` 512. Over-limit is a contract mismatch. Tests in `schema.test.js`.
+
 ### WR-02: `evmChainId` is non-nullable, but the wallet sends null
 
 **File:** `lib/gnus/schema.ts:29`
 **Issue:** The schema has `evmChainId: z.number().int().positive()`. The wallet builds the field from `details.selectedNetwork?.chainId` (`gnus_rpc_handler.dart:239,620,713`), so it is `null` whenever no EVM network is selected. Today such a reply makes `getAccounts` and `estimate` fail as `contractMismatch` ("update wallet"), and it makes `gnus_networkChanged` and `gnus_accountsChanged` mismatch too. The contract text shows only `80002` and never says whether null is allowed, so the two repos have drifted.
 **Fix:** Settle the contract first. If null is legal, use `evmChainId: z.number().int().positive().nullable()` and add a null case to `schema.test.js`. If it is not, file the wallet fix. Either way, record the decision in the contract snapshot.
 
+**Status:** fixed in `ae161ed`. `evmChainId` and `sdk` are nullable (contract snapshot updated by the wallet side). Mock `setNetwork` takes nulls. Null cases added to `schema.test.js` and `mock.test.js`.
+
 ### WR-03: An invalid event payload is dropped silently by default
 
 **File:** `lib/gnus/client.ts:40,94-96`
 **Issue:** `onMismatch` is optional, and with no handler a failed parse is ignored without a trace. `client.test.js:163` locks this behaviour in. Combined with WR-02, a real account switch whose payload fails parsing never reaches the page. The dashboard keeps showing the old `node.sdkAddress` while the wallet submits as the new one. The contract tripwire goes quiet exactly when it matters.
 **Fix:** Make `onMismatch` required in `GnusClient.on`. Failing that, give it a default that surfaces the error, for example one session-level `onContractMismatch` passed to `createGnusClient(transport, { onMismatch })`. Update the "dropped quietly" test to match.
+
+**Status:** fixed in `be43fa7`. `GnusClient.on` now requires `onMismatch`. The "dropped quietly" test became "reported to onMismatch".
 
 ### WR-04: With the wallet marker in the user agent and no injection, detection never settles
 
@@ -118,6 +125,8 @@ export type TransportChoice = "injected" | "walletconnect" | "walletMissing";
 // inside the wallet: arm a longer timer (e.g. 10 s) that resolves "walletMissing" and keeps listening,
 // so a later gnus#initialized still moves it to "injected" via onSwitch.
 ```
+
+**Status:** fixed in `381a4af`. `detectTransport` gains `notReady()` and `onNotReady()`: inside the wallet, after `WALLET_NOT_READY_MS` (10 s) the signal turns on while `current()` stays null and detection keeps waiting. It clears if the wallet then arrives. `choice` is unchanged.
 
 ### WR-05: A production build with `NEXT_PUBLIC_GNUS_MOCK=1` silently ships a fake wallet
 
@@ -134,11 +143,15 @@ module.exports = (phase) => {
 };
 ```
 
+**Status:** fixed in `285b6cb`. `next.config.js` throws when `NEXT_PUBLIC_GNUS_MOCK=1` and `NODE_ENV=production`, unless `GNUS_MOCK_PRODUCTION_BUILD_TEST_ONLY=1`. The out/ marker gate is unchanged. Test in `__tests__/scripts/next-config.test.js`.
+
 ### WR-06: The mock marker exists only in `provider.ts`, so parts of the mock can ship undetected
 
 **File:** `lib/gnus/mock/provider.ts:5`, `lib/gnus/mock/profiles.ts:1-166`, `lib/gnus/mock/install.ts:41-62`, `scripts/check-secrets.sh:65`
 **Issue:** The gate greps out/ for `__GNUS_MOCK__`, a string that only appears in the facade `createFacade` returns. A production import of `MOCK_PROFILES` or `isMockProfileName` (say, a profile picker), or of `mockOptionsFromSearch` alone, gets tree-shaken down to code that never references the provider. The fault table and parser ship and the gate stays green. The planted-probe test only covers the full `installMock` path.
 **Fix:** Put the boundary at import time rather than in the bundle output. Add an ESLint `no-restricted-imports` rule that bans `**/lib/gnus/mock/**` everywhere except `pages/_app.tsx`, `__tests__/` and `cypress/`, and run `next lint` in CI. Alternatively, export the marker from `profiles.ts` (the module every mock file depends on) and reference it in each mock module's exports.
+
+**Status:** fixed in `b2fe84a`. The marker lives in `lib/gnus/mock/marker.ts` with a side-effecting assignment so it is not tree-shaken; `profiles.ts`, `provider.ts` and `install.ts` import it. The gate reads it from there. `--mock-import-test` now plants three imports (install, profiles-only, option parser only), each must trip the gate.
 
 ### WR-07: The conformance suites burn real GNUS and reuse fixed keys when pointed at a real wallet
 
@@ -149,6 +162,8 @@ module.exports = (phase) => {
 const itSpends = factory.name === "mock" || process.env.GNUS_CONTRACT_ALLOW_SPEND === "1" ? it : it.skip;
 ```
 Use `newKey()` (already in `gnus-contract.test.js`) for every key in `gnus-errors.test.js`.
+
+**Status:** fixed in `dceb978`. Spend cases skip unless the factory is `mock` or `GNUS_CONTRACT_ALLOW_SPEND=1`. Keys come from `newKey()` (random UUID) in `factories/spend.js`, used in both suites.
 
 ## Info
 
