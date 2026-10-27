@@ -134,3 +134,5 @@ dist
 data/SuperGNUSNode*
 
 *.so
+cypress/screenshots
+cypress/videos
