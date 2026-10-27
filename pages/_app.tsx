@@ -1,5 +1,4 @@
 import "../styles/theme.scss";
-import "react-tooltip/dist/react-tooltip.css";
 import "react-toastify/dist/ReactToastify.css";
 
 import React from "react";
@@ -11,8 +10,6 @@ import { Provider } from "react-redux";
 import { store } from "../store/store";
 import { ToastContainer } from "react-toastify";
 import type { AppProps } from "next/app";
-import { PricesWrapper } from "context/prices/PricesContext";
-import { Tooltip } from "react-tooltip";
 
 const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const router = useRouter();
@@ -51,21 +48,10 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
           closeOnClick={true}
           draggable={false}
         />
-        <PricesWrapper>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </PricesWrapper>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
       </Provider>
-      <Tooltip
-        id="price-gas-tooltip"
-        delayHide={300}
-        delayShow={300}
-        style={{ zIndex: 50000 }}
-        place="bottom"
-        offset={20}
-        className="tooltip-custom"
-      />
     </>
   );
 };

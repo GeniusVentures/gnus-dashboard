@@ -6,7 +6,6 @@ import NavDropdownMain from "../../sub-components/navbar/NavDropdownMain";
 import NavbarDefaultRoutes from "../../data/navbars/navbarRoutes";
 import Socials from "../../sub-components/socials/Socials";
 import ToggleSwitch from "widgets/forms/ToggleSwitch";
-import Price from "sub-components/navbar/Price";
 
 const NavbarDefault: React.FC = () => {
   const [expandedMenu, setExpandedMenu] = useState<boolean>(false);
@@ -76,9 +75,6 @@ const NavbarDefault: React.FC = () => {
                 return <NavDropdownMain href="" item={item} key={index} />;
               }
             })}
-          </Nav>
-          <Nav className="">
-            <Price />
           </Nav>
           <Nav className="navbar-nav navbar-right-wrap nav-top-wrap d-none d-lg-block">
             <ToggleSwitch label="Network" />
