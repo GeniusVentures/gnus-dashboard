@@ -7,6 +7,11 @@ import DefaultLayout from "../layouts/DefaultLayout";
 import { ToastContainer } from "react-toastify";
 import type { AppProps } from "next/app";
 
+// Dev and test builds only; CI proves the export carries none of it.
+if (process.env.NEXT_PUBLIC_GNUS_MOCK === "1" && typeof window !== "undefined") {
+  require("../lib/gnus/mock/install").installMockFromLocation(window);
+}
+
 const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
   const Layout = DefaultLayout;
 
