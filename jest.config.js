@@ -17,15 +17,10 @@ const customJestConfig = {
   // Module name mapping for cleaner imports
   moduleNameMapper: {
     // Application aliases
-    '^@/components/(.*)$': '<rootDir>/components/$1',
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
-    '^@/hooks/(.*)$': '<rootDir>/hooks/$1',
-    '^@/functions/(.*)$': '<rootDir>/functions/$1',
-    '^@/context/(.*)$': '<rootDir>/context/$1',
     '^@/sub-components/(.*)$': '<rootDir>/sub-components/$1',
     '^@/widgets/(.*)$': '<rootDir>/widgets/$1',
     '^@/layouts/(.*)$': '<rootDir>/layouts/$1',
-    '^@/store/(.*)$': '<rootDir>/store/$1',
     '^@/styles/(.*)$': '<rootDir>/styles/$1',
     '^@/data/(.*)$': '<rootDir>/data/$1',
 
@@ -47,15 +42,7 @@ const customJestConfig = {
   // Exclude utility files and mocks from test discovery
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
-    '<rootDir>/__tests__/utils/testSetup.js',
-    '<rootDir>/__tests__/utils/testPatterns.js',
-    '<rootDir>/__tests__/utils/mockFactory.js',
-    '<rootDir>/__tests__/utils/e2eTestBase.js',
-    '<rootDir>/__tests__/utils/componentHelpers.js',
-    '<rootDir>/__tests__/utils/testData.js',
-    '<rootDir>/__tests__/utils/index.js',
     '<rootDir>/__tests__/utils/jest.polyfills.js',
-    '<rootDir>/__tests__/utils/apiHelpers.js',
     '<rootDir>/__tests__/mocks/',
     '<rootDir>/__tests__/README.md'
   ],
@@ -63,14 +50,9 @@ const customJestConfig = {
   // Coverage configuration
   collectCoverageFrom: [
     'pages/**/*.{js,jsx,ts,tsx}',
-    'components/**/*.{js,jsx,ts,tsx}',
-    'hooks/**/*.{js,jsx,ts,tsx}',
-    'functions/**/*.{js,jsx,ts,tsx}',
-    'context/**/*.{js,jsx,ts,tsx}',
     'sub-components/**/*.{js,jsx,ts,tsx}',
     'widgets/**/*.{js,jsx,ts,tsx}',
     'layouts/**/*.{js,jsx,ts,tsx}',
-    'store/**/*.{js,jsx,ts,tsx}',
     '!**/*.d.ts',
     '!**/node_modules/**',
     '!**/.next/**',
