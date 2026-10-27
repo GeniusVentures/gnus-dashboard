@@ -59,7 +59,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. With the mock injecting `window.gnus` at 0, 500 and 4000 ms and twice, with and without the user-agent marker, detection picks the transport the contract's rules give and keeps it for the session.
   4. A developer can pick any fault profile on the dev server and in tests, and the production export contains no mock code (CI goes red on a planted import).
   5. `tsc` passes with `strict` on over `lib/gnus/` and all new code.
-**Plans**: TBD
+**Plans**: 7 plans in 4 waves
+- [ ] 02-01-PLAN.md - Tracer: gnus_getAccounts from the mock through select, injected, client and zod; address and amount wire rules; strict tsc in CI (wave 1)
+- [ ] 02-02-PLAN.md - zod schemas for every result and event; the other five client methods and parsed events (wave 2)
+- [ ] 02-03-PLAN.md - Error table for every code and reason; exact formatAmount and the shared Amount component (wave 2)
+- [ ] 02-04-PLAN.md - Detection with the UA marker, 3 s wait, lock and late injection; injected transport survives re-injection; mock injection timings (wave 2)
+- [ ] 02-05-PLAN.md - Mock wallet for every method and event; contract conformance suite over a pluggable factory (wave 3)
+- [ ] 02-07-PLAN.md - Mock behind NEXT_PUBLIC_GNUS_MOCK for the dev server and Cypress; out/ gate with a planted-import test in CI (wave 3)
+- [ ] 02-06-PLAN.md - Fault profiles for every error code and state; error conformance and the mismatch and big-amount criteria (wave 4)
 
 ### Phase 3: Connect and identity
 **Goal**: A user who opens the dashboard sees which account earns, which wallet pays and which network they are on, and every wallet state (connecting, starting up, not responding, denied, switching, old wallet, no wallet) has its own screen and its own next step.
@@ -151,7 +158,7 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Teardown and static shell | 6/6 | Verified locally; remote CI not run (no push) | 2026-10-27 |
-| 2. Contract client and mock wallet | 0/TBD | Not started | - |
+| 2. Contract client and mock wallet | 0/7 | Planned | - |
 | 3. Connect and identity | 0/TBD | Not started | - |
 | 4. Submit a job | 0/TBD | Not started | - |
 | 5. My jobs and earnings | 0/TBD | Not started | - |
