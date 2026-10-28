@@ -143,7 +143,7 @@ Result:
   "jobId": "<string | null>",
   "burnTxHash": "0x<64 hex>",
   "sdkAddress": "0x<128 hex>",
-  "status": "submitted | bridgedNotProcessed"
+  "status": "submitted | bridgedNotProcessed | unconfirmed"
 }
 ```
 
@@ -159,6 +159,23 @@ Result:
 - Rejected confirm: `4001`. A confirm left unanswered for 10 minutes is a rejection too, nothing burned.
 - (D, 2026-10-27) The wallet writes the job record at burn time as `bridgedNotProcessed` and moves it to
   `submitted` when Process succeeds, so a wallet killed mid-submit shows the recoverable state.
+- (D, 2026-10-28) Before the burn the wallet durably writes a submit intent for `origin|idempotencyKey`.
+  If that write fails nothing burns and the call is `-32603`. If the wallet later holds an intent for the
+  key but no job record (killed mid-submit, or every record write failed), a same-key submit never burns
+  again: it is `-32603` with `data.reason: "submission_outcome_unknown"` and `data` = `{ idempotencyKey,
+  burnTxHash, sdkAddress, payer, cost, createdAt }` (`burnTxHash` null when the burn was never recorded;
+  every field but `idempotencyKey` null when the intent is unreadable). The page shows the spend as
+  unconfirmed and points the user to the wallet; a fresh key is a new submit.
+- (D, 2026-10-28) The burn is signed locally and its hash written onto the intent before it is
+  broadcast; if that write fails nothing is sent and the call is `-32603` (the key stays blocked). A
+  send the node refuses after signing is the `submission_outcome_unknown` error with `burnTxHash` set.
+  A send that gets no answer is settled by its receipt for about 75 s: success goes on to Process,
+  a revert is `-32013` (nothing burned, the key may be reused), and no receipt is a result with
+  `status: "unconfirmed"`, recorded as a job, Process not run. A burn that fails before signing is
+  `-32013` and the key may be reused.
+- (D, 2026-10-28) An intent with no settled job record blocks its key at any age, past the 24 h
+  window too; an `unconfirmed` job does not settle it. After 24 h such a key is
+  `submission_outcome_unknown`.
 
 ### `gnus_listJobs` (read, no prompt)
 
@@ -176,11 +193,17 @@ Job = {
   "idempotencyKey": "<the key the submit carried>",
   "submittedAt": "<ISO 8601>",
   "cost": "<decimal string>",
-  "status": "submitted | queued | processing | completed | failed | bridgedNotProcessed | unknown"
+  "status": "submitted | queued | processing | completed | failed | bridgedNotProcessed | unconfirmed | unknown | pending"
 }
 ```
 
-`status` is `submitted` or `bridgedNotProcessed` until SDK-STATUS lands; then the live states.
+`status` is `submitted`, `bridgedNotProcessed` or `unconfirmed` until SDK-STATUS lands; then the live
+states. (D, 2026-10-28) `unconfirmed`: the burn was sent and the network neither confirmed nor reverted
+it in time; the GNUS may be spent and the job did not start. Check `burnTxHash` on chain.
+(D, 2026-10-28) `pending` appears only from `gnus_getJob({ idempotencyKey })`: the wallet recorded the
+submit but not its outcome (still in flight, or the wallet stopped mid-submit). On a pending job
+`burnTxHash` is null until the burn is signed, `jobId` is null, and the other fields are null only when
+the wallet's record is unreadable.
 (D, 2026-10-27) Only the current node account's jobs are listed.
 
 ### `gnus_getJob` (read, no prompt)
@@ -192,6 +215,8 @@ Needs SDK-JOBID and SDK-STATUS/SDK-RESULT; until then it returns the wallet's ow
 `result: null`.
 (D, 2026-10-27) The result is `null` when no record matches for the current node account. A lookup by
 `idempotencyKey` only finds keys sent from the same origin.
+(D, 2026-10-28) A lookup by `idempotencyKey` with no job record returns the pending submit, if any,
+with `status: "pending"` (see `Job`), so a page can recover after a crash.
 
 ### `gnus_getEarnings` (read, no prompt)
 
@@ -245,7 +270,7 @@ Params: `{ "includeChildren"?: false }`. Result:
 |---|---|
 | -32012 | `no_wallet`, `view_only`, `child`, `not_earning`, `wrong_network` |
 | -32011 | `no_gnus`, `gnus_elsewhere` |
-| -32603 | `balance_unavailable`, `checking`, `missing_data` |
+| -32603 | `balance_unavailable`, `checking`, `missing_data`, `submission_outcome_unknown` (a same-key submit whose earlier outcome was never recorded; it may have burned, so nothing burns again) |
 | -32015 | `account_changed`: the account, wallet or network changed while the confirm was open; nothing was burned |
 
 ## 6. Security rules the wallet enforces (dashboard can rely on them)
@@ -259,8 +284,8 @@ Params: `{ "includeChildren"?: false }`. Result:
 - Per-origin permission: the first call from an origin asks the user to connect (like
   `eth_requestAccounts`). Reads after that need no prompt; every `gnus_submitJob` prompts. So the
   dashboard's first call (normally `gnus_getAccounts`) can wait on a human: give it no timeout and show a
-  "confirm in your wallet" state. Rejecting the connect prompt returns `4001`; an origin the user
-  revoked returns `4100` until it connects again.
+  "confirm in your wallet" state. Rejecting the connect prompt returns `4001`. Revoking forgets the origin, so
+  its next call prompts again; `4100` is an origin outside the allowlist or a call in flight at the revoke.
 - No method returns keys, mnemonics or anything derived from them.
 
 ## 7. SDK dependencies (not wallet work)

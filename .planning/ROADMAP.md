@@ -79,7 +79,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Each mock fault (SDK starting, no reply or disconnect, old wallet, account switching) puts the page in its own named state with its own words and action, never a bare spinner, and estimate and submit stay disabled while switching.
   4. After a mock account or network switch nothing from the old account stays on screen, a reply delayed across the switch is dropped (test), and a network that is not this build's shows a banner.
   5. A browser with no GeniusWallet shows "GeniusWallet required" with a way to get the wallet and no submit control.
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
+- [ ] 03-01-PLAN.md - Tracer: mock to session store to identity header and gated home page; no-wallet screen (wave 1)
+- [ ] 03-02-PLAN.md - lib/gnus to the 2026-10-28 contract; mock connect prompt, decline and revoke (wave 1)
+- [ ] 03-03-PLAN.md - Connect-time states: confirm, denied, starting up, update wallet, late injection (wave 2)
+- [ ] 03-04-PLAN.md - Copy buttons with fallback, new header, nav and footer, light and dark from the OS (wave 3)
+- [ ] 03-05-PLAN.md - react-query keyed by account, switching, wrong network, not responding (wave 3)
+- [ ] 03-06-PLAN.md - axe sweep of every state in light and dark, keyboard walk (wave 4)
 **UI hint**: yes
 
 ### Phase 4: Submit a job
