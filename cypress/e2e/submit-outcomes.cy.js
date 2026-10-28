@@ -49,7 +49,7 @@ describe("paid, or not sure", () => {
       run(profile);
       cy.contains("h2", "Paid but not processed").should("have.focus");
       cy.contains("h2", "Paid but not processed")
-        .closest("[role=alert]")
+        .closest("section")
         .should("contain", "0x0000...0001")
         .and("contain", "Submitting this job again would pay again.");
       cy.contains("a", "View the payment on the block explorer").should(

@@ -15,16 +15,16 @@ const SubmitPanel: React.FC = () => {
   const unit = sessionState.accounts?.unit;
   if (state.step === "confirm") {
     return (
-      <section role="status">
+      <section>
         <h2 className="h4">Confirm in your wallet</h2>
-        <p>
+        <p role="status">
           GeniusWallet shows the cost, the paying wallet and the account that runs the job. Approve or reject it
           there.
         </p>
         <button type="button" className="btn border" onClick={store.showCancelNote}>
           Cancel
         </button>
-        {state.cancelNote ? <p className="mt-2 mb-0">{CANCEL_NOTE}</p> : null}
+        <div role="status">{state.cancelNote ? <p className="mt-2 mb-0">{CANCEL_NOTE}</p> : null}</div>
       </section>
     );
   }

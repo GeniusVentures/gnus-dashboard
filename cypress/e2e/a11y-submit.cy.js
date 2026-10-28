@@ -189,18 +189,20 @@ describe("focus and announcements", () => {
     });
   });
 
-  it("Paid but not processed is an alert that stays", () => {
+  it("Paid but not processed is an alert that stays, and holds only its message", () => {
     paid("bridgedNotProcessedStatus");
-    cy.contains("h2", "Paid but not processed").closest("[role=alert]").should("exist");
+    cy.contains("[role=alert]", "Your payment went through").should("exist");
     cy.wait(10000);
-    cy.contains("h2", "Paid but not processed").closest("[role=alert]").should("be.visible");
+    cy.contains("[role=alert]", "Your payment went through").should("be.visible").find("button, a, h2").should("not.exist");
   });
 
-  it("the confirm region and the other outcomes are status regions", () => {
+  it("the confirm message and the other outcome messages are status regions without their buttons", () => {
     paid("manualConfirm");
-    cy.contains("h2", "Confirm in your wallet").closest("[role=status]").should("exist");
+    cy.contains("[role=status]", "Approve or reject it there.").find("button").should("not.exist");
     cy.then(() => mock.controls.answerConfirm(true));
-    cy.contains("h2", "Job submitted").closest("[role=status]").should("exist");
+    cy.contains("[role=status]", "GeniusWallet paid for this job and sent it to the network.")
+      .find("button, a, h2")
+      .should("not.exist");
   });
 
   it("an input error and a submit error are alerts", () => {

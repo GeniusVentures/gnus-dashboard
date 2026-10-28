@@ -29,7 +29,7 @@ describe("the confirm screen", () => {
   it("stays until the wallet answers, shows the Cancel note, then ends on Job submitted", async () => {
     const view = await submitOn({ profile: "manualConfirm" });
     expect(await heading("Confirm in your wallet")).toBeInTheDocument();
-    expect(screen.getByRole("status")).toHaveTextContent("Approve or reject it there.");
+    expect(screen.getByText(/Approve or reject it there\./)).toHaveAttribute("role", "status");
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByText(/This page can't close GeniusWallet's confirm/)).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
@@ -136,8 +136,10 @@ describe("outcome screens", () => {
       const view = await submitOn({ profile });
       const h = await heading("Paid but not processed");
       expect(h).toHaveFocus();
-      const banner = h.closest("[role=alert]");
-      expect(banner).toHaveTextContent("Submitting this job again would pay again.");
+      const banner = h.closest("section");
+      const live = within(banner).getByRole("alert");
+      expect(live).toHaveTextContent("Submitting this job again would pay again.");
+      expect(within(live).queryAllByRole("button")).toHaveLength(0);
       expect(within(banner).getByText(HASH_SHORT)).toBeInTheDocument();
       expect(within(banner).getByRole("link", { name: "View the payment on the block explorer" })).toBeInTheDocument();
       const names = within(banner)
@@ -162,7 +164,7 @@ describe("outcome screens", () => {
     };
     const view = await submitOn({ provider });
     const h = await heading("Payment recorded");
-    expect(h.closest("[role=status]")).toHaveTextContent("GeniusWallet recorded this payment. Open the job to see its status.");
+    expect(h.closest("section")).toHaveTextContent("GeniusWallet recorded this payment. Open the job to see its status.");
     expect(screen.queryByText(/sent it to the network/)).toBeNull();
     expect(screen.getByRole("link", { name: "View this job" })).toHaveAttribute("href", `/jobs/detail?hash=0x${"0".repeat(63)}1`);
     expect(await axe(view.container)).toHaveNoViolations();
@@ -172,7 +174,7 @@ describe("outcome screens", () => {
     const view = await submitOn({ profile: "unconfirmedSubmit" });
     const h = await heading("Payment not confirmed");
     expect(h).toHaveFocus();
-    expect(h.closest("[role=status]")).toHaveTextContent("The GNUS may be spent and the job did not start.");
+    expect(h.closest("section")).toHaveTextContent("The GNUS may be spent and the job did not start.");
     expect(screen.getByRole("link", { name: "View this job" })).toBeInTheDocument();
     expect(await axe(view.container)).toHaveNoViolations();
   });
@@ -180,7 +182,7 @@ describe("outcome screens", () => {
   it("outcome unknown shows only the fields the wallet sent, and no View this job link", async () => {
     const view = await submitOn({ profile: "submissionOutcomeUnknown" });
     const h = await heading("Payment status unknown");
-    expect(h.closest("[role=status]")).toHaveTextContent("GeniusWallet can't tell whether this payment went through.");
+    expect(h.closest("section")).toHaveTextContent("GeniusWallet can't tell whether this payment went through.");
     expect(screen.getByText("3 GNUS")).toBeInTheDocument();
     expect(screen.getByText("Paying wallet", { selector: "dt" })).toBeInTheDocument();
     expect(screen.queryByText("Burn transaction", { exact: false })).not.toBeInTheDocument();
@@ -233,7 +235,7 @@ describe("outcome screens", () => {
       });
       const view = await submitOn({ provider });
       const h = await heading("Couldn't check this payment");
-      expect(h.closest("[role=status]")).toHaveTextContent(
+      expect(h.closest("section")).toHaveTextContent(
         "GeniusWallet didn't answer the check: GeniusWallet hit an internal error.",
       );
       expect(screen.getByRole("button", { name: "Check again" })).toBeInTheDocument();
