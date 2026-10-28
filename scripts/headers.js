@@ -87,8 +87,7 @@ function unlistedHosts(chunksDir) {
   return [...found].filter((host) => !allowed.has(host) && !Object.hasOwn(UNUSED_HOSTS, host)).sort();
 }
 
-function main() {
-  const out = path.resolve(__dirname, "..", "out");
+function main(out = path.resolve(__dirname, "..", "out")) {
   if (!fs.existsSync(out)) {
     console.error("out/ is missing: run next build first");
     return 1;
@@ -107,7 +106,18 @@ function main() {
   return 0;
 }
 
-module.exports = { CSP_ENFORCED, policy, cspName, securityHeaders, headersFor, headersFile, unlistedHosts, UNUSED_HOSTS, STATIC_PREFIX };
+module.exports = {
+  CSP_ENFORCED,
+  policy,
+  cspName,
+  securityHeaders,
+  headersFor,
+  headersFile,
+  unlistedHosts,
+  main,
+  UNUSED_HOSTS,
+  STATIC_PREFIX,
+};
 
 if (require.main === module) {
   process.exit(main());
