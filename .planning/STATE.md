@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Static dashboard on the gnus_* contract
-current_phase: 5
-current_phase_name: "My jobs and earnings"
-status: ready_to_execute
-stopped_at: "2026-10-28: Phase 4 executed (7 plans) on the mock. Needs a human look at light and dark, and a run against a real wallet. Phase 5 is planned and can execute next. Nothing pushed."
+current_phase: 6
+current_phase_name: "WalletConnect browser flow"
+status: ready_to_plan
+stopped_at: "2026-10-28: Phases 4 and 5 executed (13 plans) on the mock. Both need a human look at light and dark, and a run against a real wallet. Phase 6 can plan next. Nothing pushed."
 last_updated: "2026-10-28T12:00:00.000Z"
 last_activity: 2026-10-28
-last_activity_desc: Phase 4 executed on the mock; draft binds to a job hash, explorer link accepted for v1
+last_activity_desc: Phases 4 and 5 executed on the mock; lint step added to CI
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 32
-  completed_plans: 26
-  percent: 50
+  completed_plans: 32
+  percent: 63
 resume_file: null
 ---
 
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 ## Current Position
 
-Phase: 5 of 8 (My jobs and earnings)
-Plan: 0 of 6 in current phase
-Status: Ready to execute (Phases 1-4 done and verified locally; remote CI not run)
-Last activity: 2026-10-28 - Phase 4 executed on the mock
+Phase: 6 of 8 (WalletConnect browser flow)
+Plan: 0 of TBD in current phase
+Status: Ready to plan (Phases 1-5 done and verified locally; remote CI not run)
+Last activity: 2026-10-28 - Phases 4 and 5 executed on the mock
 
-Progress: [#####.....] 50%
+Progress: [######....] 63%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Full log in PROJECT.md Key Decisions. Every item below was taken overnight in au
 - U5: paid-but-not-processed shows the burn hash, a copy button and a pointer to the wallet; no retry button until the wallet adds `gnus_retryProcess`. (D) overnight, not reviewed by Braian
 - Submit draft: the idempotency key binds to a SHA-256 of the sent JSON; localStorage holds the key, hash, label and timestamps, never the job body. A reload cannot restore the typed job; loading the same job again finds the same key. (Braian, 2026-10-28)
 - Explorer link for the burn hash on the submit result is in v1 (was v2 JOBX-03). (Braian, 2026-10-28)
+- Job status words, the 30 s poll only while a job can change, and the IPFS gateway constant (`ipfs.io`, for Braian to confirm) live in `lib/jobs.ts`. `yarn lint` (every external link through `ExternalLink`) runs in CI. (D) overnight, not reviewed by Braian
 - Roadmap: Earnings folded into My jobs; SUMMARY's Phase 8 split into hosting/CSP (Phase 7) and device walks plus cutover (Phase 8); "Load example" only, no example download. (D) overnight, not reviewed by Braian
 
 ### Pending Todos

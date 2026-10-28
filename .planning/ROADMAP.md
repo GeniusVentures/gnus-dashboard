@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Contract client and mock wallet** - One typed `gnus_*` client and a mock wallet with real faults, so every later phase builds and tests without a wallet
 - [x] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
 - [x] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
-- [ ] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
+- [x] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
 - [ ] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
 - [ ] **Phase 7: Hosting and CSP hardening** - The export runs on the pinned origin with a strict CSP, no third-party code, and an a11y pass
 - [ ] **Phase 8: Device walks and cutover** - Walked end to end on every wallet platform and over WalletConnect; the origin moves off EC2 only when the gate passes
@@ -120,7 +120,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Searching by job id or burn hash finds the job whether or not it is loaded.
   4. A `gnus_jobUpdated` event changes the row and the open detail without a reload, returning to the tab or reconnecting refetches, and the page never polls fast.
   5. Earnings shows the node account's balance and processing state, "Not available yet" for counts and earned amounts, a note that child accounts are not included, the last-updated time and a working Refresh.
-**Plans**: TBD
+**Plans**: 6 plans in 4 waves
+- [x] 05-01-PLAN.md - Tracer: seeded jobs to the My jobs table; statuses in true words; loading, empty, error, paging (wave 1)
+- [x] 05-02-PLAN.md - ExternalLink for every outside link, enforced by lint and CI (wave 1)
+- [x] 05-03-PLAN.md - Job detail by deep link, the result block, jobResults on the mock (wave 2)
+- [x] 05-04-PLAN.md - Earnings: balance, processing, null-first fields, Refresh (wave 2)
+- [x] 05-05-PLAN.md - Live events, refetches, the slow poll and search (wave 3)
+- [x] 05-06-PLAN.md - axe sweep of every state in light and dark, keyboard walk, phase gate (wave 4)
 **UI hint**: yes
 
 ### Phase 6: WalletConnect browser flow
@@ -174,7 +180,7 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | 2. Contract client and mock wallet | 7/7 | Verified locally (human_needed: real-wallet conformance run, dev-server browser check) | 2026-10-27 |
 | 3. Connect and identity | 6/6 | Verified locally (human_needed: light and dark look, real-wallet run) | 2026-10-28 |
 | 4. Submit a job | 7/7 | Verified locally (human_needed: light and dark look, real-wallet confirm and burn) | 2026-10-28 |
-| 5. My jobs and earnings | 0/TBD | Not started | - |
+| 5. My jobs and earnings | 6/6 | Verified locally (human_needed: light and dark look, real-wallet lists and events) | 2026-10-28 |
 | 6. WalletConnect browser flow | 0/TBD | Not started | - |
 | 7. Hosting and CSP hardening | 0/TBD | Not started | - |
 | 8. Device walks and cutover | 0/TBD | Not started | - |
