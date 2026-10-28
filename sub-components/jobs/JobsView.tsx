@@ -3,10 +3,11 @@ import Head from "next/head";
 import Link from "next/link";
 import { GnusContractMismatchError } from "../../lib/gnus/errors";
 import type { JobList } from "../../lib/gnus/schema";
+import { isMarked, shortJobId } from "../../lib/jobs";
 import Amount from "../shared/Amount";
-import { shorten } from "../wallet/AddressChip";
 import { useSession } from "../wallet/SessionProvider";
 import { useAccountInfiniteQuery } from "../wallet/useAccountQuery";
+import JobStatusBadge from "./JobStatusBadge";
 
 const PAGE_SIZE = 20;
 
@@ -48,7 +49,9 @@ const JobsBody: React.FC = () => {
         <tbody>
           {jobs.map((job) => (
             <tr key={job.burnTxHash}>
-              <td>{job.status}</td>
+              <td>
+                <JobStatusBadge status={job.status} explain={isMarked(job.status)} />
+              </td>
               <td>
                 <time dateTime={job.submittedAt}>{when.format(new Date(job.submittedAt))}</time>
               </td>
@@ -57,7 +60,7 @@ const JobsBody: React.FC = () => {
               </td>
               <td>{job.origin}</td>
               <td>
-                <Link href={`/jobs/detail?hash=${job.burnTxHash}`}>{shorten(job.jobId ?? job.burnTxHash)}</Link>
+                <Link href={`/jobs/detail?hash=${job.burnTxHash}`}>{shortJobId(job)}</Link>
               </td>
             </tr>
           ))}

@@ -7,6 +7,11 @@
   },
   "include": [
     "lib/**/*.ts",
+    "sub-components/jobs/**/*.ts",
+    "sub-components/jobs/**/*.tsx",
+    "sub-components/earnings/**/*.tsx",
+    "pages/jobs/**/*.tsx",
+    "pages/earnings/**/*.tsx",
     "sub-components/shared/Amount.tsx",
     "sub-components/shared/ExternalLink.tsx",
     "sub-components/wallet/**/*.ts",
