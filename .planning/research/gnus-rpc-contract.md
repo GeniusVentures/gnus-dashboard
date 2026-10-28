@@ -57,6 +57,12 @@ Rules:
   300 s and 7 days: use 60 s on the page side for reads (request expiry 300 s) and a 900 s expiry for
   `gnus_submitJob` and the first connect call (they wait on a human). A submit that expires on the page
   may still complete in the wallet: recover it with `gnus_getJob({ idempotencyKey })`.
+- Wire note (2026-10-28, wallet phase 47 decisions D-06 and D-08; not yet in the wallet's canonical text):
+  Reown's Dart side cannot send JSON-RPC error `data` or a `null` result. When an error has `data`, the
+  WalletConnect error `message` is the JSON text `{"message": ..., "data": ...}`. A `null` result goes out
+  as `{}`; no result in the contract is an empty object. The dashboard reverses both. The wallet holds a
+  gnus request for its 10-minute prompt limit plus 60 s and drops a reply it cannot deliver; a submit still
+  completes and is recovered by `gnus_getJob({ idempotencyKey })`.
 
 ## 3. Methods
 
@@ -257,7 +263,7 @@ Params: `{ "includeChildren"?: false }`. Result:
 | -32602 | Invalid params (bad job schema, bad address, out-of-range limit) |
 | -32603 | Internal error |
 | -32005 | Busy. `data.reason` is `rate_limited`, `confirm_open` or `submit_in_flight` |
-| -32010 | Cost unavailable (SDK returned 0 or failed; `data.reason` when the SDK provides one). On `gnus_submitJob` also when the burn's gas estimate fails, before any confirm |
+| -32010 | Cost unavailable (SDK returned 0 or failed; `data.reason` when the SDK provides one). On `gnus_submitJob` also when the burn's gas estimate fails, before any confirm, except a chain with no bridgeOut, which is `-32013` (D, 2026-10-28) |
 | -32011 | Insufficient GNUS balance for `cost` |
 | -32012 | Payer cannot sign (watch-only, `sgnus` row, or child without key) |
 | -32013 | Bridge (burn) failed; nothing spent |
@@ -272,12 +278,16 @@ Params: `{ "includeChildren"?: false }`. Result:
 | -32011 | `no_gnus`, `gnus_elsewhere` |
 | -32603 | `balance_unavailable`, `checking`, `missing_data`, `submission_outcome_unknown` (a same-key submit whose earlier outcome was never recorded; it may have burned, so nothing burns again) |
 | -32015 | `account_changed`: the account, wallet or network changed while the confirm was open; nothing was burned |
+| -32013 | `bridge_unavailable`: this network has no GNUS bridge; nothing was signed (D, 2026-10-28) |
 
 ## 6. Security rules the wallet enforces (dashboard can rely on them)
 
 - Origins: exact scheme+host+port allowlist, one pinned https origin per network in release builds
-  (D); `http://localhost:<port>` only in dev builds. The bridge drops any reply whose origin changed
-  between request and reply.
+  (D); `http://localhost:<port>` only in dev builds. The wallet keys every caller on its transport
+  (WebView or WalletConnect) plus its canonical origin: scheme and host lowercased, default port
+  dropped, no path, query or fragment. Anything not http(s), or with userinfo, is `4100`. The same
+  origin over the other transport is a different caller with its own connection. The bridge drops
+  any reply whose origin changed between request and reply.
 - Top frame only. Messages from iframes never reach the bridge.
 - Top-level navigation is locked to the allowlist; popups and `target=_blank` open in the system
   browser.
@@ -286,6 +296,11 @@ Params: `{ "includeChildren"?: false }`. Result:
   dashboard's first call (normally `gnus_getAccounts`) can wait on a human: give it no timeout and show a
   "confirm in your wallet" state. Rejecting the connect prompt returns `4001`. Revoking forgets the origin, so
   its next call prompts again; `4100` is an origin outside the allowlist or a call in flight at the revoke.
+- Prompt limits (D, 2026-10-28): the connect prompt, like the confirm, is a rejection (`4001`) after 10
+  minutes unanswered. One prompt may be open in the wallet at a time, from any origin, and at most 3 per
+  minute per origin: a call that needs another prompt gets `-32005` with `data.reason` `confirm_open`
+  or `rate_limited` and no dialog.
+  A `gnus_submitJob` whose origin is revoked before its burn is sent answers `4100` and burns nothing.
 - No method returns keys, mnemonics or anything derived from them.
 
 ## 7. SDK dependencies (not wallet work)
