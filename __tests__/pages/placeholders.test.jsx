@@ -16,6 +16,21 @@ describe('placeholder routes', () => {
     expect(screen.getByText('This page is not available yet.')).toBeInTheDocument();
   });
 
+  it.each([
+    '../../pages/index',
+    '../../pages/submit/index',
+    '../../pages/jobs/index',
+    '../../pages/jobs/detail',
+    '../../pages/earnings/index',
+  ])('gates %s: with no wallet it shows no page content', async (modulePath) => {
+    jest.useFakeTimers();
+    const Page = require(modulePath).default;
+    renderWithSession(<Page />, { provider: null });
+    expect(screen.getByRole('heading', { level: 1, name: 'Looking for GeniusWallet' })).toBeInTheDocument();
+    expect(screen.queryByText('This page is not available yet.')).not.toBeInTheDocument();
+    jest.useRealTimers();
+  });
+
   it('renders the 404 page with a link back to /', () => {
     const NotFound = require('../../pages/404').default;
     render(<NotFound />);
