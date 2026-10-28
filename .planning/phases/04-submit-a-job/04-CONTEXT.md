@@ -76,22 +76,28 @@ phase runs axe in light and dark.
   identity change drops it; a late reply for an old text or identity is ignored.
 
 ### Idempotency key
-- **D-12 (D):** The review step is a successful estimate. There the page reuses the unsettled draft with
-  the same identity (node account and SDK network) and the same job text, else makes a key with
-  `crypto.randomUUID()` (v4 from `getRandomValues` where it is missing, as on a plain-http dev host) and
-  writes the draft at once. Submit stays disabled until that write succeeded; a failed write shows "This
-  browser couldn't save the submit, so a reload could lose track of the payment. Free some site storage,
-  then estimate again."
-- **D-13 (D):** One localStorage entry per job draft: `gnus.submit.<key>` = `{ v: 1, idempotencyKey,
-  sdkAddress, sdkNetwork, job, createdAt, sentAt, chainId, settled }`, `job` being the exact text sent.
-  Read through zod; a bad entry is removed. "Same job" is equal text; the exact text binds tighter than
-  SUB-01's hash and is stored anyway to resubmit after a reload. Lifecycle: `sentAt` and `chainId` (the
+- **D-12 (D, revised by Braian 2026-10-28):** The review step is a successful estimate. There the page hashes
+  the job (D-13) and reuses the unsettled draft with the same identity (node account and SDK network) and the
+  same `jobHash`, else makes a key with `crypto.randomUUID()` (v4 from `getRandomValues` where it is missing,
+  as on a plain-http dev host) and writes the draft at once. Submit stays disabled until that write
+  succeeded; a failed write shows "This browser couldn't save the submit, so a reload could lose track of the
+  payment. Free some site storage, then estimate again." Without `crypto.subtle` (a plain-http host that is
+  not localhost) no hash can be made, so the same message variant "This browser can't hash the job" blocks
+  submit rather than falling back to the job text.
+- **D-13 (D, revised by Braian 2026-10-28):** The key binds to a SHA-256 of the canonical job JSON (SUB-01),
+  not to the stored job text. Canonical means the exact string sent: `JSON.stringify` of the parsed object
+  (whitespace normalised, key order kept), so equal hash means equal bytes to the wallet. The hash is
+  lowercase hex from WebCrypto `crypto.subtle.digest("SHA-256", utf8)`. Jobs run to 5 MiB and localStorage
+  holds about 5 MB per origin, so the entry never holds the job body: one entry per job draft,
+  `gnus.submit.<key>` = `{ v: 1, idempotencyKey, sdkAddress, sdkNetwork, jobHash, label, createdAt, sentAt,
+  chainId, settled }`, `label` being a short caption (the job's name or "Job", at most 40 characters). Read
+  through zod; a bad entry is removed. "Same job" is equal `jobHash`. Lifecycle: `sentAt` and `chainId` (the
   reported `evmChainId`) are written before `gnus_submitJob`, and no call goes out if that write fails;
   `settled` on any outcome where the payment went or its fate is unknown; unchanged on a nothing-spent
-  error; removed on `idempotency_key_reused`, on "Submit another job", and, if never sent, on editing its
-  text; removed at page start when older than 23 h (from `sentAt`, else `createdAt`).
-
-### Submit and outcomes
+  error; removed on `idempotency_key_reused`, on "Submit another job", and, if never sent, when the job is
+  edited away from its hash; removed at page start when older than 23 h (from `sentAt`, else `createdAt`).
+  A reload cannot restore the job text (the page never stored it); the user loads the same job again and the
+  hash finds the same key.
 - **D-14 (D):** "Pay and submit", enabled with `canSubmit`, a fresh unblocked estimate, a saved draft and
   nothing in flight; a guard set before any await drops a second click. Never retried by the page. When
   `payer.canSign` is false the button explains with errors.ts's `-32012` message (`no_wallet` when the payer
@@ -131,19 +137,20 @@ phase runs axe in light and dark.
   transaction hash" (phase 5 uses the same words), plus "View the payment on the block explorer" through
   `ExternalLink`. `lib/explorer.ts` maps chain id to a tx URL prefix, the six the wallet links in
   `transaction_utils.dart` (1, 11155111, 137, 80002, 56, 97). The chain is the one stored on the draft at
-  send; an unknown or null chain shows no link. This pulls part of v2 JOBX-03 into v1 at Braian's request.
-- **D-20 (D):** Recovery runs once per identity per page load (StrictMode safe): the newest draft for the
-  identity is restored. Never sent: its job is back at review and needs an estimate. Sent or settled:
-  checking, then `gnus_getJob({ idempotencyKey })` (a tracked read) gives the outcome screen; notSeen puts the
-  job back at review with the same key and "GeniusWallet has no record of this submit. If its confirm is
-  still open, answer it there. Submitting again is safe: the same submit is never paid twice."; a failed
-  lookup is unknown. pending and unknown re-check only on "Check again": no timer, no polling.
+  send; an unknown or null chain shows no link. This pulls part of v2 JOBX-03 into v1 at Braian's request (accepted 2026-10-28; ROADMAP and REQUIREMENTS updated).
+- **D-20 (D, revised):** Recovery runs once per identity per page load (StrictMode safe): the newest draft for
+  the identity is restored. Never sent: nothing to show (the page holds no job text); the draft stays for
+  reuse by hash. Sent or settled: checking, then `gnus_getJob({ idempotencyKey })` (a tracked read) gives the
+  outcome screen; notSeen puts the form back with the same key kept and "GeniusWallet has no record of this
+  submit. If its confirm is still open, answer it there. To submit again, load the same job: the same submit
+  is never paid twice."; a failed lookup is unknown. pending and unknown re-check only on "Check again": no
+  timer, no polling.
 
 ### Architecture and tests
 - **D-21 (D):** `lib/submit/store.ts` is framework-free, one per session store (a WeakMap keyed by it), so a
   gate screen that unmounts the page never loses an open submit. React reads it through
-  `useSyncExternalStore` in `sub-components/submit/useSubmit.ts`. Storage, clock and key maker are injected:
-  Jest's global `localStorage` and `randomUUID` are stubs, so tests pass a Map-backed storage. Actions:
+  `useSyncExternalStore` in `sub-components/submit/useSubmit.ts`. Storage, clock, key maker and digest are injected:
+  Jest's global `localStorage` and `randomUUID` are stubs, so tests pass a Map-backed storage and a digest (Node's webcrypto). Actions:
   `setText`, `loadExample`, `estimate`, `submit`, `showCancelNote`, `checkAgain`, `newKey`, `startOver`.
   Components: `SubmitFlow`, `JobInput`, `JobPreview`, `EstimatePanel`, `SubmitPanel`, `SubmitResult`.
 - **D-22 (D):** Text from the wallet or the job renders as React text only. Only mode-aware Bootstrap

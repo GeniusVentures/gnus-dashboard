@@ -81,7 +81,7 @@ The `gnus_*` contract is owned by GeniusWallet (`research/gnus-rpc-contract.md`)
 - [ ] **SUB-02**: Submit is disabled while a submit is in flight, a `-32005` (`submit_in_flight`, `confirm_open`) shows "A confirm is already open in your wallet", and the dashboard never retries `gnus_submitJob` on its own.
 - [ ] **SUB-03**: While the wallet's confirm is open the page shows "Confirm in your wallet" with no timeout (over WalletConnect: open GeniusWallet on your phone); a dashboard-side Cancel says the wallet prompt stays open.
 - [ ] **SUB-04**: A rejected confirm (`4001`) returns the user to the job with the form and the same key intact, saying nothing was spent.
-- [ ] **SUB-05**: A `submitted` result shows the `burnTxHash` always, the `jobId` when not null ("Job id pending" otherwise), and a link to the job's detail. The page branches on `status`, never on the call merely returning.
+- [ ] **SUB-05**: A `submitted` result shows the `burnTxHash` always, the `jobId` when not null ("Job id pending" otherwise), and a link to the job's detail. The burn hash also links to its transaction on the block explorer of the chain the wallet reported at send (pulled forward from v2 JOBX-03, accepted 2026-10-28); an unknown chain shows no link. The page branches on `status`, never on the call merely returning.
 - [ ] **SUB-06**: `status: bridgedNotProcessed` and `-32014` become one "Paid but not processed" state: a persistent banner (not a toast) saying the payment went through and the network did not start the job, the burn hash with a copy button, a pointer to the wallet, and no retry button.
 - [ ] **SUB-07**: Each other failure (`-32013` nothing spent, `-32012` payer cannot sign, `4100`, `4900`, `-32015`, `-32602` including `idempotency_key_reused`) shows its own message and next step from the RPC-05 table.
 - [ ] **SUB-08**: After a reload at any step (before confirm, during confirm, after a lost response), the page finds the stored key, calls `gnus_getJob({idempotencyKey})` and shows the real outcome, or the job ready to submit again with the same key if the wallet never saw it. A test reloads at each step and asserts exactly one burn in the mock.
@@ -145,7 +145,7 @@ Deferred. Tracked but not in the current roadmap. The items marked "if capacity 
 
 - **JOBX-01**: Per-job timeline (submitted, burn, queued, processing, completed) with "not reported yet" for steps without data. If capacity allows.
 - **JOBX-02**: "Needs attention" nav badge counting paid-but-not-processed jobs. If capacity allows.
-- **JOBX-03**: Explorer link for `burnTxHash` on the Polygon Amoy explorer. If capacity allows.
+- ~~**JOBX-03**~~: Pulled forward into v1 on 2026-10-28 (Braian), see SUB-05.
 - **JOBX-04**: Copy-as-support-bundle (jobId, burnTxHash, sdkAddress, network, times, error code). If capacity allows.
 - **JOBX-05**: Estimate-versus-confirmed cost difference on job detail.
 - **JOBX-06**: In-page notice when a job completes, after SDK-STATUS lands.

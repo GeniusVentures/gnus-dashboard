@@ -96,7 +96,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Success Criteria** (what must be TRUE):
   1. A user loads the example job, uploads a file or pastes JSON, sees a preview of exactly what will be sent, and gets an estimate of cost, balance and gas in the wallet's units; bad input keeps Estimate disabled with a plain error.
   2. On the mock's live-like profile (`-32010`) the page says "Price unavailable" and blocks submit; not enough GNUS blocks submit and shows both amounts; null gas reads "Gas not estimated"; an edited job needs a new estimate.
-  3. Submitting shows "Confirm in your wallet" until the wallet answers; a reject returns to the job with nothing spent; success shows the burn hash, the job id or "Job id pending", and a link to the job.
+  3. Submitting shows "Confirm in your wallet" until the wallet answers; a reject returns to the job with nothing spent; success shows the burn hash with a block-explorer link (v2 JOBX-03, pulled forward and accepted 2026-10-28), the job id or "Job id pending", and a link to the job.
   4. A paid-but-not-processed result, in either shape, shows a persistent banner with the burn hash, a copy button and a pointer to the wallet and no retry button, and every other error shows its own message.
   5. Reloading at each step of a submit ends with the true outcome on screen and exactly one burn in the mock, and a second click or a second tab never opens a second confirm.
 **Plans**: TBD
