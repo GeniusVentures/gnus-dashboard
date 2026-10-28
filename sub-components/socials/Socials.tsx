@@ -27,6 +27,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-center me-n1">
                     <Link
                         href="https://discord.gg/gnusai"
+                        aria-label="Discord"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -55,6 +56,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-center">
                     <Link
                         href="https://t.me/geniustokens"
+                        aria-label="Telegram"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -104,6 +106,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-center">
                     <Link
                         href="https://www.facebook.com/gnusai"
+                        aria-label="Facebook"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -137,6 +140,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-center">
                     <Link
                         href="https://x.com/gnusai"
+                        aria-label="X"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -168,6 +172,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-start">
                     <Link
                         href="https://www.linkedin.com/company/gnusai"
+                        aria-label="LinkedIn"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -199,6 +204,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-center" style={{ marginRight: 2 }}>
                     <Link
                         href="https://www.youtube.com/@gnusai"
+                        aria-label="YouTube"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">
@@ -245,6 +251,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                 <div className="text-start">
                     <Link
                         href="https://github.com/geniusventures"
+                        aria-label="GitHub"
                         target="_blank"
                         rel="noreferrer noopener"
                         className="social-links">

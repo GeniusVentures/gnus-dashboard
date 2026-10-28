@@ -24,8 +24,7 @@ actuals:
 - Submit status and `JOB_STATUSES` gain `unconfirmed`; `JOB_STATUSES` gains `pending`. `jobLookupSchema` (detail or pending, nullable) is what `getJob` parses; list and event jobs still need a burn hash.
 - `-32603 submission_outcome_unknown` is kind `submissionOutcomeUnknown`; `GnusError.outcome` parses each field alone (null when bad), and `burnTxHash` is read for this reason too.
 - Revised D-11: `-32013 bridge_unavailable` is kind `bridgeUnavailable`, "Not available on this network. Switch the network in GeniusWallet.", action `openWallet`. New mock profile `bridgeUnavailable` (estimate and submit).
-- Mock: `connected` flag, `connectPrompt` profile (5 s auto-approve), `controls.answerConnect` and `controls.revokeOrigin`. The connection check runs after params, before readiness and switching, one prompt at a time (`-32005 confirm_open`). Revoke aborts open spend confirms with 4100.
-- `originRevoked` is now `originNotAllowed`. New profiles `unconfirmedSubmit` and `submissionOutcomeUnknown`.
+- Mock: `connected` flag, `connectPrompt` profile (5 s auto-approve), `answerConnect` and `revokeOrigin` controls. The connection check runs after params, before readiness and switching, one prompt at a time (`-32005 confirm_open`); revoke aborts open spend confirms with 4100. `originRevoked` is now `originNotAllowed`; new profiles `unconfirmedSubmit` and `submissionOutcomeUnknown`.
 
 ## Deviations
 
