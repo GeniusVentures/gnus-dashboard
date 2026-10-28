@@ -3,7 +3,7 @@ import { screen } from "@testing-library/react";
 import { createMockProvider } from "../../../lib/gnus/mock/provider";
 import SubmitFlow from "../../../sub-components/submit/SubmitFlow";
 import { DRAFT_PREFIX } from "../../../lib/submit/drafts";
-import { JOB_TEXT, MemoryStorage, makeSubmit, reload, renderWithSubmit, submitCalls, until } from "../../mocks/submit";
+import { JOB_TEXT, MemoryStorage, counterKeys, gated, makeSubmit, reload, renderWithSubmit, submitCalls, until } from "../../mocks/submit";
 
 const state = (made) => made.submit.getState();
 const settled = (made) => until(() => state(made).outcome?.kind !== "checking" && state(made).step !== "confirm");
@@ -225,6 +225,87 @@ describe("a payment whose fate is open keeps its key until the wallet answers fo
     made.submit.startOver();
     await estimate(made);
     expect(state(made).draft.idempotencyKey).not.toBe(key);
+  });
+});
+
+describe("a spent payment never drops off the screen", () => {
+  it("a newer estimate that was never paid does not hide an older payment from the reload", async () => {
+    const first = await makeSubmit({ profile: "manualConfirm", now: () => 1000 });
+    await estimate(first);
+    first.submit.submit();
+    await settle();
+    first.session.dispose();
+    const second = await makeSubmit({ provider: first.provider.controls.reinject(), storage: first.storage, now: () => 2000, newKey: counterKeys("second") });
+    await settled(second);
+    expect(state(second).notSeen).toBe(true);
+    second.provider.controls.answerConfirm(true);
+    await settle();
+
+    second.submit.setText(JSON.stringify({ name: "other", inputs: [], outputs: [], passes: [] }));
+    await second.submit.estimate();
+    expect(state(second).draft.sentAt).toBeNull();
+    const third = await reload(second);
+    await settled(third);
+    expect(state(third).outcome).toMatchObject({ kind: "done", burnTxHash: "0x" + "0".repeat(63) + "1" });
+    expect(third.provider.controls.burnCount()).toBe(1);
+  });
+
+  it("a new paying wallet or EVM chain keeps Paid but not processed and its burn hash", async () => {
+    const made = await makeSubmit({ profile: "bridgedNotProcessedStatus" });
+    await estimate(made);
+    await made.submit.submit();
+    const shown = state(made).outcome;
+    expect(shown.kind).toBe("paidNotProcessed");
+
+    const accounts = made.session.getState().accounts;
+    made.provider.controls.emit("gnus_accountsChanged", {
+      ...accounts,
+      payer: { ...accounts.payer, evmAddress: "0x" + "b2".repeat(20) },
+    });
+    expect(made.session.getState().accounts.payer.evmAddress).toBe("0x" + "b2".repeat(20));
+    made.provider.controls.setNetwork({ sdk: accounts.network.sdk, evmChainId: 137 });
+    await settle();
+    expect(state(made).outcome).toEqual(shown);
+    expect(state(made).draft.chainId).toBe(accounts.network.evmChainId);
+  });
+
+  it("a new paying wallet during a check does not leave the page on Checking", async () => {
+    const first = await makeSubmit({ profile: "walletStopsMidSubmit" });
+    await estimate(first);
+    first.submit.submit();
+    await settle();
+    first.session.dispose();
+    const provider = first.provider.controls.reinject();
+    const release = gated(provider, "gnus_getJob");
+    const page = await makeSubmit({ provider, storage: first.storage });
+    expect(state(page).outcome.kind).toBe("checking");
+    const accounts = page.session.getState().accounts;
+    provider.controls.emit("gnus_accountsChanged", { ...accounts, payer: { ...accounts.payer, evmAddress: "0x" + "b2".repeat(20) } });
+    expect(page.session.getState().accounts.payer.evmAddress).toBe("0x" + "b2".repeat(20));
+    expect(state(page).outcome.kind).toBe("checking");
+    release();
+    await settled(page);
+    expect(state(page).outcome.kind).toBe("pending");
+  });
+
+  it("switching back to the node account shows its open payment again", async () => {
+    const first = await makeSubmit({ profile: "walletStopsMidSubmit" });
+    await estimate(first);
+    first.submit.submit();
+    await settle();
+    const made = await reload(first);
+    await settled(made);
+    expect(state(made).outcome.kind).toBe("pending");
+    const accounts = made.session.getState().accounts;
+    made.provider.controls.emit("gnus_accountsChanged", {
+      ...accounts,
+      node: { ...accounts.node, sdkAddress: "0x" + "c3".repeat(64) },
+    });
+    await settle();
+    expect(state(made).outcome).toBeNull();
+    made.provider.controls.emit("gnus_accountsChanged", accounts);
+    await settled(made);
+    expect(state(made).outcome).toMatchObject({ kind: "pending", burnTxHash: "0x" + "0".repeat(63) + "1" });
   });
 });
 

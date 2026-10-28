@@ -13,7 +13,7 @@ import {
   isOpen,
   markSent,
   markSettled,
-  newestFor,
+  newestSent,
   prune,
   randomKey,
   removeDraft,
@@ -101,9 +101,16 @@ export interface SubmitStore {
   startOver(): void;
 }
 
+// An estimate belongs to the whole identity, paying wallet and chain included.
 const identityOf = (session: SessionStore): string | null => {
   const accounts = session.getState().accounts;
   return accounts ? JSON.stringify([accounts.network, accounts.node.sdkAddress, accounts.payer.evmAddress]) : null;
+};
+
+// A draft and its outcome belong to the node account and SDK network only.
+const ownerOf = (session: SessionStore): string | null => {
+  const accounts = session.getState().accounts;
+  return accounts ? JSON.stringify({ sdkAddress: accounts.node.sdkAddress, sdkNetwork: accounts.network.sdk }) : null;
 };
 
 const reportable = (error: GnusError): boolean => error.code === 4100 || error.code === 4900;
@@ -141,6 +148,7 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
   let sending: object | null = null;
   let away = false;
   let lastIdentity = identityOf(session);
+  let lastOwner = ownerOf(session);
   const recovered = new Set<string>();
   const listeners = new Set<() => void>();
 
@@ -154,18 +162,31 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     notify();
   };
 
-  // A reply belongs to the text and the identity it was asked for; anything newer makes it stale.
-  // A drop to no identity (a disconnect) is not a change of account.
+  // An estimate belongs to the text and the whole identity it was asked for. A payment screen belongs to the node
+  // account and SDK network: a new paying wallet or chain never hides a spent payment. A drop to no identity
+  // (a disconnect) is not a change of account.
   function onSession(): void {
     const current = identityOf(session);
     if (current !== null && current !== lastIdentity) {
+      const owner = ownerOf(session);
+      const ownerChanged = owner !== lastOwner;
+      if (ownerChanged && lastOwner !== null) {
+        // Coming back to the old account runs its recovery again.
+        recovered.delete(lastOwner);
+      }
       lastIdentity = current;
-      epoch += 1;
-      if (state.step === "outcome") {
-        state = INITIAL;
-        notify();
-      } else if (state.step === "job" && (state.estimate.status !== "idle" || state.notSeen)) {
-        set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, notSeen: false });
+      lastOwner = owner;
+      if (state.step === "job") {
+        epoch += 1;
+        if (state.estimate.status !== "idle" || state.notSeen || state.submitError) {
+          set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, submitError: null, notSeen: false });
+        }
+      } else if (ownerChanged) {
+        epoch += 1;
+        if (state.step === "outcome") {
+          state = INITIAL;
+          notify();
+        }
       }
     }
     if (session.getState().accounts === null) {
@@ -321,15 +342,15 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       return;
     }
     const identity = { sdkAddress: accounts.node.sdkAddress, sdkNetwork: accounts.network.sdk };
-    const id = JSON.stringify(identity);
+    const id = ownerOf(session) ?? "";
     if (recovered.has(id)) {
       return;
     }
     recovered.add(id);
     prune(deps.storage, deps.now());
-    const draft = newestFor(deps.storage, identity);
+    const draft = newestSent(deps.storage, identity);
     // A draft never sent has no payment to account for; it waits for the same job to be estimated again.
-    if (!draft || (draft.sentAt === null && !draft.settled) || state.step !== "job" || state.draft) {
+    if (!draft || state.step !== "job" || state.draft) {
       return;
     }
     set({ draft });

@@ -5,7 +5,7 @@ import {
   listDrafts,
   markSent,
   markSettled,
-  newestFor,
+  newestSent,
   prune,
   randomKey,
   removeIfUnsent,
@@ -111,15 +111,30 @@ describe("prune", () => {
   });
 });
 
-describe("newestFor", () => {
-  it("gives the identity's newest draft by createdAt and ignores other identities", () => {
+describe("newestSent", () => {
+  it("gives the identity's most recently sent draft and ignores other identities", () => {
     const storage = new MemoryStorage();
-    make(storage, "a1", { createdAt: 1 });
-    make(storage, "a2", { createdAt: 5 });
-    make(storage, "b9", { createdAt: 9, sdkAddress: OTHER_NODE });
-    expect(newestFor(storage, identity).idempotencyKey).toBe("a2");
-    expect(newestFor(storage, { sdkAddress: OTHER_NODE, sdkNetwork: "staging" }).idempotencyKey).toBe("b9");
-    expect(newestFor(storage, { sdkAddress: NODE, sdkNetwork: "mainnet" })).toBeNull();
+    markSent(storage, make(storage, "a1", { createdAt: 1 }), 1, 2);
+    markSent(storage, make(storage, "a2", { createdAt: 5 }), 1, 6);
+    markSent(storage, make(storage, "b9", { createdAt: 9, sdkAddress: OTHER_NODE }), 1, 10);
+    expect(newestSent(storage, identity).idempotencyKey).toBe("a2");
+    expect(newestSent(storage, { sdkAddress: OTHER_NODE, sdkNetwork: "staging" }).idempotencyKey).toBe("b9");
+    expect(newestSent(storage, { sdkAddress: NODE, sdkNetwork: "mainnet" })).toBeNull();
+  });
+
+  it("a newer estimate that was never sent does not hide an older sent one", () => {
+    const storage = new MemoryStorage();
+    markSent(storage, make(storage, "paid", { createdAt: 1 }), 80002, 2);
+    make(storage, "estimate-only", { createdAt: 9, jobHash: HASH_B });
+    expect(newestSent(storage, identity).idempotencyKey).toBe("paid");
+  });
+
+  it("orders by the last send, not by when the draft was made", () => {
+    const storage = new MemoryStorage();
+    const old = markSent(storage, make(storage, "old", { createdAt: 1 }), 80002, 2);
+    markSent(storage, make(storage, "new", { createdAt: 5, jobHash: HASH_B }), 80002, 6);
+    markSent(storage, old, 80002, 9);
+    expect(newestSent(storage, identity).idempotencyKey).toBe("old");
   });
 });
 

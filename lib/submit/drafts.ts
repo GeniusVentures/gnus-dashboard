@@ -159,10 +159,10 @@ export function findReusable(storage: DraftStorage, identity: DraftIdentity, job
   return found.sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)) || b.createdAt - a.createdAt)[0] ?? null;
 }
 
-/** The newest draft of this identity, settled or not: the one a reload has to account for. */
-export function newestFor(storage: DraftStorage, identity: DraftIdentity): Draft | null {
-  const found = listDrafts(storage).filter((draft) => sameIdentity(draft, identity));
-  return found.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
+/** The identity's most recently sent draft, settled or not: the one a reload has to account for. Unsent drafts paid nothing. */
+export function newestSent(storage: DraftStorage, identity: DraftIdentity): Draft | null {
+  const found = listDrafts(storage).filter((draft) => draft.sentAt !== null && sameIdentity(draft, identity));
+  return found.sort((a, b) => (b.sentAt ?? 0) - (a.sentAt ?? 0))[0] ?? null;
 }
 
 /** Drops expired drafts, except open ones, and entries that do not parse; keys outside the prefix are never touched. */
