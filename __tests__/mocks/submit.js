@@ -112,3 +112,25 @@ export function gated(provider, method) {
   };
   return release;
 }
+
+export async function until(check, tries = 200) {
+  for (let i = 0; i < tries && !check(); i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  if (!check()) {
+    throw new Error("until: condition never held");
+  }
+}
+
+let pages = 0;
+
+// A page reload: a new session over a reinjected facade of the same mock, and a new submit store over the same storage.
+export async function reload(previous) {
+  previous.session.dispose();
+  pages += 1;
+  return makeSubmit({
+    provider: previous.provider.controls.reinject(),
+    storage: previous.storage,
+    newKey: counterKeys(`page${pages}`),
+  });
+}

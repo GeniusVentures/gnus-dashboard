@@ -4,7 +4,20 @@ import { GnusError, normalizeError } from "../gnus/errors";
 import type { Estimate, SubmitResult } from "../gnus/schema";
 import { canEstimate, canSubmit } from "../session/machine";
 import type { SessionStore } from "../session/store";
-import { Draft, DraftStorage, browserStorage, createDraft, markSent, markSettled, removeDraft } from "./drafts";
+import {
+  Draft,
+  DraftStorage,
+  browserStorage,
+  createDraft,
+  findReusable,
+  markSent,
+  markSettled,
+  newestFor,
+  prune,
+  randomKey,
+  removeDraft,
+  removeIfUnsent,
+} from "./drafts";
 import { Digest, ParsedJob, browserDigest, hashJob, jobLabel, parseJob } from "./job";
 import { Outcome, classifyError, classifyLookup, classifyResult } from "./outcome";
 
@@ -67,18 +80,6 @@ const INITIAL: SubmitState = {
   outcome: null,
 };
 
-export function randomKey(): string {
-  const c = globalThis.crypto;
-  if (typeof c?.randomUUID === "function") {
-    return c.randomUUID();
-  }
-  const bytes = c.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
 export function defaultDeps(): SubmitDeps {
   return { storage: browserStorage(), now: () => Date.now(), newKey: randomKey, digest: browserDigest };
 }
@@ -137,6 +138,7 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
   let epoch = 0;
   let sending = false;
   let lastIdentity = identityOf(session);
+  const recovered = new Set<string>();
   const listeners = new Set<() => void>();
 
   const notify = (): void => {
@@ -151,24 +153,27 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
 
   // A reply belongs to the text and the identity it was asked for; anything newer makes it stale.
   // A drop to no identity (a disconnect) is not a change of account.
-  session.subscribe(() => {
+  function onSession(): void {
     const current = identityOf(session);
-    if (current === null || current === lastIdentity) {
-      return;
+    if (current !== null && current !== lastIdentity) {
+      lastIdentity = current;
+      epoch += 1;
+      if (state.step === "outcome") {
+        state = INITIAL;
+        notify();
+      } else if (state.step === "job" && (state.estimate.status !== "idle" || state.notSeen)) {
+        set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, notSeen: false });
+      }
     }
-    lastIdentity = current;
-    epoch += 1;
-    if (state.step === "outcome") {
-      state = INITIAL;
-      notify();
-    } else if (state.step === "job" && (state.estimate.status !== "idle" || state.notSeen)) {
-      set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, notSeen: false });
-    }
-  });
+    void recover();
+  }
 
   function setText(text: string): void {
     if (text === state.text) {
       return;
+    }
+    if (state.draft && deps.storage) {
+      removeIfUnsent(deps.storage, state.draft);
     }
     epoch += 1;
     const had = state.estimate.status === "ready" || state.estimate.status === "stale";
@@ -233,17 +238,19 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       return;
     }
     const accounts = session.getState().accounts;
-    const draft =
-      deps.storage && accounts
-        ? createDraft(deps.storage, {
-            idempotencyKey: deps.newKey(),
-            sdkAddress: accounts.node.sdkAddress,
-            sdkNetwork: accounts.network.sdk,
-            jobHash,
-            label: jobLabel(parsed.job),
-            createdAt: deps.now(),
-          })
-        : null;
+    let draft: Draft | null = null;
+    if (deps.storage && accounts) {
+      const identity = { sdkAddress: accounts.node.sdkAddress, sdkNetwork: accounts.network.sdk };
+      draft =
+        findReusable(deps.storage, identity, jobHash) ??
+        createDraft(deps.storage, {
+          idempotencyKey: deps.newKey(),
+          ...identity,
+          jobHash,
+          label: jobLabel(parsed.job),
+          createdAt: deps.now(),
+        });
+    }
     set({ estimate: { status: "ready", estimate: reply }, jobHash, draft, saveError: draft ? null : SAVE_FAILED });
   }
 
@@ -283,6 +290,28 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     } else {
       finish(draft, result.outcome);
     }
+  }
+
+  // Once per identity per page load: a draft that reached the wallet is accounted for before anything else shows.
+  async function recover(): Promise<void> {
+    const { accounts, phase } = session.getState();
+    if (!accounts || phase !== "ready" || !deps.storage) {
+      return;
+    }
+    const identity = { sdkAddress: accounts.node.sdkAddress, sdkNetwork: accounts.network.sdk };
+    const id = JSON.stringify(identity);
+    if (recovered.has(id)) {
+      return;
+    }
+    recovered.add(id);
+    prune(deps.storage, deps.now());
+    const draft = newestFor(deps.storage, identity);
+    // A draft never sent has no payment to account for; it waits for the same job to be estimated again.
+    if (!draft || (draft.sentAt === null && !draft.settled) || state.step !== "job" || state.draft) {
+      return;
+    }
+    set({ draft });
+    await lookup(draft);
   }
 
   async function failed(error: GnusError, draft: Draft): Promise<void> {
@@ -376,6 +405,9 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     state = INITIAL;
     notify();
   }
+
+  session.subscribe(onSession);
+  void recover();
 
   return {
     getState: () => state,
