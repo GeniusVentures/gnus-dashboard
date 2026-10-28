@@ -11,8 +11,8 @@ const Dashboard: React.FC = () => (
       </Head>
       <h1 className="display-4">Dashboard</h1>
       <p className="fs-5">
-        Earning as is the node account that owns your jobs and earnings. Paying from is the wallet that pays for the
-        jobs you submit.
+        &ldquo;Earning as&rdquo; is the account your jobs and earnings belong to. &ldquo;Paying from&rdquo; is the
+        wallet that pays for the jobs you submit.
       </p>
       <p className="d-flex flex-wrap justify-content-center gap-4 fs-5">
         {NavbarDefaultRoutes.map((item) => (

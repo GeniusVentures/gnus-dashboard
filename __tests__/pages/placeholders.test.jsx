@@ -7,7 +7,7 @@ describe('placeholder routes', () => {
     const Page = require('../../pages/index').default;
     renderWithSession(<Page />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByText(/node account that owns your jobs and earnings/)).toBeInTheDocument();
+    expect(screen.getByText(/account your jobs and earnings belong to/)).toBeInTheDocument();
     expect(screen.getByText(/wallet that pays/)).toBeInTheDocument();
     ['Submit a job', 'My jobs', 'Earnings'].forEach((name) => {
       expect(screen.getByRole('link', { name })).toBeInTheDocument();
