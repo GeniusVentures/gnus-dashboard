@@ -22,7 +22,7 @@ const IdentityHeader: React.FC = () => {
         Network: {sdk ?? "not set"}, chain {evmChainId ?? "not set"}
       </span>
       {state.transport === "walletconnect" ? (
-        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => store?.disconnect()}>
+        <button type="button" className="btn btn-sm border" onClick={() => store?.disconnect()}>
           Disconnect
         </button>
       ) : null}

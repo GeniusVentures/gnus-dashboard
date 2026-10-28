@@ -187,7 +187,7 @@ const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {secondary ? (
         <button
           type="button"
-          className="btn btn-outline-secondary ms-2"
+          className="btn border ms-2"
           onClick={() => store && RUN[secondary.run](store)}
         >
           {secondary.label}
