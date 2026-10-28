@@ -54,7 +54,7 @@ afterEach(() => {
 
 afterAll(() => {
   const missing = EXPECTED_ROWS.filter((row) => !observed.has(row));
-  if (factory.name === "mock") {
+  if (factory.mockBacked === true) {
     expect(missing).toEqual([]);
   } else if (missing.length > 0) {
     console.warn(`gnus-errors: rows not observed on "${factory.name}": ${missing.join(", ")}`);

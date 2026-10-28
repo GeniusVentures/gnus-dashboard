@@ -59,6 +59,7 @@ export interface FakeRelay extends SignClientLike {
 interface Pending {
   resolve(session: WcSession): void;
   reject(reason: unknown): void;
+  timers: Array<ReturnType<typeof setTimeout>>;
 }
 
 const wire = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
@@ -128,6 +129,17 @@ export function createFakeRelay(options: RelayOptions = {}): FakeRelay {
 
   const stops = new Map<string, () => void>();
 
+  // Takes the open proposal for an answer and stops its timers.
+  function takeProposal(): Pending {
+    const answer = slot.proposal;
+    if (!answer) {
+      throw new Error("Relay has no open proposal");
+    }
+    slot.proposal = null;
+    answer.timers.forEach(clearTimeout);
+    return answer;
+  }
+
   function drop(topic: string): void {
     sessions.delete(topic);
     stops.get(topic)?.();
@@ -148,28 +160,13 @@ export function createFakeRelay(options: RelayOptions = {}): FakeRelay {
 
   const controls: RelayControls = {
     approvePending() {
-      const answer = slot.proposal;
-      if (!answer) {
-        throw new Error("Relay has no open proposal");
-      }
-      slot.proposal = null;
-      answer.resolve(openSession());
+      takeProposal().resolve(openSession());
     },
     declinePending(message = options.declineMessage ?? "User rejected the connection") {
-      const answer = slot.proposal;
-      if (!answer) {
-        throw new Error("Relay has no open proposal");
-      }
-      slot.proposal = null;
-      answer.reject({ code: 5000, message });
+      takeProposal().reject({ code: 5000, message });
     },
     expirePending() {
-      const answer = slot.proposal;
-      if (!answer) {
-        throw new Error("Relay has no open proposal");
-      }
-      slot.proposal = null;
-      answer.reject({ code: 0, message: "Proposal expired" });
+      takeProposal().reject({ code: 0, message: "Proposal expired" });
     },
     endFromWallet(reason) {
       for (const topic of [...sessions.keys()]) {
@@ -193,28 +190,32 @@ export function createFakeRelay(options: RelayOptions = {}): FakeRelay {
     connect() {
       const uri = `wc:fakeproposal${proposals.length + 1}@2?relay-protocol=irn&symKey=fakekey`;
       proposals.push({ uri });
-      const mine: Pending = { resolve: () => {}, reject: () => {} };
+      const mine: Pending = { resolve: () => {}, reject: () => {}, timers: [] };
       const approval = new Promise<WcSession>((resolve, reject) => {
         mine.resolve = resolve;
         mine.reject = reject;
       });
       slot.proposal = mine;
       // A proposal that nothing answers expires, as the real one does after five minutes.
-      setTimeout(() => {
-        if (slot.proposal === mine) {
-          controls.expirePending();
-        }
-      }, PROPOSAL_MS);
-      if (options.autoAnswerMs !== undefined && profile !== "proposalExpires") {
+      mine.timers.push(
         setTimeout(() => {
           if (slot.proposal === mine) {
-            if (profile === "decline") {
-              controls.declinePending();
-            } else {
-              controls.approvePending();
-            }
+            controls.expirePending();
           }
-        }, options.autoAnswerMs);
+        }, PROPOSAL_MS),
+      );
+      if (options.autoAnswerMs !== undefined && profile !== "proposalExpires") {
+        mine.timers.push(
+          setTimeout(() => {
+            if (slot.proposal === mine) {
+              if (profile === "decline") {
+                controls.declinePending();
+              } else {
+                controls.approvePending();
+              }
+            }
+          }, options.autoAnswerMs),
+        );
       }
       return Promise.resolve({ uri, approval: () => approval });
     },

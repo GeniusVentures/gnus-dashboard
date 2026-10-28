@@ -3,6 +3,7 @@ const { createInjectedTransport } = require("../../../lib/gnus/transport/injecte
 
 module.exports = {
   name: "mock",
+  mockBacked: true,
   // Shape only: the dashboard keeps no copy of the SDK's processing-definition schema.
   exampleJob: { name: "contract-example", inputs: [], outputs: [], passes: [] },
   create(profile) {
