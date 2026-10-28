@@ -25,7 +25,10 @@ export interface DraftStorage {
   readonly length: number;
 }
 
-/** A draft older than this, counted from sentAt else createdAt, is dropped; the wallet forgets a key after 24 h. */
+/**
+ * A draft older than this, counted from sentAt else createdAt, is dropped. A sent draft the wallet never answered
+ * for definitively is kept at any age: its key is the only thing that stops the same job being paid for twice.
+ */
 export const DRAFT_TTL_MS = 23 * 60 * 60 * 1000;
 
 /** The node account and SDK network a draft belongs to. */
@@ -109,12 +112,21 @@ export function markSent(storage: DraftStorage, draft: Draft, chainId: number | 
   return writeDraft(storage, next) ? next : null;
 }
 
-/** Best effort: a settled flag that fails to save is still recovered by the key lookup. */
-export function markSettled(storage: DraftStorage, draft: Draft): Draft {
-  const next: Draft = { ...draft, settled: true };
+/**
+ * Settled means the wallet answered for this key for good, so the same job may get a new key.
+ * Best effort: a flag that fails to save is put right by the next key lookup.
+ */
+export function markSettled(storage: DraftStorage, draft: Draft, settled: boolean): Draft {
+  if (draft.settled === settled) {
+    return draft;
+  }
+  const next: Draft = { ...draft, settled };
   writeDraft(storage, next);
   return next;
 }
+
+/** A sent draft without a definitive answer: its fate is open, so it is never pruned or removed. */
+export const isOpen = (draft: Draft): boolean => draft.sentAt !== null && !draft.settled;
 
 // Keys are read first and entries after, because reading can remove a bad entry and shift the indexes.
 function draftKeys(storage: DraftStorage): string[] {
@@ -139,12 +151,12 @@ export function listDrafts(storage: DraftStorage): Draft[] {
 const sameIdentity = (draft: Draft, identity: DraftIdentity): boolean =>
   draft.sdkAddress === identity.sdkAddress && draft.sdkNetwork === identity.sdkNetwork;
 
-/** The newest unsettled draft for this identity and this exact job, so a retry of the same job reuses its key. */
+/** The unsettled draft for this identity and this exact job, a sent one first, so a retry of the same job reuses its key. */
 export function findReusable(storage: DraftStorage, identity: DraftIdentity, jobHash: string): Draft | null {
   const found = listDrafts(storage).filter(
     (draft) => !draft.settled && draft.jobHash === jobHash && sameIdentity(draft, identity),
   );
-  return found.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
+  return found.sort((a, b) => Number(isOpen(b)) - Number(isOpen(a)) || b.createdAt - a.createdAt)[0] ?? null;
 }
 
 /** The newest draft of this identity, settled or not: the one a reload has to account for. */
@@ -153,11 +165,11 @@ export function newestFor(storage: DraftStorage, identity: DraftIdentity): Draft
   return found.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
 }
 
-/** Drops expired drafts and entries that do not parse; keys outside the prefix are never touched. */
+/** Drops expired drafts, except open ones, and entries that do not parse; keys outside the prefix are never touched. */
 export function prune(storage: DraftStorage, now: number): void {
   for (const key of draftKeys(storage)) {
     const draft = readDraft(storage, key);
-    if (draft && now - (draft.sentAt ?? draft.createdAt) > DRAFT_TTL_MS) {
+    if (draft && !isOpen(draft) && now - (draft.sentAt ?? draft.createdAt) > DRAFT_TTL_MS) {
       removeDraft(storage, key);
     }
   }

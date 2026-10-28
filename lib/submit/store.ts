@@ -10,6 +10,7 @@ import {
   browserStorage,
   createDraft,
   findReusable,
+  isOpen,
   markSent,
   markSettled,
   newestFor,
@@ -19,7 +20,7 @@ import {
   removeIfUnsent,
 } from "./drafts";
 import { Digest, ParsedJob, browserDigest, hashJob, jobLabel, parseJob } from "./job";
-import { Outcome, classifyError, classifyLookup, classifyResult } from "./outcome";
+import { Outcome, classifyError, classifyLookup, classifyResult, isDefinitive } from "./outcome";
 
 export type { Outcome } from "./outcome";
 
@@ -254,17 +255,17 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     set({ estimate: { status: "ready", estimate: reply }, jobHash, draft, saveError: draft ? null : SAVE_FAILED });
   }
 
-  // A payment went or its fate is unknown: the draft is done and the outcome screen takes over.
+  // Only a definitive answer retires the draft; any other outcome keeps its key for the same job.
   function finish(draft: Draft, outcome: Outcome): void {
-    const settled = deps.storage ? markSettled(deps.storage, draft) : draft;
-    set({ draft: settled, step: "outcome", outcome, cancelNote: false });
+    const kept = deps.storage ? markSettled(deps.storage, draft, isDefinitive(outcome)) : draft;
+    set({ draft: kept, step: "outcome", outcome, cancelNote: false });
   }
 
-  // Asks the wallet by key; never sends a submit.
-  async function lookup(draft: Draft): Promise<void> {
+  // Asks the wallet by key; never sends a submit. True only when the wallet has no record of the key.
+  async function lookup(draft: Draft): Promise<boolean> {
     const client = session.getClient();
     if (!client) {
-      return;
+      return false;
     }
     const mine = epoch;
     set({ step: "outcome", outcome: { kind: "checking" }, cancelNote: false });
@@ -279,17 +280,19 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       if (mine === epoch) {
         finish(draft, { kind: "unknown", message: error.message });
       }
-      return;
+      return false;
     }
     if (mine !== epoch) {
-      return;
+      return false;
     }
     const result = classifyLookup(found);
     if (result.kind === "notSeen") {
-      set({ step: "job", outcome: null, notSeen: true });
-    } else {
-      finish(draft, result.outcome);
+      const open = deps.storage ? markSettled(deps.storage, draft, false) : draft;
+      set({ step: "job", outcome: null, notSeen: true, draft: open });
+      return true;
     }
+    finish(draft, result.outcome);
+    return false;
   }
 
   // Once per identity per page load: a draft that reached the wallet is accounted for before anything else shows.
@@ -352,6 +355,13 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     }
     sending = true;
     try {
+      // A key that went out before is asked about first: past the wallet's 24 h replay window only a lookup is safe.
+      if (draft.sentAt !== null && !(await lookup(draft))) {
+        return;
+      }
+      if (submitBlocker(state, session) !== null || state.draft?.idempotencyKey !== draft.idempotencyKey) {
+        return;
+      }
       const chainId = session.getState().accounts?.network.evmChainId ?? null;
       const sent = markSent(storage, draft, chainId, deps.now());
       if (!sent) {
@@ -397,8 +407,9 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     set({ draft, submitError: null, saveError: draft ? null : SAVE_FAILED });
   }
 
+  // An open draft stays: its key is what keeps the same job from being paid for twice, and a reload shows it again.
   function startOver(): void {
-    if (state.draft && deps.storage) {
+    if (state.draft && deps.storage && !isOpen(state.draft)) {
       removeDraft(deps.storage, state.draft.idempotencyKey);
     }
     epoch += 1;

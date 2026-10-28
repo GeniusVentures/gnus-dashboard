@@ -40,7 +40,7 @@ describe("findReusable", () => {
   it("gives null for another job, address, network, or a settled draft", () => {
     const storage = new MemoryStorage();
     const settled = make(storage, "k1");
-    markSettled(storage, settled);
+    markSettled(storage, settled, true);
     expect(findReusable(storage, identity, HASH_A)).toBeNull();
     make(storage, "k2");
     expect(findReusable(storage, identity, HASH_B)).toBeNull();
@@ -60,6 +60,21 @@ describe("findReusable", () => {
     make(storage, "new", { createdAt: 2 });
     expect(findReusable(storage, identity, HASH_A).idempotencyKey).toBe("new");
   });
+
+  it("prefers a sent draft over a newer unsent one for the same job", () => {
+    const storage = new MemoryStorage();
+    markSent(storage, make(storage, "sent", { createdAt: 1 }), 80002, 5);
+    make(storage, "unsent", { createdAt: 9 });
+    expect(findReusable(storage, identity, HASH_A).idempotencyKey).toBe("sent");
+  });
+
+  it("a draft settled and then reopened by a lookup is reusable again", () => {
+    const storage = new MemoryStorage();
+    const settled = markSettled(storage, markSent(storage, make(storage, "k1"), 80002, 5), true);
+    expect(findReusable(storage, identity, HASH_A)).toBeNull();
+    markSettled(storage, settled, false);
+    expect(findReusable(storage, identity, HASH_A).idempotencyKey).toBe("k1");
+  });
 });
 
 describe("prune", () => {
@@ -67,14 +82,21 @@ describe("prune", () => {
     const storage = new MemoryStorage();
     make(storage, "unsent-old", { createdAt: 0 });
     make(storage, "unsent-new", { createdAt: 3 * HOUR });
-    markSent(storage, make(storage, "sent-recent", { createdAt: 0 }), null, 3 * HOUR);
+    markSettled(storage, markSent(storage, make(storage, "settled-recent", { createdAt: 0 }), null, 3 * HOUR), true);
     const now = 24 * HOUR + 1;
     prune(storage, now);
-    expect(listDrafts(storage).map((d) => d.idempotencyKey).sort()).toEqual(["sent-recent", "unsent-new"]);
+    expect(listDrafts(storage).map((d) => d.idempotencyKey).sort()).toEqual(["settled-recent", "unsent-new"]);
     prune(storage, 3 * HOUR + 22 * HOUR);
     expect(storage.keys()).toHaveLength(2);
     prune(storage, 3 * HOUR + DRAFT_TTL_MS + 1);
     expect(storage.keys()).toEqual([]);
+  });
+
+  it("keeps a sent draft without a definitive answer at any age", () => {
+    const storage = new MemoryStorage();
+    markSent(storage, make(storage, "open", { createdAt: 0 }), 80002, 0);
+    prune(storage, 400 * 24 * HOUR);
+    expect(storage.keys()).toEqual(["gnus.submit.open"]);
   });
 
   it("removes entries that are not JSON or fail the schema and leaves other keys alone", () => {

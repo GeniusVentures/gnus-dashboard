@@ -131,6 +131,103 @@ describe("a reload at every step", () => {
   });
 });
 
+describe("a payment whose fate is open keeps its key until the wallet answers for good", () => {
+  it("a failed check, a reload and a null lookup: the same job keeps one key and pays once", async () => {
+    const first = await makeSubmit({ profile: "manualConfirm" });
+    await estimate(first);
+    const key = state(first).draft.idempotencyKey;
+    // The submit reply is unclassifiable while the confirm stays open, and the check after it fails.
+    const request = first.provider.request;
+    first.provider.request = (args) => {
+      if (args.method === "gnus_submitJob") {
+        request(args).catch(() => {});
+        return Promise.reject({ code: -32603, message: "Internal error" });
+      }
+      if (args.method === "gnus_getJob") {
+        return Promise.reject({ code: -32005, message: "Too many requests", data: { reason: "rate_limited" } });
+      }
+      return request(args);
+    };
+    await first.submit.submit();
+    expect(state(first).outcome.kind).toBe("unknown");
+    expect(state(first).draft.settled).toBe(false);
+
+    const page = await reload(first);
+    await settled(page);
+    expect(state(page)).toMatchObject({ step: "job", notSeen: true });
+    await estimate(page);
+    expect(state(page).draft.idempotencyKey).toBe(key);
+
+    page.provider.controls.answerConfirm(true);
+    await settle();
+    await page.submit.submit();
+    expect(state(page).outcome).toMatchObject({ kind: "done" });
+    expect(page.provider.controls.burnCount()).toBe(1);
+    expect(page.provider.controls.confirmCount()).toBe(1);
+  });
+
+  it("Submit another job on a pending payment keeps the key; the same job is looked up, never sent again", async () => {
+    const first = await makeSubmit({ profile: "walletStopsMidSubmit" });
+    await estimate(first);
+    const key = state(first).draft.idempotencyKey;
+    first.submit.submit();
+    await settle();
+    const page = await reload(first);
+    await settled(page);
+    expect(state(page).outcome.kind).toBe("pending");
+
+    page.submit.startOver();
+    expect(page.storage.keys()).toEqual([`${DRAFT_PREFIX}${key}`]);
+    await estimate(page);
+    expect(state(page).draft.idempotencyKey).toBe(key);
+    await page.submit.submit();
+    expect(state(page).outcome.kind).toBe("pending");
+    expect(submitCalls(page.provider)).toHaveLength(1);
+    expect(page.provider.controls.burnCount()).toBe(1);
+  });
+
+  it("submission_outcome_unknown keeps the key, and the same job never pays again", async () => {
+    const made = await makeSubmit({ profile: "submissionOutcomeUnknown" });
+    await estimate(made);
+    const key = state(made).draft.idempotencyKey;
+    await made.submit.submit();
+    expect(state(made).outcome.kind).toBe("outcomeUnknown");
+    made.submit.startOver();
+    await estimate(made);
+    expect(state(made).draft.idempotencyKey).toBe(key);
+    await made.submit.submit();
+    expect(state(made).outcome.kind).toBe("pending");
+    expect(submitCalls(made.provider)).toHaveLength(1);
+  });
+
+  it("an open payment is kept and looked up at any age", async () => {
+    const first = await makeSubmit({ profile: "walletStopsMidSubmit", now: () => 0 });
+    await estimate(first);
+    first.submit.submit();
+    await settle();
+    first.session.dispose();
+    const page = await makeSubmit({
+      provider: first.provider.controls.reinject(),
+      storage: first.storage,
+      now: () => 30 * 24 * 60 * 60 * 1000,
+    });
+    await settled(page);
+    expect(page.storage.keys()).toHaveLength(1);
+    expect(state(page).outcome.kind).toBe("pending");
+  });
+
+  it("a definitive answer retires the key: the same job gets a new one", async () => {
+    const made = await makeSubmit({ profile: "today" });
+    await estimate(made);
+    const key = state(made).draft.idempotencyKey;
+    await made.submit.submit();
+    expect(state(made).draft.settled).toBe(true);
+    made.submit.startOver();
+    await estimate(made);
+    expect(state(made).draft.idempotencyKey).not.toBe(key);
+  });
+});
+
 describe("identity", () => {
   it("a switched node account does not see the old account's result, and its draft is not restored", async () => {
     const made = await makeSubmit({ profile: "bridgedNotProcessedStatus" });

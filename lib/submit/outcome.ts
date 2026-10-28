@@ -20,6 +20,9 @@ export type ErrorClass =
 
 export type LookupClass = { kind: "outcome"; outcome: Outcome } | { kind: "notSeen" };
 
+/** The wallet answered for the key for good. Anything else keeps the key, so the same job can never pay twice. */
+export const isDefinitive = (outcome: Outcome): boolean => outcome.kind === "done" || outcome.kind === "paidNotProcessed";
+
 const NOTHING_SPENT_CODES = new Set([4001, 4100, 4200, 4900, -32005, -32010, -32011, -32012, -32013, -32015, -32602]);
 const NOTHING_SPENT_INTERNAL = new Set(["balance_unavailable", "checking", "missing_data"]);
 

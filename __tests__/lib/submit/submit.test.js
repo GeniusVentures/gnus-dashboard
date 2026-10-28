@@ -90,15 +90,15 @@ describe("the confirm", () => {
 
 describe("outcomes from the wallet's own replies", () => {
   it.each([
-    ["bridgedNotProcessedStatus", "paidNotProcessed"],
-    ["bridgedNotProcessedError", "paidNotProcessed"],
-    ["unconfirmedSubmit", "unconfirmed"],
-    ["submissionOutcomeUnknown", "outcomeUnknown"],
-  ])("%s ends on %s", async (profile, kind) => {
+    ["bridgedNotProcessedStatus", "paidNotProcessed", true],
+    ["bridgedNotProcessedError", "paidNotProcessed", true],
+    ["unconfirmedSubmit", "unconfirmed", false],
+    ["submissionOutcomeUnknown", "outcomeUnknown", false],
+  ])("%s ends on %s, settled %s", async (profile, kind, settled) => {
     const made = await ready({ profile });
     await made.submit.submit();
     expect(state(made).outcome.kind).toBe(kind);
-    expect(state(made).draft.settled).toBe(true);
+    expect(state(made).draft.settled).toBe(settled);
     expect(submitCalls(made.provider)).toHaveLength(1);
   });
 

@@ -7,7 +7,7 @@ import { useSubmit } from "./useSubmit";
 const CANCEL_NOTE =
   "This page can't close GeniusWallet's confirm. Reject it in GeniusWallet to cancel; until then this page waits for its answer.";
 const NOT_SEEN =
-  "GeniusWallet has no record of this submit. If its confirm is still open, answer it there. You can submit the same job again: the same submit is never paid twice.";
+  "GeniusWallet has no record of this submit. If its confirm is still open, answer it there. Submitting the same job again from this browser reuses this submit's key, and GeniusWallet never pays twice for one key.";
 
 const SubmitPanel: React.FC = () => {
   const { state: sessionState, store: session } = useSession();
