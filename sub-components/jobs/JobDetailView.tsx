@@ -1,19 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { GnusContractMismatchError, GnusError } from "../../lib/gnus/errors";
 import type { JobLookup } from "../../lib/gnus/schema";
-import { JobRef, cidHref, parseJobRef } from "../../lib/jobs";
+import { JobRef, cidHref, isFinal, parseJobRef } from "../../lib/jobs";
 import Amount from "../shared/Amount";
 import ExternalLink from "../shared/ExternalLink";
 import AddressChip from "../wallet/AddressChip";
 import { useSession } from "../wallet/SessionProvider";
 import { useAccountQuery } from "../wallet/useAccountQuery";
 import JobStatusBadge from "./JobStatusBadge";
+import { useJobUpdates } from "./useJobUpdates";
 
 const UNEXPECTED = "GeniusWallet returned an unexpected error.";
 const NOT_RECORDED = "Not recorded";
+// A slow re-read while the job can still change; paused while the tab is hidden.
+const POLL_MS = 30000;
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
 
@@ -137,14 +140,24 @@ const JobDetailBody: React.FC<{ jobRef: JobRef }> = ({ jobRef }) => {
   const { state } = useSession();
   const accounts = state.accounts;
   const [selector, value] = "burnTxHash" in jobRef ? (["burnTxHash", jobRef.burnTxHash] as const) : (["jobId", jobRef.jobId] as const);
-  const query = useAccountQuery(`job:${selector}:${value}`, async (client) => {
-    const job = await client.getJob("burnTxHash" in jobRef ? { burnTxHash: jobRef.burnTxHash } : { jobId: jobRef.jobId });
-    // The wallet answers only for the current node account; another account's job means the contract is broken.
-    if (job && accounts && job.sdkAddress !== null && job.sdkAddress !== accounts.node.sdkAddress) {
-      throw new GnusContractMismatchError("gnus_getJob", accounts.version);
-    }
-    return job;
-  });
+  const [poll, setPoll] = useState<number | false>(false);
+  useJobUpdates();
+  const query = useAccountQuery(
+    `job:${selector}:${value}`,
+    async (client) => {
+      const job = await client.getJob("burnTxHash" in jobRef ? { burnTxHash: jobRef.burnTxHash } : { jobId: jobRef.jobId });
+      // The wallet answers only for the current node account; another account's job means the contract is broken.
+      if (job && accounts && job.sdkAddress !== null && job.sdkAddress !== accounts.node.sdkAddress) {
+        throw new GnusContractMismatchError("gnus_getJob", accounts.version);
+      }
+      return job;
+    },
+    { refetchOnWindowFocus: true, refetchInterval: poll },
+  );
+  const live = query.data != null && !isFinal(query.data.status);
+  useEffect(() => {
+    setPoll(live ? POLL_MS : false);
+  }, [live]);
   if (query.isPending) {
     return (
       <p role="status">

@@ -1,4 +1,4 @@
-import type { Job, JobStatus } from "./gnus/schema";
+import type { Job, JobLookup, JobStatus } from "./gnus/schema";
 import { shorten } from "../sub-components/wallet/AddressChip";
 
 export interface StatusInfo {
@@ -106,7 +106,7 @@ export const cidHref = (cid: string): string | null => (/^[A-Za-z0-9]+$/.test(ci
 
 interface JobsPage {
   jobs: Job[];
-  nextCursor: string | null;
+  nextCursor?: string | null;
 }
 
 /** Swaps the job with the same burn hash wherever a loaded page holds it; found is false when none does. */
@@ -124,8 +124,9 @@ export function replaceInPages<P extends JobsPage>(pages: P[], job: Job): { page
 }
 
 /** An event carries a Job without its result or error, so a matching detail keeps both. */
-export function replaceInDetail<D extends { burnTxHash: string | null }>(detail: D | null | undefined, job: Job): D | null | undefined {
-  return detail && detail.burnTxHash === job.burnTxHash ? { ...detail, ...job } : detail;
+export function replaceInDetail(detail: JobLookup | undefined, job: Job): JobLookup | undefined {
+  // A pending record that a job event matches becomes that job; the cast says the merge keeps the detail's shape.
+  return detail && detail.burnTxHash === job.burnTxHash ? ({ ...detail, ...job } as NonNullable<JobLookup>) : detail;
 }
 
 export type SearchTarget = { burnTxHash: string } | { jobId: string } | { partialHash: string } | null;

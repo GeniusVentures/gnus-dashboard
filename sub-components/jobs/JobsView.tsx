@@ -3,13 +3,16 @@ import Head from "next/head";
 import Link from "next/link";
 import { GnusContractMismatchError, GnusError } from "../../lib/gnus/errors";
 import type { Job, JobList } from "../../lib/gnus/schema";
-import { isMarked, shortJobId } from "../../lib/jobs";
+import { isFinal, isMarked, shortJobId } from "../../lib/jobs";
 import Amount from "../shared/Amount";
 import { useSession } from "../wallet/SessionProvider";
 import { useAccountInfiniteQuery } from "../wallet/useAccountQuery";
 import JobStatusBadge from "./JobStatusBadge";
+import { useJobUpdates } from "./useJobUpdates";
 
 const PAGE_SIZE = 20;
+// A slow re-read while a job on screen can still change; never faster, and paused while the tab is hidden.
+const POLL_MS = 30000;
 const UNEXPECTED = "GeniusWallet returned an unexpected error.";
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -37,6 +40,8 @@ const Spinner: React.FC<{ text: string }> = ({ text }) => (
 const JobsBody: React.FC = () => {
   const { state } = useSession();
   const accounts = state.accounts;
+  const [poll, setPoll] = useState<number | false>(false);
+  useJobUpdates();
   const query = useAccountInfiniteQuery(
     "jobs",
     async (client, cursor): Promise<JobList> => {
@@ -48,11 +53,16 @@ const JobsBody: React.FC = () => {
       return page;
     },
     (last) => last.nextCursor,
+    { refetchOnWindowFocus: true, refetchInterval: poll },
   );
   const links = useRef<Array<HTMLAnchorElement | null>>([]);
   const focusFrom = useRef<number | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const jobs = distinct(query.data?.pages ?? []);
+  const live = jobs.some((job) => !isFinal(job.status));
+  useEffect(() => {
+    setPoll(live ? POLL_MS : false);
+  }, [live]);
 
   // After "Load more jobs" the focus moves to the first new row so a keyboard user does not start over.
   useEffect(() => {
