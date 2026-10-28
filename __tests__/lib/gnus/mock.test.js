@@ -441,7 +441,7 @@ describe("controls and events", () => {
 describe("fault profiles", () => {
   const { installMock, mockOptionsFromSearch } = require("../../../lib/gnus/mock/install");
   const FAULTS = [
-    "connectRejected", "rejectConfirm", "originRevoked", "methodUnsupported", "sdkStarting", "internalError",
+    "connectRejected", "rejectConfirm", "originNotAllowed", "connectPrompt", "bridgeUnavailable", "unconfirmedSubmit", "submissionOutcomeUnknown", "methodUnsupported", "sdkStarting", "internalError",
     "rateLimited", "confirmOpen", "costUnavailable", "insufficientBalance", "payerCannotSign", "balanceUnavailable",
     "bridgeFailed", "bridgedNotProcessedStatus", "bridgedNotProcessedError", "switching", "slowConfirm",
     "malformedNumericAmount", "malformedSwappedAddress", "malformedMissingField",
@@ -478,8 +478,8 @@ describe("fault profiles", () => {
     await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
   });
 
-  test("originRevoked rejects every call", async () => {
-    const { mock } = make("originRevoked");
+  test("originNotAllowed rejects every call", async () => {
+    const { mock } = make("originNotAllowed");
     expectWire(await wireError(mock.request(GET_ACCOUNTS)), 4100);
     expectWire(await wireError(mock.request(ESTIMATE)), 4100);
     expectWire(await wireError(mock.request({ method: "gnus_nope" })), 4100);
@@ -640,5 +640,111 @@ describe("fault profiles", () => {
     const missing = await make("malformedMissingField").mock.request(GET_ACCOUNTS);
     expect("unit" in missing).toBe(false);
     expect(missing.version).toBe("1");
+  });
+});
+
+describe("connect prompt, revoke and the new outcomes", () => {
+  const GET_ACCOUNTS = { method: "gnus_getAccounts" };
+  const ESTIMATE = { method: "gnus_estimate", params: { job: JOB } };
+  const submit = (key) => ({ method: "gnus_submitJob", params: { job: JOB, idempotencyKey: key } });
+  const tick = (ms) => jest.advanceTimersByTimeAsync(ms);
+  const settled = (promise) => {
+    const box = { done: false };
+    promise.then(() => { box.done = true; }, () => { box.done = true; });
+    return box;
+  };
+
+  afterEach(() => jest.useRealTimers());
+
+  test("connectPrompt: pending, confirm_open for a second call, decline is 4001 and prompts again", async () => {
+    jest.useFakeTimers();
+    const { mock, controls } = make("connectPrompt");
+    const first = mock.request(GET_ACCOUNTS);
+    const firstBox = settled(first);
+    const second = await wireError(mock.request(ESTIMATE));
+    expect(second.code).toBe(-32005);
+    expect(second.data.reason).toBe("confirm_open");
+    await tick(1000);
+    expect(firstBox.done).toBe(false);
+    const declined = wireError(first);
+    controls.answerConnect(false);
+    expect((await declined).code).toBe(4001);
+    const again = mock.request(GET_ACCOUNTS);
+    const againBox = settled(again);
+    await tick(1000);
+    expect(againBox.done).toBe(false);
+    controls.answerConnect(true);
+    await expect(again).resolves.toMatchObject({ version: "1" });
+    await expect(mock.request(GET_ACCOUNTS)).resolves.toBeDefined();
+  });
+
+  test("connectPrompt approves itself after 5000 ms", async () => {
+    jest.useFakeTimers();
+    const { mock } = make("connectPrompt");
+    const pending = mock.request(GET_ACCOUNTS);
+    await tick(4999);
+    const box = settled(pending);
+    await tick(0);
+    expect(box.done).toBe(false);
+    await tick(1);
+    await expect(pending).resolves.toBeDefined();
+  });
+
+  test("answerConnect throws when no prompt is open", () => {
+    const { controls } = make();
+    expect(() => controls.answerConnect(true)).toThrow();
+  });
+
+  test("revokeOrigin on the default profile prompts again and rejects an open confirm with 4100", async () => {
+    jest.useFakeTimers();
+    const { mock, controls } = make("slowConfirm");
+    const pending = wireError(mock.request(submit("k1")));
+    await tick(1000);
+    controls.revokeOrigin();
+    expect((await pending).code).toBe(4100);
+    const next = mock.request(GET_ACCOUNTS);
+    const box = settled(next);
+    await tick(10000);
+    expect(box.done).toBe(false);
+    controls.answerConnect(true);
+    await expect(next).resolves.toBeDefined();
+    expect(controls.burnCount()).toBe(0);
+  });
+
+  test("params are checked before the connect prompt", async () => {
+    const { mock } = make("connectPrompt");
+    expect((await wireError(mock.request({ method: "gnus_estimate", params: { job: "x" } }))).code).toBe(-32602);
+  });
+
+  test("unconfirmedSubmit: one burn, listed as unconfirmed, same key replays the same result", async () => {
+    const { mock, controls } = make("unconfirmedSubmit");
+    const first = await mock.request(submit("k"));
+    expect(first.status).toBe("unconfirmed");
+    expect(await mock.request(submit("k"))).toEqual(first);
+    expect(controls.burnCount()).toBe(1);
+    const { jobs } = await mock.request({ method: "gnus_listJobs" });
+    expect(jobs.map((job) => job.status)).toEqual(["unconfirmed"]);
+  });
+
+  test("submissionOutcomeUnknown: -32603 with a null burnTxHash and no burn", async () => {
+    const { mock, controls, client } = make("submissionOutcomeUnknown");
+    const err = await wireError(mock.request(submit("k")));
+    expect(err.code).toBe(-32603);
+    expect(err.data.reason).toBe("submission_outcome_unknown");
+    expect(err.data.burnTxHash).toBeNull();
+    expect(err.data.idempotencyKey).toBe("k");
+    expect(controls.burnCount()).toBe(0);
+    const typed = await wireError(client.submitJob({ job: JOB, idempotencyKey: "k" }));
+    expect(typed).toBeInstanceOf(GnusError);
+    expect(typed.kind).toBe("submissionOutcomeUnknown");
+    expect(typed.outcome.payer).not.toBeNull();
+  });
+
+  test("bridgeUnavailable refuses estimate and submit with its reason", async () => {
+    const { client } = make("bridgeUnavailable");
+    for (const err of [await wireError(client.estimate({ job: JOB })), await wireError(client.submitJob({ job: JOB, idempotencyKey: "k" }))]) {
+      expect(err.kind).toBe("bridgeUnavailable");
+    }
+    await expect(client.getAccounts()).resolves.toBeDefined();
   });
 });

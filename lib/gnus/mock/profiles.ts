@@ -2,8 +2,8 @@ import "./marker";
 
 export type WireError = { code: number; message: string; data?: Record<string, unknown> };
 
-const wire = (code: number, message: string, reason?: string): WireError =>
-  reason === undefined ? { code, message } : { code, message, data: { reason } };
+const wire = (code: number, message: string, reason?: string, extra?: Record<string, unknown>): WireError =>
+  reason === undefined ? { code, message } : { code, message, data: { reason, ...extra } };
 
 export interface MockProfile {
   readonly description: string;
@@ -23,7 +23,15 @@ export interface MockProfile {
   readonly confirmDelayMs?: number;
   /** reject: 4001 after the delay, nothing burned. */
   readonly confirm?: "approve" | "reject";
-  readonly submitOutcome?: "submitted" | "bridgeFailed" | "bridgedNotProcessedStatus" | "bridgedNotProcessedError";
+  readonly submitOutcome?:
+    | "submitted"
+    | "bridgeFailed"
+    | "bridgedNotProcessedStatus"
+    | "bridgedNotProcessedError"
+    | "unconfirmed"
+    | "outcomeUnknown";
+  /** The origin starts unconnected: the first call opens a prompt that approves itself after this long unless answered. */
+  readonly connectPromptMs?: number;
   /** Estimate takes 1000 ms; a second one meanwhile is -32005 rate_limited. */
   readonly busyWhenConcurrent?: boolean;
   /** Estimate balance is a fixed string below cost. */
@@ -63,7 +71,12 @@ export const MOCK_PROFILES = {
     data: "today",
     confirm: "reject",
   },
-  originRevoked: {
+  connectPrompt: {
+    description: "The origin starts unconnected: the first call opens a connect prompt that approves itself after 5 s",
+    data: "today",
+    connectPromptMs: 5000,
+  },
+  originNotAllowed: {
     description: "The origin was revoked: every call is 4100",
     data: "today",
     errors: { "*": wire(4100, "Origin not allowed") },
@@ -121,6 +134,24 @@ export const MOCK_PROFILES = {
     description: "The burn fails: submit is -32013, nothing spent or recorded",
     data: "today",
     submitOutcome: "bridgeFailed",
+  },
+  bridgeUnavailable: {
+    description: "The wallet has no bridge on its EVM network: estimate and submit are -32013 bridge_unavailable",
+    data: "today",
+    errors: {
+      gnus_estimate: wire(-32013, "No bridge on this network", "bridge_unavailable"),
+      gnus_submitJob: wire(-32013, "No bridge on this network", "bridge_unavailable"),
+    },
+  },
+  unconfirmedSubmit: {
+    description: "The burn was sent but not confirmed: submit resolves with status unconfirmed, one burn, job listed",
+    data: "today",
+    submitOutcome: "unconfirmed",
+  },
+  submissionOutcomeUnknown: {
+    description: "A same-key submit whose earlier outcome was lost: -32603 submission_outcome_unknown, no burn hash",
+    data: "today",
+    submitOutcome: "outcomeUnknown",
   },
   bridgedNotProcessedStatus: {
     description: "Paid but not processed, as a result: submit resolves with status bridgedNotProcessed",

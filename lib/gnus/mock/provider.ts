@@ -15,6 +15,10 @@ export interface MockControls {
   advanceJob(burnTxHash: string, status?: string): void;
   /** Emits disconnect { code, message }; the code defaults to 4900. */
   disconnect(code?: number, message?: string): void;
+  /** Settles the open connect prompt: approve connects the origin, decline rejects the waiting call with 4001. Throws when none is open. */
+  answerConnect(approve: boolean): void;
+  /** Forgets the origin: its next call prompts again, and open spend confirms reject 4100. */
+  revokeOrigin(): void;
   burnCount(): number;
   readonly calls: Array<{ method: string; params?: unknown }>;
 }
@@ -50,8 +54,10 @@ interface MockState {
   createdAt: number;
   firstCallPending: boolean;
   estimating: boolean;
-  /** Open confirms to abort when the node account changes. */
-  accountWatchers: Set<() => void>;
+  connected: boolean;
+  prompt: { settle: (approve: boolean) => void } | null;
+  /** Open confirms to abort when the node account changes or the origin is revoked. */
+  accountWatchers: Set<(err: WireError) => void>;
 }
 
 const IDEMPOTENCY_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -100,8 +106,8 @@ function initialAccounts(profile: MockProfile): Accounts {
 
 const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-function fail(code: number, message: string, reason?: string): WireError {
-  return reason === undefined ? { code, message } : { code, message, data: { reason } };
+function fail(code: number, message: string, reason?: string, extra?: Record<string, unknown>): WireError {
+  return reason === undefined ? { code, message } : { code, message, data: { reason, ...extra } };
 }
 
 const invalid = (message: string, reason?: string) => fail(-32602, message, reason);
@@ -120,7 +126,7 @@ function changeNode(state: MockState): void {
   const watchers = [...state.accountWatchers];
   state.accountWatchers.clear();
   for (const abort of watchers) {
-    abort();
+    abort(fail(-32015, "The account changed while the confirm was open", "account_changed"));
   }
   emitFrom(state, ACCOUNTS_CHANGED, state.accounts);
 }
@@ -188,12 +194,14 @@ function createFacade(state: MockState): MockProvider {
   const mine = (): JobRecord[] => state.jobs.filter((job) => job.sdkAddress === node());
   const publicJob = ({ result: _result, ...job }: JobRecord): Job => job;
 
-  function getAccounts(): Accounts {
+  async function getAccounts(): Promise<Accounts> {
+    await admit("gnus_getAccounts");
     return state.accounts;
   }
 
   async function estimate(args: RequestArgs): Promise<Estimate> {
     jobOf(paramsOf(args, true));
+    await admit("gnus_estimate");
     if (profile.busyWhenConcurrent) {
       if (state.estimating) {
         throw fail(-32005, "Too many requests", "rate_limited");
@@ -220,15 +228,48 @@ function createFacade(state: MockState): MockProvider {
     };
   }
 
-  // Resolves after the native confirm; a node account change meanwhile aborts it with nothing burned.
+  // The wallet checks params first, then the connection, then readiness, then a switch in progress.
+  async function admit(method: string): Promise<void> {
+    if (!state.connected) {
+      if (state.prompt) {
+        throw fail(-32005, "A connect prompt is already open", "confirm_open");
+      }
+      await new Promise<void>((resolve, reject) => {
+        const timer =
+          profile.connectPromptMs === undefined
+            ? undefined
+            : setTimeout(() => state.prompt?.settle(true), profile.connectPromptMs);
+        state.prompt = {
+          settle(approve) {
+            clearTimeout(timer);
+            state.prompt = null;
+            state.connected = approve;
+            if (approve) {
+              resolve();
+            } else {
+              reject(fail(4001, "User rejected the request"));
+            }
+          },
+        };
+      });
+    }
+    if (profile.notReadyForMs !== undefined && Date.now() - state.createdAt < profile.notReadyForMs) {
+      throw fail(4900, "Wallet not ready");
+    }
+    if (state.accounts.switching && method !== "gnus_getAccounts") {
+      throw fail(-32015, "Account switch in progress");
+    }
+  }
+
+  // Resolves after the native confirm; a node account change or a revoke meanwhile aborts it with nothing burned.
   function confirmWait(ms: number): Promise<void> {
     if (ms <= 0) {
       return Promise.resolve();
     }
     return new Promise((resolve, reject) => {
-      const abort = (): void => {
+      const abort = (err: WireError): void => {
         clearTimeout(timer);
-        reject(fail(-32015, "The account changed while the confirm was open", "account_changed"));
+        reject(err);
       };
       const timer = setTimeout(() => {
         state.accountWatchers.delete(abort);
@@ -242,6 +283,7 @@ function createFacade(state: MockState): MockProvider {
     const params = paramsOf(args, true);
     const job = jobOf(params);
     const key = boundedString(params.idempotencyKey, "idempotencyKey", MAX_KEY_LENGTH);
+    await admit("gnus_submitJob");
     // ponytail: bodies are compared as JSON.stringify(job), so key order counts. Upgrade: canonical JSON if the wallet documents its rule.
     const body = JSON.stringify(job);
     const earlier = state.replays.get(key);
@@ -273,6 +315,16 @@ function createFacade(state: MockState): MockProvider {
       if (outcome === "bridgeFailed") {
         throw fail(-32013, "The bridge transaction failed");
       }
+      if (outcome === "outcomeUnknown") {
+        throw fail(-32603, "The earlier submit has no recorded outcome", "submission_outcome_unknown", {
+          idempotencyKey: key,
+          burnTxHash: null,
+          sdkAddress: node(),
+          payer: state.accounts.payer.evmAddress,
+          cost: amounts.cost,
+          createdAt: new Date().toISOString(),
+        });
+      }
       state.burns += 1;
       const burnTxHash = "0x" + state.burns.toString(16).padStart(64, "0");
       const record: JobRecord = {
@@ -296,6 +348,8 @@ function createFacade(state: MockState): MockProvider {
         await pause(0);
         record.status = "submitted";
         record.jobId = data === "populated" ? `job-${state.burns}` : null;
+      } else if (outcome === "unconfirmed") {
+        record.status = "unconfirmed";
       }
       const result = { jobId: record.jobId, burnTxHash, sdkAddress: record.sdkAddress, status: record.status };
       state.replays.set(key, { at: Date.now(), body, reply: result, rejected: false });
@@ -305,7 +359,7 @@ function createFacade(state: MockState): MockProvider {
     }
   }
 
-  function listJobs(args: RequestArgs): unknown {
+  async function listJobs(args: RequestArgs): Promise<unknown> {
     const params = paramsOf(args, false);
     let limit = DEFAULT_LIMIT;
     if (params.limit !== undefined) {
@@ -322,6 +376,7 @@ function createFacade(state: MockState): MockProvider {
       }
       start = Number(cursor.slice(1));
     }
+    await admit("gnus_listJobs");
     const newestFirst = mine().reverse();
     const end = start + limit;
     let nextCursor: string | null = null;
@@ -332,7 +387,7 @@ function createFacade(state: MockState): MockProvider {
     return { jobs: newestFirst.slice(start, end).map(publicJob), nextCursor };
   }
 
-  function getJob(args: RequestArgs): unknown {
+  async function getJob(args: RequestArgs): Promise<unknown> {
     const params = paramsOf(args, true);
     const given = (["jobId", "burnTxHash", "idempotencyKey"] as const).filter(
       (name) => params[name] !== undefined && params[name] !== null,
@@ -342,6 +397,7 @@ function createFacade(state: MockState): MockProvider {
     }
     const selector = given[0];
     const value = boundedString(params[selector], selector, MAX_KEY_LENGTH);
+    await admit("gnus_getJob");
     const found = mine().find((job) => job[selector] === value);
     if (!found) {
       return null;
@@ -350,11 +406,12 @@ function createFacade(state: MockState): MockProvider {
     return { ...publicJob(found), result: completed ? { cids: ["bafy" + "q".repeat(40)] } : null };
   }
 
-  function getEarnings(args: RequestArgs): Earnings {
+  async function getEarnings(args: RequestArgs): Promise<Earnings> {
     const params = paramsOf(args, false);
     if (params.includeChildren !== undefined && typeof params.includeChildren !== "boolean") {
       throw invalid("Invalid params: includeChildren must be a boolean");
     }
+    await admit("gnus_getEarnings");
     const filled = data === "populated";
     return {
       sdkAddress: state.accounts.node.sdkAddress,
@@ -390,12 +447,6 @@ function createFacade(state: MockState): MockProvider {
     if (scripted) {
       throw copy(scripted);
     }
-    if (profile.notReadyForMs !== undefined && Date.now() - state.createdAt < profile.notReadyForMs) {
-      throw fail(4900, "Wallet not ready");
-    }
-    if (state.accounts.switching && method !== "gnus_getAccounts") {
-      throw fail(-32015, "Account switch in progress");
-    }
   }
 
   // Applied to the built reply just before it is returned, nowhere else.
@@ -425,7 +476,7 @@ function createFacade(state: MockState): MockProvider {
     let built: unknown;
     switch (args.method) {
       case "gnus_getAccounts":
-        built = getAccounts();
+        built = await getAccounts();
         break;
       case "gnus_estimate":
         built = await estimate(args);
@@ -434,13 +485,13 @@ function createFacade(state: MockState): MockProvider {
         built = await submitJob(args);
         break;
       case "gnus_listJobs":
-        built = listJobs(args);
+        built = await listJobs(args);
         break;
       case "gnus_getJob":
-        built = getJob(args);
+        built = await getJob(args);
         break;
       case "gnus_getEarnings":
-        built = getEarnings(args);
+        built = await getEarnings(args);
         break;
       default:
         throw fail(4200, "Method not supported");
@@ -468,6 +519,20 @@ function createFacade(state: MockState): MockProvider {
     },
     disconnect(code = 4900, message = "Wallet disconnected") {
       emitFrom(state, "disconnect", { code, message });
+    },
+    answerConnect(approve) {
+      if (!state.prompt) {
+        throw new Error("Mock has no open connect prompt");
+      }
+      state.prompt.settle(approve);
+    },
+    revokeOrigin() {
+      state.connected = false;
+      const watchers = [...state.accountWatchers];
+      state.accountWatchers.clear();
+      for (const abort of watchers) {
+        abort(fail(4100, "The origin was revoked while the confirm was open"));
+      }
     },
     burnCount: () => state.burns,
     calls: state.calls,
@@ -513,6 +578,8 @@ export function createMockProvider(options?: { profile?: string }): MockProvider
     createdAt: Date.now(),
     firstCallPending: profile.firstCallError !== undefined,
     estimating: false,
+    connected: profile.connectPromptMs === undefined,
+    prompt: null,
     accountWatchers: new Set(),
   };
   const provider = createFacade(state);

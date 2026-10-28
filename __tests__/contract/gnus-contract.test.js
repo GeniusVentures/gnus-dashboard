@@ -30,10 +30,10 @@ const EVM = /^0x[0-9a-f]{40}$/;
 const DIGITS = /^\d+$/;
 
 const targets = [];
-function fresh() {
-  const target = factory.create("today");
+function fresh(profile = "today") {
+  const target = factory.create(profile);
   if (!target) {
-    throw new Error(`factory "${factory.name}" cannot create profile "today"`);
+    throw new Error(`factory "${factory.name}" cannot create profile "${profile}"`);
   }
   targets.push(target);
   return { target, client: createGnusClient(target.transport), controls: target.controls };
@@ -187,6 +187,37 @@ describe(`gnus contract (${factory.name})`, () => {
     test("an unknown method is unsupportedMethod", async () => {
       const { target } = fresh();
       expect(await kindOf(target, "gnus_getAddress")).toBe("unsupportedMethod");
+    });
+  });
+
+  describe("connection", () => {
+    const stillPending = async (promise) => {
+      let done = false;
+      promise.then(() => { done = true; }, () => { done = true; });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      return !done;
+    };
+
+    itControls(`${SKIP_NOTE} a declined connect prompt is 4001 and the next call prompts again`, async () => {
+      const { client, controls } = fresh("connectPrompt");
+      const first = client.getAccounts().catch((err) => err);
+      expect(await stillPending(first)).toBe(true);
+      controls.answerConnect(false);
+      expect((await first).code).toBe(4001);
+      const second = client.getAccounts();
+      expect(await stillPending(second)).toBe(true);
+      controls.answerConnect(true);
+      await expect(second).resolves.toMatchObject({ version: "1" });
+    });
+
+    itControls(`${SKIP_NOTE} after revokeOrigin the next call prompts again`, async () => {
+      const { client, controls } = fresh();
+      await client.getAccounts();
+      controls.revokeOrigin();
+      const next = client.getAccounts();
+      expect(await stillPending(next)).toBe(true);
+      controls.answerConnect(true);
+      await expect(next).resolves.toMatchObject({ version: "1" });
     });
   });
 

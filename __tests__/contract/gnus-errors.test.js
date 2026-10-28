@@ -21,9 +21,9 @@ const OTHER_JOB = { ...JOB, name: `${JOB.name}-other` };
 const EXPECTED_ROWS = [
   "4001", "4100", "4200", "4900",
   "-32602", "-32602:idempotency_key_reused",
-  "-32603", "-32603:balance_unavailable",
+  "-32603", "-32603:balance_unavailable", "-32603:submission_outcome_unknown",
   "-32005:rate_limited", "-32005:confirm_open", "-32005:submit_in_flight",
-  "-32010", "-32011", "-32012", "-32013", "-32014",
+  "-32010", "-32011", "-32012", "-32013", "-32013:bridge_unavailable", "-32014",
   "-32015", "-32015:account_changed",
 ];
 
@@ -90,7 +90,7 @@ const ROWS = [
     spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => expect((await client.listJobs()).jobs).toEqual([]),
   ],
-  ["4100", "originRevoked", "unauthorized", async ({ client }) => client.getAccounts()],
+  ["4100", "originNotAllowed", "unauthorized", async ({ client }) => client.getAccounts()],
   ["4200", "methodUnsupported", "unsupportedMethod", async ({ client }) => client.getEarnings()],
   ["4900", "sdkStarting", "notReady", async ({ client }) => client.getAccounts(), null, true],
   ["-32602", "today", "invalidParams", async ({ client }) => client.submitJob({ job: "not an object", idempotencyKey: newKey() })],
@@ -112,6 +112,24 @@ const ROWS = [
     spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
     async ({ client }) => expect((await client.estimate({ job: JOB })).balance).toBeNull(),
   ],
+  [
+    "-32603:submission_outcome_unknown",
+    "submissionOutcomeUnknown",
+    "submissionOutcomeUnknown",
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
+    async ({ client }, err) => {
+      expect(err.burnTxHash).toBeNull();
+      expect(err.outcome).not.toBeNull();
+      expect((await client.listJobs()).jobs).toEqual([]);
+    },
+  ],
+  [
+    "-32013:bridge_unavailable",
+    "bridgeUnavailable",
+    "bridgeUnavailable",
+    spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() })),
+  ],
+  ["-32013:bridge_unavailable", "bridgeUnavailable", "bridgeUnavailable", async ({ client }) => client.estimate({ job: JOB })],
   ["-32005:confirm_open", "confirmOpen", "confirmOpen", spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() }))],
   ["-32010", "costUnavailable", "costUnavailable", async ({ client }) => client.estimate({ job: JOB })],
   ["-32010", "costUnavailable", "costUnavailable", spends(async ({ client }) => client.submitJob({ job: JOB, idempotencyKey: newKey() }))],
