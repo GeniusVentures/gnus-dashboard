@@ -6,6 +6,9 @@ export type WireError = { code: number; message: string; data?: Record<string, u
 const wire = (code: number, message: string, reason?: string, extra?: Record<string, unknown>): WireError =>
   reason === undefined ? { code, message } : { code, message, data: { reason, ...extra } };
 
+// Wallet text is untrusted. This payload runs script if a page ever puts it in markup instead of a text node.
+const HOSTILE = '<img src="x" onerror="window.__gnusXss=1"><script>window.__gnusXss=1</script>';
+
 export interface MockProfile {
   readonly description: string;
   /** What the SDK behind the wallet can fill: today = SDK gaps are null; populated = every field set; allNulls = every nullable field null. */
@@ -70,6 +73,17 @@ export const MOCK_PROFILES = {
     description: "25 jobs for the first node account, the three statuses the wallet can report today, two pages of 20",
     data: "today",
     jobs: "history",
+  },
+  hostileText: {
+    description: "The jobResults jobs, and an estimate rejected with -32602 whose message is HTML and script",
+    data: "populated",
+    jobs: "results",
+    errors: { gnus_estimate: wire(-32602, HOSTILE) },
+  },
+  hostileSubmit: {
+    description: "An estimate that works and a submit rejected with -32602 whose message is HTML and script",
+    data: "populated",
+    errors: { gnus_submitJob: wire(-32602, HOSTILE) },
   },
   jobResults: {
     description: "Populated: nine jobs, one per state plus an unseen status and a hostile one, with stored results and errors",
