@@ -1,6 +1,6 @@
 import { createMockProvider } from "../../../lib/gnus/mock/provider";
 import { submitBlocker } from "../../../lib/submit/store";
-import { JOB_TEXT, failing, gated, makeSubmit, submitCalls } from "../../mocks/submit";
+import { JOB_TEXT, failing, gated, makeSubmit, submitCalls, until } from "../../mocks/submit";
 
 async function ready(options) {
   const made = await makeSubmit(options);
@@ -85,6 +85,78 @@ describe("the confirm", () => {
     await pending;
     expect(made.session.getState().phase).toBe("denied");
     expect(made.provider.controls.burnCount()).toBe(0);
+  });
+});
+
+// The wallet burns, then the origin is revoked before the reply, so the page gets 4100 for a spent payment.
+function revokedAfterBurn(made) {
+  const request = made.provider.request;
+  made.provider.request = async (args) => {
+    if (args.method !== "gnus_submitJob") {
+      return request(args);
+    }
+    await request(args);
+    made.provider.controls.revokeOrigin();
+    throw { code: 4100, message: "The origin was revoked" };
+  };
+}
+
+// until() checks once more after the loop, so the prompt is answered at most once.
+async function approveConnect(made) {
+  let answered = false;
+  await until(() => {
+    if (!answered) {
+      try {
+        made.provider.controls.answerConnect(true);
+        answered = true;
+      } catch {
+        // no prompt open yet
+      }
+    }
+    return answered;
+  });
+}
+
+describe("a disconnect during a submit", () => {
+  it("4100 after the burn keeps the key, never says nothing was spent, and the reconnect shows the payment", async () => {
+    const made = await ready({ profile: "today" });
+    const key = state(made).draft.idempotencyKey;
+    revokedAfterBurn(made);
+    await made.submit.submit();
+    expect(state(made)).toMatchObject({ step: "outcome", outcome: { kind: "disconnected" }, submitError: null });
+    expect(state(made).draft).toMatchObject({ idempotencyKey: key, settled: false });
+    expect(made.session.getState().phase).toBe("denied");
+
+    made.session.connectAgain();
+    await approveConnect(made);
+    await until(() => state(made).outcome?.kind === "done");
+    expect(state(made).draft).toMatchObject({ idempotencyKey: key, settled: true });
+    expect(made.provider.controls.burnCount()).toBe(1);
+    expect(submitCalls(made.provider)).toHaveLength(1);
+  });
+
+  it("a wallet that restarts mid-submit: Retry looks the key up instead of waiting forever", async () => {
+    const made = await ready({ profile: "walletStopsMidSubmit" });
+    made.submit.submit();
+    await settle();
+    expect(state(made).step).toBe("confirm");
+    made.provider.controls.disconnect();
+    expect(made.session.getState().phase).toBe("notResponding");
+    made.session.retry();
+    await until(() => state(made).outcome?.kind === "pending");
+    expect(state(made).outcome.burnTxHash).toBe("0x" + "0".repeat(63) + "1");
+  });
+
+  it("a transient disconnect: the open confirm still answers, and that answer is shown", async () => {
+    const made = await ready({ profile: "manualConfirm" });
+    made.submit.submit();
+    await settle();
+    made.provider.controls.disconnect();
+    made.session.retry();
+    await until(() => state(made).notSeen);
+    made.provider.controls.answerConfirm(true);
+    await until(() => state(made).outcome?.kind === "done");
+    expect(made.provider.controls.burnCount()).toBe(1);
   });
 });
 

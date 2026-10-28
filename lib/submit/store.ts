@@ -137,7 +137,9 @@ const EXAMPLE_TEXT = JSON.stringify(exampleJob, null, 2);
 export function createSubmitStore(session: SessionStore, deps: SubmitDeps): SubmitStore {
   let state = INITIAL;
   let epoch = 0;
-  let sending = false;
+  // The submit call in flight; a reconnect abandons it, since a wallet that restarted never answers it.
+  let sending: object | null = null;
+  let away = false;
   let lastIdentity = identityOf(session);
   const recovered = new Set<string>();
   const listeners = new Set<() => void>();
@@ -166,7 +168,24 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
         set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, notSeen: false });
       }
     }
+    if (session.getState().accounts === null) {
+      away = true;
+    } else if (away) {
+      away = false;
+      resume();
+    }
     void recover();
+  }
+
+  // Back from a disconnect: an open submit or an interrupted check is asked about by key, as its call may never answer.
+  function resume(): void {
+    const { draft, step, outcome } = state;
+    if (!draft || !(step === "confirm" || outcome?.kind === "checking" || outcome?.kind === "disconnected")) {
+      return;
+    }
+    sending = null;
+    epoch += 1;
+    void lookup(draft);
   }
 
   function setText(text: string): void {
@@ -278,7 +297,7 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
         session.report(error);
       }
       if (mine === epoch) {
-        finish(draft, { kind: "unknown", message: error.message });
+        finish(draft, error.code === 4100 ? { kind: "disconnected" } : { kind: "unknown", message: error.message });
       }
       return false;
     }
@@ -353,7 +372,8 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     ) {
       return;
     }
-    sending = true;
+    const mine = {};
+    sending = mine;
     try {
       // A key that went out before is asked about first: past the wallet's 24 h replay window only a lookup is safe.
       if (draft.sentAt !== null && !(await lookup(draft))) {
@@ -373,18 +393,25 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       try {
         result = await client.submitJob({ job: parsed.job, idempotencyKey: sent.idempotencyKey });
       } catch (err) {
-        await failed(normalizeError(err), sent);
+        if (sending === mine) {
+          await failed(normalizeError(err), sent);
+        }
         return;
       }
-      finish(sent, classifyResult(result));
+      // An abandoned call that still answers is the truth about its key, as long as the page is on that key.
+      if (sending === mine || state.draft?.idempotencyKey === sent.idempotencyKey) {
+        finish(sent, classifyResult(result));
+      }
     } finally {
-      sending = false;
+      if (sending === mine) {
+        sending = null;
+      }
     }
   }
 
   async function checkAgain(): Promise<void> {
     const { draft, outcome } = state;
-    if (!draft || (outcome?.kind !== "pending" && outcome?.kind !== "unknown")) {
+    if (!draft || (outcome?.kind !== "pending" && outcome?.kind !== "unknown" && outcome?.kind !== "disconnected")) {
       return;
     }
     await lookup(draft);

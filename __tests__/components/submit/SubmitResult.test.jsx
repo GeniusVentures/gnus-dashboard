@@ -3,6 +3,7 @@ import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { createMockProvider } from "../../../lib/gnus/mock/provider";
+import Submit from "../../../pages/submit";
 import SubmitFlow from "../../../sub-components/submit/SubmitFlow";
 import { failing, gated, renderWithSubmit } from "../../mocks/submit";
 
@@ -73,6 +74,34 @@ describe("back at the job after nothing was spent", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Start a new submit" }));
     expect(screen.queryByRole("button", { name: "Start a new submit" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Pay and submit" })).toBeEnabled();
+  });
+});
+
+describe("a disconnect during the payment", () => {
+  it("names the payment over the wallet gate, never says nothing was spent, and Check again is offered once back", async () => {
+    const provider = createMockProvider({ profile: "today" });
+    const request = provider.request;
+    provider.request = async (args) => {
+      if (args.method !== "gnus_submitJob") {
+        return request(args);
+      }
+      await request(args);
+      throw { code: 4100, message: "The origin was revoked" };
+    };
+    const view = renderWithSubmit(<Submit />, { provider });
+    await userEvent.click(await screen.findByRole("button", { name: "Load example" }));
+    const estimate = screen.getByRole("button", { name: "Estimate cost" });
+    await waitFor(() => expect(estimate).toBeEnabled());
+    await userEvent.click(estimate);
+    const pay = await screen.findByRole("button", { name: "Pay and submit" });
+    await waitFor(() => expect(pay).toBeEnabled());
+    await userEvent.click(pay);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "This site was disconnected during the payment. Reconnect to see what happened.",
+    );
+    expect(screen.getByRole("heading", { name: "Allow this site in GeniusWallet" })).toBeInTheDocument();
+    expect(screen.queryByText(/Nothing was spent/)).toBeNull();
+    expect(await axe(view.container)).toHaveNoViolations();
   });
 });
 

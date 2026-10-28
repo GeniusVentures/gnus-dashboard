@@ -43,7 +43,6 @@ describe("classifyError", () => {
 
   it.each([
     [4001, undefined],
-    [4100, undefined],
     [4200, undefined],
     [4900, undefined],
     [-32005, "confirm_open"],
@@ -75,6 +74,10 @@ describe("classifyError", () => {
     [new GnusError(-32603, { reason: "something_new" })],
   ])("an unknown fate asks the wallet: %#", (error) => {
     expect(classifyError(error)).toEqual({ kind: "lookup" });
+  });
+
+  it("4100 is a disconnect with an open fate: a call in flight at a revoke may already have burned", () => {
+    expect(classifyError(new GnusError(4100))).toEqual({ kind: "outcome", outcome: { kind: "disconnected" } });
   });
 
   it("asks for a new key only for idempotency_key_reused", () => {

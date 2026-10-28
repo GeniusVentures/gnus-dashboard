@@ -9,6 +9,8 @@ export type Outcome =
   | { kind: "outcomeUnknown"; message: string; details: SubmissionOutcome | null }
   | { kind: "pending"; burnTxHash: string | null }
   | { kind: "unknown"; message: string }
+  /** The site lost its permission mid-call; a call in flight at a revoke may already have burned. */
+  | { kind: "disconnected" }
   | { kind: "checking" };
 
 export type ErrorClass =
@@ -23,7 +25,7 @@ export type LookupClass = { kind: "outcome"; outcome: Outcome } | { kind: "notSe
 /** The wallet answered for the key for good. Anything else keeps the key, so the same job can never pay twice. */
 export const isDefinitive = (outcome: Outcome): boolean => outcome.kind === "done" || outcome.kind === "paidNotProcessed";
 
-const NOTHING_SPENT_CODES = new Set([4001, 4100, 4200, 4900, -32005, -32010, -32011, -32012, -32013, -32015, -32602]);
+const NOTHING_SPENT_CODES = new Set([4001, 4200, 4900, -32005, -32010, -32011, -32012, -32013, -32015, -32602]);
 const NOTHING_SPENT_INTERNAL = new Set(["balance_unavailable", "checking", "missing_data"]);
 
 export function classifyResult(result: SubmitResult): Outcome {
@@ -39,6 +41,9 @@ export function classifyResult(result: SubmitResult): Outcome {
 
 export function classifyError(error: GnusError): ErrorClass {
   const { code, reason } = error;
+  if (code === 4100) {
+    return { kind: "outcome", outcome: { kind: "disconnected" } };
+  }
   if (code === -32014) {
     return { kind: "outcome", outcome: { kind: "paidNotProcessed", burnTxHash: error.burnTxHash } };
   }

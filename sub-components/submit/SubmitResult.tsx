@@ -9,6 +9,8 @@ import AddressChip from "../wallet/AddressChip";
 import { useSession } from "../wallet/SessionProvider";
 import { useSubmit } from "./useSubmit";
 
+export const DISCONNECTED = "This site was disconnected during the payment. Reconnect to see what happened.";
+
 interface Screen {
   heading: string;
   body: string;
@@ -43,6 +45,8 @@ function screenFor(outcome: Outcome): Screen {
         heading: "Couldn't check this payment",
         body: `GeniusWallet didn't answer the check: ${outcome.message}. Check it in GeniusWallet before you submit again.`,
       };
+    case "disconnected":
+      return { heading: "Disconnected during the payment", body: DISCONNECTED };
     case "checking":
       return { heading: "Checking your last submit", body: "Asking GeniusWallet what happened to it." };
   }
@@ -115,7 +119,7 @@ const SubmitResult: React.FC = () => {
   const unit = session.accounts?.unit ?? { decimals: 18, symbol: "GNUS" };
   const chainId = draft?.chainId ?? null;
   const hash = "burnTxHash" in outcome ? outcome.burnTxHash : null;
-  const canCheck = outcome.kind === "pending" || outcome.kind === "unknown";
+  const canCheck = outcome.kind === "pending" || outcome.kind === "unknown" || outcome.kind === "disconnected";
   return (
     <section role={screen.alert ? "alert" : "status"} className={screen.alert ? "border border-warning border-3 rounded p-3" : undefined}>
       <h2 ref={heading} tabIndex={-1} className="h4">
