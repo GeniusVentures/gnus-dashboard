@@ -30,7 +30,18 @@ const SubmitPanel: React.FC = () => {
           {state.submitError}
         </p>
       ) : null}
-      <button type="button" className="btn btn-primary" disabled={blocker !== null} onClick={() => void store.submit()}>
+      {blocker ? (
+        <p id="submit-blocker" className="mb-2">
+          {blocker}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        className="btn btn-primary"
+        disabled={blocker !== null}
+        aria-describedby={blocker ? "submit-blocker" : undefined}
+        onClick={() => void store.submit()}
+      >
         Pay and submit
       </button>
     </div>

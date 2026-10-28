@@ -1,8 +1,30 @@
 import React from "react";
 import Amount from "../shared/Amount";
+import { GnusError } from "../../lib/gnus/errors";
 import { canEstimate } from "../../lib/session/machine";
+import { insufficient } from "../../lib/submit/store";
 import { useSession } from "../wallet/SessionProvider";
 import { useSubmit } from "./useSubmit";
+
+// Wallet text renders as plain text only.
+const EstimateError: React.FC<{ error: GnusError }> = ({ error }) => {
+  if (error.code === -32010) {
+    return (
+      <>
+        <strong>Price unavailable</strong>
+        <br />
+        GeniusWallet couldn&apos;t get a price for this job.
+        {error.reason ? <> Reason: {error.reason}</> : null}
+      </>
+    );
+  }
+  return (
+    <>
+      {error.message}
+      {error.code === -32602 && error.wireMessage ? <> {error.wireMessage}</> : null}
+    </>
+  );
+};
 
 const EstimatePanel: React.FC = () => {
   const { state: session } = useSession();
@@ -26,9 +48,14 @@ const EstimatePanel: React.FC = () => {
           Asking GeniusWallet for the price...
         </span>
       ) : null}
+      {estimate.status === "stale" ? (
+        <p role="status" className="mt-2 mb-0">
+          The job changed. Estimate again before you submit.
+        </p>
+      ) : null}
       {estimate.status === "error" ? (
         <p role="alert" className="text-danger-emphasis mt-2 mb-0">
-          {estimate.error.message}
+          <EstimateError error={estimate.error} />
         </p>
       ) : null}
       {estimate.status === "ready" && unit ? (
@@ -55,6 +82,15 @@ const EstimatePanel: React.FC = () => {
             </dd>
           </dl>
           <p className="mb-0">GeniusWallet shows the final amount when you confirm.</p>
+          {insufficient(estimate.estimate) ? (
+            <p role="alert" className="text-danger-emphasis mt-2 mb-0">
+              <strong>Not enough GNUS</strong>
+              <br />
+              This job costs <Amount value={estimate.estimate.cost} decimals={unit.decimals} symbol={unit.symbol} />.
+              The paying wallet holds{" "}
+              <Amount value={estimate.estimate.balance} decimals={unit.decimals} symbol={unit.symbol} />.
+            </p>
+          ) : null}
         </>
       ) : null}
     </div>

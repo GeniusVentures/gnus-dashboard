@@ -81,3 +81,26 @@ export function renderWithSubmit(ui, { profile, provider, storage = new MemorySt
   const result = render(strict ? <React.StrictMode>{tree}</React.StrictMode> : tree);
   return { ...result, ...made, session: made.store, submit, storage, deps };
 }
+
+// Makes one method of a mock provider reject with a wire error; every other method keeps working.
+export function failing(provider, method, wire) {
+  const request = provider.request;
+  provider.request = (args) => (args.method === method ? Promise.reject(wire) : request(args));
+  return provider;
+}
+
+// Holds one method until release() is called, so a test can answer late.
+export function gated(provider, method) {
+  const request = provider.request;
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  provider.request = async (args) => {
+    if (args.method === method) {
+      await gate;
+    }
+    return request(args);
+  };
+  return release;
+}

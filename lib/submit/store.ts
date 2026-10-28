@@ -1,4 +1,5 @@
 import exampleJob from "../../data/jobs/posenet-example.json";
+import { exceeds } from "../gnus/amount";
 import { GnusError, normalizeError } from "../gnus/errors";
 import type { Estimate } from "../gnus/schema";
 import { canEstimate, canSubmit } from "../session/machine";
@@ -17,6 +18,7 @@ export interface SubmitDeps {
 export type EstimateState =
   | { status: "idle" }
   | { status: "loading" }
+  | { status: "stale" }
   | { status: "ready"; estimate: Estimate }
   | { status: "error"; error: GnusError };
 
@@ -82,12 +84,28 @@ const identityOf = (session: SessionStore): string | null => {
   return accounts ? JSON.stringify([accounts.network, accounts.node.sdkAddress, accounts.payer.evmAddress]) : null;
 };
 
-/** Why Pay and submit is disabled: null when it is allowed, "" when it is off without anything to say. */
+/** True when the paying wallet holds less than the job costs; an unreadable balance never blocks (the wallet fails closed). */
+export const insufficient = (estimate: Estimate): boolean =>
+  estimate.balance !== null && exceeds(estimate.cost, estimate.balance);
+
+/** Why Pay and submit is disabled: null when it is allowed, "" when it is off and the page already says why. */
 export function submitBlocker(state: SubmitState, session: SessionStore): string | null {
-  if (state.step !== "job" || state.estimate.status !== "ready" || state.draft === null) {
+  const { accounts } = session.getState();
+  if (state.step !== "job") {
     return "";
   }
-  return canSubmit(session.getState()) ? null : "";
+  if (canEstimate(session.getState()) && accounts && !accounts.payer.canSign) {
+    return new GnusError(-32012, accounts.payer.evmAddress === null ? { reason: "no_wallet" } : undefined).message;
+  }
+  if (
+    state.estimate.status !== "ready" ||
+    insufficient(state.estimate.estimate) ||
+    state.draft === null ||
+    !canSubmit(session.getState())
+  ) {
+    return "";
+  }
+  return null;
 }
 
 const EXAMPLE_TEXT = JSON.stringify(exampleJob, null, 2);
@@ -124,7 +142,15 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       return;
     }
     epoch += 1;
-    set({ text, parsed: parseJob(text), estimate: { status: "idle" }, draft: null, saveError: null, submitError: null });
+    const had = state.estimate.status === "ready" || state.estimate.status === "stale";
+    set({
+      text,
+      parsed: parseJob(text),
+      estimate: { status: had ? "stale" : "idle" },
+      draft: null,
+      saveError: null,
+      submitError: null,
+    });
   }
 
   async function estimate(): Promise<void> {
@@ -146,8 +172,13 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     try {
       reply = await session.track(client.estimate({ job: parsed.job }));
     } catch (err) {
+      const error = normalizeError(err);
+      // Only these two move the session; a rejected estimate or a busy wallet is just this page's message.
+      if (error.code === 4100 || error.code === 4900) {
+        session.report(error);
+      }
       if (mine === epoch) {
-        set({ estimate: { status: "error", error: normalizeError(err) } });
+        set({ estimate: { status: "error", error } });
       }
       return;
     }
