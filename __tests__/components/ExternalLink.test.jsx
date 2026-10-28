@@ -32,7 +32,7 @@ describe("ExternalLink", () => {
 
 describe("links that leave the dashboard", () => {
   it("gives Socials seven named links that open the system browser safely", () => {
-    render(<Socials si="md" gap={10} />);
+    render(<Socials si="md" />);
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(7);
     for (const link of links) {

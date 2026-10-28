@@ -3,10 +3,9 @@ import ExternalLink from '../shared/ExternalLink';
 
 interface SocialsProps {
     si: 'sm' | 'md' | 'lg';
-    gap: number;
 }
 
-const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
+const Socials: React.FC<SocialsProps> = ({ si }) => {
     const [size, setSize] = useState<'sm' | 'md' | 'lg' | null>(null);
 
     useEffect(() => {
@@ -21,9 +20,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
 
     return (
         <Fragment>
-            <div
-                className="d-flex flex-wrap justify-content-center align-items-center"
-                style={{ gap: `${gap}px`, overflow: 'hidden' }}>
+            <div className="d-flex flex-wrap justify-content-center align-items-center socials-row">
                 <div className="text-center me-n1">
                     <ExternalLink
                         href="https://discord.gg/gnusai"
@@ -191,7 +188,7 @@ const Socials: React.FC<SocialsProps> = ({ si, gap }) => {
                         </svg>
                     </ExternalLink>
                 </div>
-                <div className="text-center" style={{ marginRight: 2 }}>
+                <div className="text-center socials-row-tight">
                     <ExternalLink
                         href="https://www.youtube.com/@gnusai"
                         aria-label="YouTube"

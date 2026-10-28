@@ -12,6 +12,11 @@ module.exports = defineConfig({
       // axe-core comes in through jest-axe; the spec injects this text into the page under test only.
       on("task", {
         axeSource: () => fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8"),
+        // The Content-Security-Policy header the export must be served with, from the module that also writes out/_headers.
+        expectedCsp() {
+          const { CSP_ENFORCED, cspName, policy } = require("./scripts/headers");
+          return { name: cspName(CSP_ENFORCED), value: policy };
+        },
         // The two chunks that make the browser path: the WalletConnect module, and Reown's client with the relay address.
         walletConnectChunks() {
           const dir = path.join(__dirname, "out", "_next", "static", "chunks");

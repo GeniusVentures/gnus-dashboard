@@ -1,8 +1,10 @@
 // Plain static server for out/: exact file, then .html, then /index.html, else the 404 page.
+// Every response carries the headers scripts/headers.js writes into out/_headers for the host.
 // With a command (node scripts/serve-out.js yarn cy:run) it runs that command against the server, then stops and exits with the command's code.
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const { headersFor } = require("./headers");
 
 const root = path.resolve(__dirname, "..", "out");
 const port = Number(process.env.PORT) || 4173;
@@ -54,12 +56,13 @@ const resolveFile = (pathname) => {
   return null;
 };
 
-const send = (res, status, file, head) => {
+const send = (res, status, file, head, pathname) => {
   const body = fs.readFileSync(file);
+  const type = types[path.extname(file).toLowerCase()] || "application/octet-stream";
   res.writeHead(status, {
-    "Content-Type": types[path.extname(file).toLowerCase()] || "application/octet-stream",
+    ...Object.fromEntries(headersFor(pathname, { html: type.startsWith("text/html") })),
+    "Content-Type": type,
     "Content-Length": body.length,
-    "X-Content-Type-Options": "nosniff",
   });
   res.end(head ? undefined : body);
 };
@@ -67,7 +70,7 @@ const send = (res, status, file, head) => {
 const server = http
   .createServer((req, res) => {
     if (req.method !== "GET" && req.method !== "HEAD") {
-      res.writeHead(405, { Allow: "GET, HEAD", "X-Content-Type-Options": "nosniff" });
+      res.writeHead(405, { Allow: "GET, HEAD", ...Object.fromEntries(headersFor("/")) });
       res.end();
       return;
     }
@@ -76,15 +79,15 @@ const server = http
     try {
       pathname = decodeURIComponent(req.url.split(/[?#]/)[0]);
     } catch {
-      res.writeHead(400, { "X-Content-Type-Options": "nosniff" });
+      res.writeHead(400, Object.fromEntries(headersFor("/")));
       res.end();
       return;
     }
     const file = resolveFile(pathname);
     if (file) {
-      send(res, 200, file, head);
+      send(res, 200, file, head, pathname);
     } else {
-      send(res, 404, path.join(root, "404.html"), head);
+      send(res, 404, path.join(root, "404.html"), head, pathname);
     }
   })
   .listen(port, "127.0.0.1", () => {

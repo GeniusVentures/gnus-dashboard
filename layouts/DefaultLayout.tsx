@@ -5,7 +5,7 @@ import Footer from "./footers/Footer";
 const DefaultLayout = (props) => (
   <Fragment>
     <NavbarDefault />
-    <main style={{ minHeight: "70vh" }}>{props.children}</main>
+    <main className="main-body">{props.children}</main>
     <Footer />
   </Fragment>
 );

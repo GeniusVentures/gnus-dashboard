@@ -1,3 +1,6 @@
+import "@fontsource/roboto/latin-400.css";
+import "@fontsource/roboto/latin-500.css";
+import "@fontsource/roboto/latin-700.css";
 import "../styles/theme.scss";
 import "react-toastify/dist/ReactToastify.css";
 
