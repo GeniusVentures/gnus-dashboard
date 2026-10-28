@@ -79,10 +79,14 @@ them the gate they must read (`canEstimate`, `canSubmit`).
 - **D-10 (D):** Account data is read only through `useAccountQuery(kind, fn)`, keyed
   `[kind, network, sdkAddress]`. When `sdkAddress` or `network` changes, every query under another pair
   is cancelled and removed; a late reply for the old pair cannot render.
-- **D-11 (D):** The network this build serves is set at build time, `NEXT_PUBLIC_GNUS_SDK_NETWORK`
-  (default `staging`) and `NEXT_PUBLIC_GNUS_EVM_CHAIN_ID` (default `80002`), always inlined through
-  `next.config.js` `env`. A wallet network that differs in either value, null included, shows a banner and
-  blocks estimate and submit.
+- **D-11 (D, revised by Braian 2026-10-28):** The dashboard does not decide which EVM chains may estimate
+  or submit. The wallet burns on Amoy (80002), BNB Testnet (97) and Sepolia (11155111) and refuses any other
+  chain itself with `-32013` and `data.reason: "bridge_unavailable"` before a confirm. The header shows the
+  network the wallet reports. errors.ts maps that reason to kind `bridgeUnavailable`, message "Not available
+  on this network. Switch the network in GeniusWallet.", action `openWallet`. The SDK network this build
+  serves is set at build time, `NEXT_PUBLIC_GNUS_SDK_NETWORK` (default `staging`), always inlined through
+  `next.config.js` `env`; there is no EVM chain variable. A wallet SDK network that differs, null included,
+  shows a banner and blocks estimate and submit. The EVM chain id never blocks anything client-side.
 - **D-12 (D):** `canEstimate` = `ready` and the network matches; `canSubmit` = `canEstimate` and
   `payer.canSign`. Switching shows a banner over the page, not a full screen: the data on screen is still
   the current account's until `gnus_accountsChanged` names a new one.
@@ -109,8 +113,8 @@ them the gate they must read (`canEstimate`, `canSubmit`).
 
   A mismatch with the same version reads as walletOld with the `GnusContractMismatchError` message as body.
   Banners: "Switching account" / "Submitting is paused until GeniusWallet finishes switching." and
-  "Wrong network" / "GeniusWallet is on {sdk}, chain {id}. This dashboard works on {sdk}, chain {id}.
-  Switch the network in GeniusWallet." (null reads "not set").
+  "Wrong network" / "GeniusWallet is on {sdk}. This dashboard works on {sdk}. Switch the network in
+  GeniusWallet." (null reads "not set").
 - **D-14 (D):** Get GeniusWallet links to `https://gnus.ai/`, the only official site the wallet itself
   links to (Braian to confirm a download URL). `ExternalLink` (`target="_blank"`, `rel="noopener noreferrer"`)
   is created now; DISP-02's lint and CID links stay phase 5.
