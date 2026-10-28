@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "incremental": false
+  },
+  "include": [
+    "lib/**/*.ts",
+    "sub-components/jobs/**/*.ts",
+    "sub-components/jobs/**/*.tsx",
+    "sub-components/earnings/**/*.tsx",
+    "pages/jobs/**/*.tsx",
+    "pages/earnings/**/*.tsx",
+    "sub-components/shared/Amount.tsx",
+    "sub-components/shared/ExternalLink.tsx",
+    "sub-components/wallet/**/*.ts",
+    "sub-components/wallet/**/*.tsx",
+    "sub-components/submit/**/*.ts",
+    "sub-components/submit/**/*.tsx",
+    "pages/submit/index.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

@@ -109,13 +109,18 @@ $theme-soft-colors: map-merge(
 
 // The contrast ratio to reach against white, to determine if color changes from "light" to "dark". Acceptable values for WCAG 2.0 are 3, 4.5 and 7.
 // See https://www.w3.org/TR/WCAG20/#visual-audio-contrast-contrast
-$min-contrast-ratio: 2 !default;
+$min-contrast-ratio: 4.5 !default;
 
 // Body
 //
 // Settings for the `<body>` element.
-$body-bg: $gray-400 !default;
+// Light and dark follow the OS scheme with CSS only, so no script runs and nothing flashes.
+$color-mode-type: media-query;
+$body-bg: $white !default;
 $body-color: $gray-1000 !default;
+$body-bg-dark: $black;
+$body-color-dark: $gray-200;
+$body-emphasis-color-dark: $white;
 
 // Typography
 // Font, line-height, and color for body text, headings, and more.
@@ -140,7 +145,11 @@ $font-weight-base: $font-weight-normal !default;
 //
 // Style anchor elements.
 
-$link-color: $secondary !default;
+// 5.3:1 on white; the mint primary is used in dark, where it is far above AA.
+$link-color: #0b7a5e !default;
+$link-hover-color: #07533f;
+$link-color-dark: $primary;
+$link-hover-color-dark: #7ef5d0;
 $link-decoration: none !default;
 
 // Line height
@@ -216,7 +225,8 @@ $border-widths: (
 ) !default;
 
 // $border-color: $gray-200 !default;
-$border-color: $white !default;
+$border-color: $gray-300 !default;
+$border-color-dark: $gray-700;
 $border-color-translucent: rgba($gray-300, 1) !default;
 
 // scss-docs-start border-radius-variables
@@ -599,30 +609,6 @@ $toast-header-background-color: $toast-background-color;
 $toast-header-border-color: var(--#{$prefix}gray-300);
 $toast-border-color: var(--#{$prefix}gray-300) !default;
 
-$primary-text-emphasis-dark: $black;
-$secondary-text-emphasis-dark: $black;
-$success-text-emphasis-dark: $black;
-$info-text-emphasis-dark: $black;
-$warning-text-emphasis-dark: $black;
-$danger-text-emphasis-dark: $black;
-$light-text-emphasis-dark: $black;
-$dark-text-emphasis-dark: $black;
-$primary-bg-subtle-dark: $black;
-$secondary-bg-subtle-dark: $black;
-$success-bg-subtle-dark: $black;
-$info-bg-subtle-dark: $black;
-$warning-bg-subtle-dark: $black;
-$danger-bg-subtle-dark: $black;
-$light-bg-subtle-dark: $black;
-$dark-bg-subtle-dark: $black;
-$primary-border-subtle-dark: $black;
-$secondary-border-subtle-dark: $black;
-$success-border-subtle-dark: $black;
-$info-border-subtle-dark: $black;
-$warning-border-subtle-dark: $black;
-$danger-border-subtle-dark: $black;
-$light-border-subtle-dark: $black;
-$dark-border-subtle-dark: $black;
 
 $grid-breakpoints: (
   xs: 0,

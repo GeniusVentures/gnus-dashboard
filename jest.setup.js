@@ -1,5 +1,13 @@
 import '@testing-library/jest-dom';
 
+// Build-time values next.config.js inlines; the defaults live only there.
+for (const [key, value] of Object.entries(require('./next.config.js').env)) {
+  process.env[key] ??= value;
+}
+
+// A developer's .env.local id must not turn on the real WalletConnect client in tests; a test that needs one sets it.
+process.env.NEXT_PUBLIC_WC_PROJECT_ID = '';
+
 // Enhanced Jest setup for GNUS Dashboard
 // This file runs after the test framework has been set up
 

@@ -1,15 +1,7 @@
 /* Theme: Geeks */
 
-//Fonts
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+//Fonts: Roboto comes from @fontsource in _app.tsx
 @import url("/fonts/hkModular/hkModular.css");
-
-// Font Awesome
-@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css");
-
-// Material Icons
-@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
 
 // Feathers CSS for Before Icon
 @import url("/fonts/feather/feather.css");
@@ -28,3 +20,28 @@
 
 // Theme
 @import "theme/theme";
+
+// Keyboard focus is a 2px ring in the body emphasis colour, visible in both colour schemes.
+:is(a, button, input, select, textarea, [tabindex], .btn, .nav-link):focus-visible {
+  outline: 2px solid var(--#{$prefix}emphasis-color);
+  outline-offset: 2px;
+}
+
+.navbar-brand,
+.navbar-toggler {
+  color: var(--#{$prefix}emphasis-color);
+}
+
+// Classes, not style attributes: the CSP keeps style-src-attr closed.
+.main-body {
+  min-height: 70vh;
+}
+
+.socials-row {
+  gap: 12px;
+  overflow: hidden;
+}
+
+.socials-row-tight {
+  margin-right: 2px;
+}
