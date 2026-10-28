@@ -79,3 +79,27 @@ export function shortJobId(job: { jobId?: string | null; burnTxHash: string }): 
   }
   return job.jobId.length <= SHORT_ID_MAX ? job.jobId : shorten(job.jobId);
 }
+
+export type JobRef = { burnTxHash: string } | { jobId: string };
+
+const BURN_HASH = /^0x[0-9a-f]{64}$/;
+const MAX_ID = 256;
+
+/** Exactly one of ?hash= and ?id= must name a job; anything else is not a link to a job. */
+export function parseJobRef(query: Record<string, string | string[] | undefined>): JobRef | null {
+  const { hash, id } = query;
+  if ((hash === undefined) === (id === undefined)) {
+    return null;
+  }
+  if (hash !== undefined) {
+    const lower = typeof hash === "string" ? hash.toLowerCase() : "";
+    return BURN_HASH.test(lower) ? { burnTxHash: lower } : null;
+  }
+  return typeof id === "string" && id.length >= 1 && id.length <= MAX_ID ? { jobId: id } : null;
+}
+
+/** One gateway for every CID link; the choice of a GNUS-run gateway is open. */
+export const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
+
+/** A CID becomes a link only when it is plain letters and digits, so it cannot carry a path, query or scheme. */
+export const cidHref = (cid: string): string | null => (/^[A-Za-z0-9]+$/.test(cid) ? IPFS_GATEWAY + cid : null);

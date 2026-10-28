@@ -1,5 +1,5 @@
 import { JOB_STATUSES } from "../../lib/gnus/schema";
-import { STATUS_TEXT, isFinal, isMarked, shortJobId } from "../../lib/jobs";
+import { IPFS_GATEWAY, STATUS_TEXT, cidHref, isFinal, isMarked, parseJobRef, shortJobId } from "../../lib/jobs";
 
 const HASH = "0x" + "ab".repeat(32);
 
@@ -39,5 +39,38 @@ describe("shortJobId", () => {
     expect(shortJobId({ jobId: "0x" + "cd".repeat(20), burnTxHash: HASH })).toBe("0xcdcd...cdcd");
     expect(shortJobId({ jobId: "x".repeat(15), burnTxHash: HASH })).toBe("xxxxxx...xxxx");
     expect(shortJobId({ jobId: null, burnTxHash: HASH })).toBe("0xabab...abab");
+  });
+});
+
+describe("parseJobRef", () => {
+  const hash = "0x" + "ab".repeat(32);
+
+  it("reads one hash, lowercased, or one id", () => {
+    expect(parseJobRef({ hash })).toEqual({ burnTxHash: hash });
+    expect(parseJobRef({ hash: hash.toUpperCase().replace("0X", "0x") })).toEqual({ burnTxHash: hash });
+    expect(parseJobRef({ id: "job-1" })).toEqual({ jobId: "job-1" });
+    expect(parseJobRef({ id: "x".repeat(256) })).toEqual({ jobId: "x".repeat(256) });
+  });
+
+  it("gives null for none, both, an array value, a short hash or a 257-character id", () => {
+    expect(parseJobRef({})).toBeNull();
+    expect(parseJobRef({ hash, id: "job-1" })).toBeNull();
+    expect(parseJobRef({ hash: [hash, hash] })).toBeNull();
+    expect(parseJobRef({ id: ["a", "b"] })).toBeNull();
+    expect(parseJobRef({ hash: "0x12" })).toBeNull();
+    expect(parseJobRef({ hash: hash + "0" })).toBeNull();
+    expect(parseJobRef({ id: "" })).toBeNull();
+    expect(parseJobRef({ id: "x".repeat(257) })).toBeNull();
+  });
+});
+
+describe("cidHref", () => {
+  it("links a CID of letters and digits only", () => {
+    expect(cidHref("bafyabc123")).toBe(IPFS_GATEWAY + "bafyabc123");
+    expect(IPFS_GATEWAY).toBe("https://ipfs.io/ipfs/");
+  });
+
+  it.each(["a/b", "a:b", "a b", "a.b", "a%2Fb", "", "javascript:alert(1)", "//evil.com"])("gives null for %j", (cid) => {
+    expect(cidHref(cid)).toBeNull();
   });
 });
