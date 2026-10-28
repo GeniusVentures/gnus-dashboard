@@ -2,6 +2,18 @@ import type { JobDefinition } from "../gnus/schema";
 
 export const REQUIRED_KEYS = ["inputs", "outputs", "passes"] as const;
 
+/** The wallet's own limit on a job: 5 MiB of UTF-8. */
+export const JOB_CAP_BYTES = 5 * 1024 * 1024;
+
+export const FILE_TOO_LARGE = "This file is larger than 5 MB. GeniusWallet accepts jobs up to 5 MB.";
+export const JOB_TOO_LARGE = "This job is larger than 5 MB. GeniusWallet accepts jobs up to 5 MB.";
+
+export const fileTooLarge = (size: number): boolean => size > JOB_CAP_BYTES;
+
+// A UTF-16 unit is at most 3 UTF-8 bytes, so short text is under the cap without being encoded.
+const overCap = (text: string): boolean =>
+  text.length * 3 > JOB_CAP_BYTES && new TextEncoder().encode(text).length > JOB_CAP_BYTES;
+
 export type ParsedJob =
   | { state: "empty" }
   | { state: "invalid"; message: string }
@@ -12,6 +24,9 @@ export type Digest = (bytes: Uint8Array) => Promise<ArrayBuffer>;
 export function parseJob(text: string): ParsedJob {
   if (text.trim() === "") {
     return { state: "empty" };
+  }
+  if (overCap(text)) {
+    return { state: "invalid", message: JOB_TOO_LARGE };
   }
   let value: unknown;
   try {
@@ -30,7 +45,9 @@ export function parseJob(text: string): ParsedJob {
       message: `The job needs inputs, outputs and passes at the top level. Missing: ${missing.join(", ")}.`,
     };
   }
-  return { state: "ok", job, sent: JSON.stringify(job) };
+  const sent = JSON.stringify(job);
+  // Rewriting numbers can make the sent text longer than the pasted one, and the wallet counts what is sent.
+  return overCap(sent) ? { state: "invalid", message: JOB_TOO_LARGE } : { state: "ok", job, sent };
 }
 
 /** SHA-256 of the exact string sent to the wallet, as lowercase hex. */
