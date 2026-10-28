@@ -32,6 +32,8 @@ export interface RelayOptions {
   /** Answers each proposal by itself after this long (approve or decline, by profile). Left out, a control answers. */
   autoAnswerMs?: number;
   declineMessage?: string;
+  /** With the walletEnds profile, the wallet ends the session by itself this long after approving. */
+  endAfterMs?: number;
   latencyMs?: number;
   /** Replaces the namespaces the wallet approves. */
   namespaces?: Record<string, WcNamespace>;
@@ -155,6 +157,9 @@ export function createFakeRelay(options: RelayOptions = {}): FakeRelay {
     };
     sessions.set(session.topic, session);
     stops.set(session.topic, forward(session.topic));
+    if (profile === "walletEnds" && options.endAfterMs !== undefined) {
+      setTimeout(() => controls.endFromWallet({ code: 6000, message: "User disconnected." }), options.endAfterMs);
+    }
     return session;
   }
 
