@@ -33,6 +33,14 @@ export class MemoryStorage {
     this.map.delete(key);
   }
 
+  get length() {
+    return this.map.size;
+  }
+
+  key(index) {
+    return [...this.map.keys()][index] ?? null;
+  }
+
   keys() {
     return [...this.map.keys()].filter((key) => key.startsWith("gnus.submit."));
   }

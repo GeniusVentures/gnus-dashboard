@@ -21,6 +21,17 @@ export interface DraftStorage {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
+  key(index: number): string | null;
+  readonly length: number;
+}
+
+/** A draft older than this, counted from sentAt else createdAt, is dropped; the wallet forgets a key after 24 h. */
+export const DRAFT_TTL_MS = 23 * 60 * 60 * 1000;
+
+/** The node account and SDK network a draft belongs to. */
+export interface DraftIdentity {
+  sdkAddress: string;
+  sdkNetwork: string | null;
 }
 
 /** localStorage, or null when the browser refuses it (private modes throw on access). */
@@ -103,4 +114,71 @@ export function markSettled(storage: DraftStorage, draft: Draft): Draft {
   const next: Draft = { ...draft, settled: true };
   writeDraft(storage, next);
   return next;
+}
+
+// Keys are read first and entries after, because reading can remove a bad entry and shift the indexes.
+function draftKeys(storage: DraftStorage): string[] {
+  const keys: string[] = [];
+  try {
+    for (let i = 0; i < storage.length; i += 1) {
+      const name = storage.key(i);
+      if (typeof name === "string" && name.startsWith(DRAFT_PREFIX)) {
+        keys.push(name.slice(DRAFT_PREFIX.length));
+      }
+    }
+  } catch {
+    return [];
+  }
+  return keys;
+}
+
+export function listDrafts(storage: DraftStorage): Draft[] {
+  return draftKeys(storage).flatMap((key) => readDraft(storage, key) ?? []);
+}
+
+const sameIdentity = (draft: Draft, identity: DraftIdentity): boolean =>
+  draft.sdkAddress === identity.sdkAddress && draft.sdkNetwork === identity.sdkNetwork;
+
+/** The newest unsettled draft for this identity and this exact job, so a retry of the same job reuses its key. */
+export function findReusable(storage: DraftStorage, identity: DraftIdentity, jobHash: string): Draft | null {
+  const found = listDrafts(storage).filter(
+    (draft) => !draft.settled && draft.jobHash === jobHash && sameIdentity(draft, identity),
+  );
+  return found.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
+}
+
+/** The newest draft of this identity, settled or not: the one a reload has to account for. */
+export function newestFor(storage: DraftStorage, identity: DraftIdentity): Draft | null {
+  const found = listDrafts(storage).filter((draft) => sameIdentity(draft, identity));
+  return found.sort((a, b) => b.createdAt - a.createdAt)[0] ?? null;
+}
+
+/** Drops expired drafts and entries that do not parse; keys outside the prefix are never touched. */
+export function prune(storage: DraftStorage, now: number): void {
+  for (const key of draftKeys(storage)) {
+    const draft = readDraft(storage, key);
+    if (draft && now - (draft.sentAt ?? draft.createdAt) > DRAFT_TTL_MS) {
+      removeDraft(storage, key);
+    }
+  }
+}
+
+/** A draft that never reached the wallet has nothing to account for once its job is edited away. */
+export function removeIfUnsent(storage: DraftStorage, draft: Draft): void {
+  if (draft.sentAt === null) {
+    removeDraft(storage, draft.idempotencyKey);
+  }
+}
+
+export function randomKey(): string {
+  const c = globalThis.crypto;
+  if (typeof c?.randomUUID === "function") {
+    return c.randomUUID();
+  }
+  // randomUUID exists only in secure contexts; a plain-http dev host still gets a version 4 UUID.
+  const bytes = c.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
