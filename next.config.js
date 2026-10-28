@@ -18,6 +18,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_GNUS_MOCK: mockRequested ? "1" : "0",
     NEXT_PUBLIC_GNUS_SDK_NETWORK: process.env.NEXT_PUBLIC_GNUS_SDK_NETWORK || "staging",
+    // Empty means no browser pairing: the page then shows "GeniusWallet required". Public by design, set from the environment and never committed.
+    NEXT_PUBLIC_WC_PROJECT_ID: process.env.NEXT_PUBLIC_WC_PROJECT_ID || "",
   },
 };
 

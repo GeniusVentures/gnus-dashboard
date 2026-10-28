@@ -37,6 +37,18 @@ check_source() {
   return "$bad"
 }
 
+# Files in out/ holding a quoted 64-hex value that .gitleaks.toml does not list as a public constant.
+unlisted_hex_files() {
+  local allowed file value
+  allowed=$(grep -ohE '[0-9a-fA-F]{64}' .gitleaks.toml | tr 'A-F' 'a-f' | sort -u)
+  while IFS=: read -r file value; do
+    value=$(printf '%s' "$value" | tr -d "\"'" | sed 's/^0x//' | tr 'A-F' 'a-f')
+    if ! grep -qxF -e "$value" <<<"$allowed"; then
+      echo "$file"
+    fi
+  done < <(grep -rIoHE "[\"'](0x)?[0-9a-fA-F]{64}[\"']" out) | sort -u
+}
+
 check_out() {
   if [ ! -d out ]; then
     echo "SETUP: out/ is missing: run yarn build first" >&2
@@ -61,14 +73,18 @@ check_out() {
     "sgns_key|sgns_key"
     "pem-private-key|BEGIN [A-Z ]*PRIVATE KEY"
     "bridge-test-content|bridge-test"
-    "quoted-64-hex|[\"'](0x)?[0-9a-fA-F]{64}[\"']"
+    "quoted-64-hex|"
     "mock-marker|$MOCK_MARKER_ERE"
   )
   local spec
   for spec in "${checks[@]}"; do
     name="${spec%%|*}"
     pattern="${spec#*|}"
-    found=$(grep -rIliE -e "$pattern" out || true)
+    if [ "$name" = "quoted-64-hex" ]; then
+      found=$(unlisted_hex_files)
+    else
+      found=$(grep -rIliE -e "$pattern" out || true)
+    fi
     if [ -n "$found" ]; then
       echo "FAIL out-scan ($name) in:"
       echo "$found"

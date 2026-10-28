@@ -17,3 +17,21 @@ yarn
 # Start the development server
 yarn dev
 ```
+
+## Opening the dashboard in a browser
+
+Outside GeniusWallet the page pairs with the wallet over WalletConnect. A build needs a Reown project id in
+`NEXT_PUBLIC_WC_PROJECT_ID`; with none the page shows "GeniusWallet required" and loads no WalletConnect code.
+The id is never committed: for local work put your own dev id in `.env.local` (gitignored), and deploys set it
+from CI variables.
+
+```bash
+# .env.local
+NEXT_PUBLIC_WC_PROJECT_ID=<your dev project id>
+
+# serves http://127.0.0.1:3000
+yarn dev
+```
+
+Pair with a debug GeniusWallet build, which accepts the unverified `127.0.0.1` origin. A release wallet only
+pairs with an origin verified in Reown Cloud.

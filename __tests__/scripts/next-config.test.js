@@ -43,3 +43,10 @@ describe("next.config.js mock flag", () => {
     expect(loadConfig({ NODE_ENV: "production", NEXT_PUBLIC_GNUS_MOCK: undefined }).env.NEXT_PUBLIC_GNUS_MOCK).toBe("0");
   });
 });
+
+describe("next.config.js Reown project id", () => {
+  test("is always defined: empty when unset, the given value when set", () => {
+    expect(loadConfig({ NEXT_PUBLIC_WC_PROJECT_ID: undefined }).env.NEXT_PUBLIC_WC_PROJECT_ID).toBe("");
+    expect(loadConfig({ NEXT_PUBLIC_WC_PROJECT_ID: "abc" }).env.NEXT_PUBLIC_WC_PROJECT_ID).toBe("abc");
+  });
+});
