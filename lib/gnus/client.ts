@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GnusContractMismatchError, normalizeError } from "./errors";
+import { GnusContractMismatchError, GnusError, normalizeError } from "./errors";
 import {
   Accounts,
   Earnings,
@@ -82,7 +82,14 @@ export function createGnusClient(transport: Transport): GnusClient {
 
   return {
     getAccounts: () => call(METHODS.getAccounts, undefined, accountsSchema),
-    estimate: (params) => call(METHODS.estimate, params, estimateSchema),
+    estimate: async (params) => {
+      const estimate = await call(METHODS.estimate, params, estimateSchema);
+      // The wallet answers -32010 for a zero cost; a zero quote must never read as a free job.
+      if (BigInt(estimate.cost) === BigInt(0)) {
+        throw new GnusError(-32010);
+      }
+      return estimate;
+    },
     submitJob: (params) => call(METHODS.submitJob, params, submitResultSchema),
     listJobs: (params = {}) => call(METHODS.listJobs, params, jobListSchema),
     getJob: (params) => call(METHODS.getJob, params, nullableJobDetail),

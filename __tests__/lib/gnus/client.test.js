@@ -129,6 +129,16 @@ describe("wire rejections", () => {
     expect(err.reason).toBe("no_gnus");
   });
 
+  test("a zero estimate cost is the cost-unavailable error", async () => {
+    const client = createGnusClient(
+      fakeTransport(() => Promise.resolve({ cost: "0", gas: null, balance: null, network })),
+    );
+    const err = await client.estimate({ job: {} }).catch((e) => e);
+    expect(err).toBeInstanceOf(GnusError);
+    expect(err.code).toBe(-32010);
+    expect(err.kind).toBe("costUnavailable");
+  });
+
   test("a thrown TypeError becomes a GnusError with code null", async () => {
     const client = createGnusClient(fakeTransport(() => Promise.reject(new TypeError("boom"))));
     const err = await client.getAccounts().catch((e) => e);

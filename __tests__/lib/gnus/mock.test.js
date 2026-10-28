@@ -6,6 +6,14 @@ import { GnusError } from "../../../lib/gnus/errors";
 
 const JOB = { name: "posenet", inputs: [], outputs: [], passes: [] };
 const OTHER_JOB = { name: "other", inputs: [], outputs: [], passes: [] };
+// `levels` nested objects, the job itself being level 1; the innermost is empty.
+const nested = (levels) => {
+  let job = {};
+  for (let i = 1; i < levels; i += 1) {
+    job = { child: job };
+  }
+  return job;
+};
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function make(profile) {
@@ -167,12 +175,21 @@ describe("parameter rules", () => {
     ["a string", "job"],
     ["null", null],
     ["an array", []],
-    ["the old model shape", { model: "m", data: {}, input: {} }],
-    ["model with no passes", { model: "m" }],
-    ["input with no passes", { input: "i" }],
+    ["empty", {}],
+    ["nested 33 levels deep", nested(33)],
+    ["over 5 MiB", { blob: "x".repeat(5 * 1024 * 1024) }],
   ])("a job that is %s is -32602", async (_label, job) => {
     expect(await code({ method: "gnus_estimate", params: { job } })).toBe(-32602);
     expect(await code(submit({ job, idempotencyKey: "k" }))).toBe(-32602);
+  });
+
+  test.each([
+    ["with no passes", { model: "m" }],
+    ["32 levels deep", nested(32)],
+    ["any non-empty object", { anything: [1, { a: null }] }],
+  ])("a job that is %s is accepted, as the wallet does", async (_label, job) => {
+    expect(await code({ method: "gnus_estimate", params: { job } })).toBeUndefined();
+    expect(await code(submit({ job, idempotencyKey: "k" }))).toBeUndefined();
   });
 
   test.each([

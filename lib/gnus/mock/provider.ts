@@ -60,6 +60,8 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const MAX_KEY_LENGTH = 256;
 const MAX_CURSOR_LENGTH = 512;
+const MAX_JOB_DEPTH = 32;
+const MAX_JOB_BYTES = 5 * 1024 * 1024;
 const ACCOUNTS_CHANGED = "gnus_accountsChanged";
 const STATUS_ORDER: readonly string[] = ["submitted", "queued", "processing", "completed"];
 
@@ -140,13 +142,27 @@ function paramsOf(args: RequestArgs, required: boolean): Params {
   return args.params;
 }
 
+// Same rule as the wallet's job check; it does not look for any particular key.
+function withinJobDepth(value: unknown, depth: number): boolean {
+  if (depth > MAX_JOB_DEPTH) {
+    return false;
+  }
+  if (Array.isArray(value)) {
+    return value.every((child) => withinJobDepth(child, depth + 1));
+  }
+  if (isPlainObject(value)) {
+    return Object.values(value).every((child) => withinJobDepth(child, depth + 1));
+  }
+  return true;
+}
+
 function jobOf(params: Params): Params {
   const job = params.job;
-  if (!isPlainObject(job)) {
-    throw invalid("Invalid params: job must be an object");
+  if (!isPlainObject(job) || Object.keys(job).length === 0 || !withinJobDepth(job, 1)) {
+    throw invalid("Invalid params: job must be a non-empty object nested at most 32 levels");
   }
-  if (!("passes" in job) && ("data" in job || "model" in job || "input" in job)) {
-    throw invalid("Invalid params: the data/model/input job shape is not accepted");
+  if (new TextEncoder().encode(JSON.stringify(job)).length > MAX_JOB_BYTES) {
+    throw invalid("Invalid params: job is larger than 5 MiB");
   }
   return job;
 }

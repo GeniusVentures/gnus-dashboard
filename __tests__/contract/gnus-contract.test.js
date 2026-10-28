@@ -170,7 +170,7 @@ describe(`gnus contract (${factory.name})`, () => {
     const hash = "0x" + "1".repeat(64);
     const cases = [
       ["submitJob with a string job", "gnus_submitJob", { job: "x", idempotencyKey: newKey() }],
-      ["submitJob with the old model/input shape", "gnus_submitJob", { job: { model: "m", input: {} }, idempotencyKey: newKey() }],
+      ["submitJob with an empty job", "gnus_submitJob", { job: {}, idempotencyKey: newKey() }],
       ["submitJob without a key", "gnus_submitJob", { job: JOB }],
       ["estimate with a string job", "gnus_estimate", { job: "x" }],
       ["listJobs limit 0", "gnus_listJobs", { limit: 0 }],
