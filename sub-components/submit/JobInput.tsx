@@ -58,7 +58,7 @@ const JobInput: React.FC = () => {
       <div className="d-flex flex-wrap align-items-center gap-3 mt-2">
         <button
           type="button"
-          className="btn btn-outline-secondary"
+          className="btn border"
           onClick={() => {
             setFileError(null);
             store.loadExample();

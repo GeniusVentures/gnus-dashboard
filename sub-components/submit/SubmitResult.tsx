@@ -117,7 +117,7 @@ const SubmitResult: React.FC = () => {
   const hash = "burnTxHash" in outcome ? outcome.burnTxHash : null;
   const canCheck = outcome.kind === "pending" || outcome.kind === "unknown";
   return (
-    <section role={screen.alert ? "alert" : "status"} className={screen.alert ? "alert alert-warning" : undefined}>
+    <section role={screen.alert ? "alert" : "status"} className={screen.alert ? "border border-warning border-3 rounded p-3" : undefined}>
       <h2 ref={heading} tabIndex={-1} className="h4">
         {screen.heading}
       </h2>
@@ -142,7 +142,7 @@ const SubmitResult: React.FC = () => {
               Check again
             </button>
           ) : null}
-          <button type="button" className="btn btn-outline-secondary" onClick={store.startOver}>
+          <button type="button" className="btn border" onClick={store.startOver}>
             Submit another job
           </button>
         </p>

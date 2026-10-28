@@ -21,7 +21,7 @@ const SubmitPanel: React.FC = () => {
           GeniusWallet shows the cost, the paying wallet and the account that runs the job. Approve or reject it
           there.
         </p>
-        <button type="button" className="btn btn-outline-secondary" onClick={store.showCancelNote}>
+        <button type="button" className="btn border" onClick={store.showCancelNote}>
           Cancel
         </button>
         {state.cancelNote ? <p className="mt-2 mb-0">{CANCEL_NOTE}</p> : null}
@@ -55,7 +55,7 @@ const SubmitPanel: React.FC = () => {
             </p>
           ) : null}
           {failure.newKey ? (
-            <button type="button" className="btn btn-outline-secondary" onClick={store.newKey}>
+            <button type="button" className="btn border" onClick={store.newKey}>
               Start a new submit
             </button>
           ) : null}
