@@ -1,3 +1,4 @@
+import { GnusOfflineError } from "../errors";
 import { EVENTS, METHODS } from "../schema";
 import type { Listener, RequestArgs, Transport } from "./types";
 
@@ -139,7 +140,16 @@ function decodeError(err: unknown): unknown {
 const decodeResult = (result: unknown): unknown =>
   isPlainObject(result) && Object.keys(result).length === 0 ? null : result;
 
+const READ_EXPIRY_SECONDS = 300;
+const READ_WAIT_MS = 60_000;
+// A submit and the connect prompt wait on a human, who has up to ten minutes.
+const HUMAN_EXPIRY_SECONDS = 900;
+const HUMAN_WAIT_MS = HUMAN_EXPIRY_SECONDS * 1000;
+
 export function createWalletConnectTransport(client: SignClientLike, session: WcSession): Transport {
+  const approved = new Set(session.namespaces.eip155?.methods ?? []);
+  // The first gnus_getAccounts, and the first after a refusal, opens a prompt in the wallet.
+  let mayPrompt = true;
   const listeners = new Map<string, Set<Listener>>();
   const emit = (name: string, payload: unknown): void => {
     for (const listener of [...(listeners.get(name) ?? [])]) {
@@ -162,20 +172,56 @@ export function createWalletConnectTransport(client: SignClientLike, session: Wc
   client.on("session_delete", onEnd);
   client.on("session_expire", onEnd);
 
+  function request({ method, params }: RequestArgs): Promise<unknown> {
+    if (!approved.has(method)) {
+      return Promise.reject({ code: 4200, message: "The wallet did not approve this method for the session" });
+    }
+    if (!client.isOnline()) {
+      return Promise.reject(new GnusOfflineError());
+    }
+    const human = method === METHODS.submitJob || (method === METHODS.getAccounts && mayPrompt);
+    const sent = client.request({
+      topic: session.topic,
+      chainId: WC_CHAIN,
+      request: { method, params: params ?? {} },
+      expiry: human ? HUMAN_EXPIRY_SECONDS : READ_EXPIRY_SECONDS,
+    });
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(
+        () => {
+          settled = true;
+          reject(new GnusOfflineError());
+        },
+        human ? HUMAN_WAIT_MS : READ_WAIT_MS,
+      );
+      sent.then(
+        (result) => {
+          clearTimeout(timer);
+          if (method === METHODS.getAccounts) {
+            mayPrompt = false;
+          }
+          if (!settled) {
+            resolve(decodeResult(result));
+          }
+        },
+        (err: unknown) => {
+          clearTimeout(timer);
+          const decoded = decodeError(err);
+          const code = (decoded as { code?: unknown } | null)?.code;
+          if (code === 4001 || code === 4100) {
+            mayPrompt = true;
+          }
+          if (!settled) {
+            reject(decoded);
+          }
+        },
+      );
+    });
+  }
+
   return {
-    async request({ method, params }: RequestArgs) {
-      try {
-        const result = await client.request({
-          topic: session.topic,
-          chainId: WC_CHAIN,
-          request: { method, params: params ?? {} },
-          expiry: 300,
-        });
-        return decodeResult(result);
-      } catch (err) {
-        throw decodeError(err);
-      }
-    },
+    request,
     on(event, listener) {
       let set = listeners.get(event);
       if (!set) {

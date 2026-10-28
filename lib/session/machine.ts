@@ -102,6 +102,11 @@ function unsupportedCause(error: GnusError): Cause {
 
 function onError(state: SessionState, error: GnusError, source: ErrorSource): SessionState {
   const { code, kind } = error;
+  if (kind === "walletOffline") {
+    return state.accounts && source !== "connect"
+      ? { ...state, phase: "notResponding", cause: "offline" }
+      : away("notResponding", "offline", null);
+  }
   if (code === 4001 || code === 4100) {
     return away("denied", code === 4001 ? "declined" : "notAllowed", error);
   }

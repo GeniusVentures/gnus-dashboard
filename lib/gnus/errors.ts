@@ -23,6 +23,7 @@ export type GnusErrorKind =
   | "submissionOutcomeUnknown"
   | "switching"
   | "contractMismatch"
+  | "walletOffline"
   | "unknown";
 
 export type GnusErrorAction =
@@ -238,6 +239,14 @@ export class GnusContractMismatchError extends GnusError {
     this.name = "GnusContractMismatchError";
     this.method = method;
     this.version = version;
+  }
+}
+
+/** The wallet did not answer in time, or the relay is down. Carries no code, so a submit that ends this way is looked up by its key. */
+export class GnusOfflineError extends GnusError {
+  constructor() {
+    super(null, undefined, undefined, { kind: "walletOffline", message: "GeniusWallet is offline.", action: "retry" });
+    this.name = "GnusOfflineError";
   }
 }
 
