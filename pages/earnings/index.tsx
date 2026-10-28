@@ -1,9 +1,9 @@
-import Placeholder from "../../sub-components/shared/Placeholder";
+import EarningsView from "../../sub-components/earnings/EarningsView";
 import WalletGate from "../../sub-components/wallet/WalletGate";
 
 const Earnings: React.FC = () => (
   <WalletGate>
-    <Placeholder title="Earnings" />
+    <EarningsView />
   </WalletGate>
 );
 
