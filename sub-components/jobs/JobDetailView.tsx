@@ -116,15 +116,15 @@ const Fields: React.FC<{ job: NonNullable<JobLookup> }> = ({ job }) => {
         <dd className="col-sm-9">{job.origin ?? NOT_RECORDED}</dd>
         <dt className="col-sm-3">Submitted</dt>
         <dd className="col-sm-9">
-          {job.submittedAt ? <time dateTime={job.submittedAt}>{when.format(new Date(job.submittedAt))}</time> : NOT_RECORDED}
-        </dd>
-        <dt className="col-sm-3">Cost</dt>
-        <dd className="col-sm-9">
-          {unit && job.cost ? (
-            <Amount value={job.cost} decimals={unit.decimals} symbol={unit.symbol} />
+          {job.submittedAt ? (
+            <time dateTime={job.submittedAt}>{when.format(new Date(job.submittedAt))}</time>
           ) : (
             NOT_RECORDED
           )}
+        </dd>
+        <dt className="col-sm-3">Cost</dt>
+        <dd className="col-sm-9">
+          {unit && job.cost ? <Amount value={job.cost} decimals={unit.decimals} symbol={unit.symbol} /> : NOT_RECORDED}
         </dd>
         <dt className="col-sm-3">Submit key</dt>
         <dd className="col-sm-9">
@@ -139,13 +139,16 @@ const Fields: React.FC<{ job: NonNullable<JobLookup> }> = ({ job }) => {
 const JobDetailBody: React.FC<{ jobRef: JobRef }> = ({ jobRef }) => {
   const { state } = useSession();
   const accounts = state.accounts;
-  const [selector, value] = "burnTxHash" in jobRef ? (["burnTxHash", jobRef.burnTxHash] as const) : (["jobId", jobRef.jobId] as const);
+  const [selector, value] =
+    "burnTxHash" in jobRef ? (["burnTxHash", jobRef.burnTxHash] as const) : (["jobId", jobRef.jobId] as const);
   const [poll, setPoll] = useState<number | false>(false);
   useJobUpdates();
   const query = useAccountQuery(
     `job:${selector}:${value}`,
     async (client) => {
-      const job = await client.getJob("burnTxHash" in jobRef ? { burnTxHash: jobRef.burnTxHash } : { jobId: jobRef.jobId });
+      const job = await client.getJob(
+        "burnTxHash" in jobRef ? { burnTxHash: jobRef.burnTxHash } : { jobId: jobRef.jobId },
+      );
       // The wallet answers only for the current node account; another account's job means the contract is broken.
       if (job && accounts && job.sdkAddress !== null && job.sdkAddress !== accounts.node.sdkAddress) {
         throw new GnusContractMismatchError("gnus_getJob", accounts.version);
@@ -207,10 +210,7 @@ const JobDetailView: React.FC = () => {
       ) : !jobRef ? (
         <NoJob title="This link doesn't name a job." body="Open a job from your list to see it here." />
       ) : accounts ? (
-        <JobDetailBody
-          key={`${accounts.node.sdkAddress}:${JSON.stringify(jobRef)}`}
-          jobRef={jobRef}
-        />
+        <JobDetailBody key={`${accounts.node.sdkAddress}:${JSON.stringify(jobRef)}`} jobRef={jobRef} />
       ) : null}
     </section>
   );

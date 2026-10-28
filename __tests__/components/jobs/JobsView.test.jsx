@@ -1,5 +1,5 @@
 import React from "react";
-import { act, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { createMockProvider } from "../../../lib/gnus/mock/provider";
@@ -7,6 +7,11 @@ import JobsView from "../../../sub-components/jobs/JobsView";
 import { renderWithSession } from "../../mocks/session";
 
 expect.extend(toHaveNoViolations);
+
+const mockPush = jest.fn();
+jest.mock("next/router", () => ({ useRouter: () => ({ isReady: true, query: {}, push: mockPush }) }));
+
+beforeEach(() => mockPush.mockClear());
 
 const OTHER_NODE = "0x" + "c3".repeat(64);
 const rows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
@@ -145,3 +150,80 @@ describe("JobsView", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });
+
+describe("search", () => {
+  const hashOf = (n) => `0x5eed${n.toString(16).padStart(60, "0")}`;
+  const field = () => screen.getByLabelText("Search by job id or burn hash");
+  const type = (value) => fireEvent.change(field(), { target: { value } });
+  const submit = () => fireEvent.submit(screen.getByRole("search"));
+
+  it("filters the loaded rows as the user types, and says when none match", async () => {
+    const { container } = renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    type("0019");
+    expect(rows()).toHaveLength(1);
+    expect(await axe(container)).toHaveNoViolations();
+    type("zzzz");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    expect(screen.getByText("No loaded job matches.")).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+    type("");
+    expect(rows()).toHaveLength(20);
+  });
+
+  it("sends no wallet call while typing", async () => {
+    const { provider } = renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    const before = provider.controls.calls.length;
+    type("0");
+    type("00");
+    type("0019");
+    expect(provider.controls.calls).toHaveLength(before);
+  });
+
+  it("opens the one loaded match on submit", async () => {
+    renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    type("0019");
+    submit();
+    expect(mockPush).toHaveBeenCalledWith(`/jobs/detail?hash=${hashOf(25)}`);
+  });
+
+  it("opens a whole burn hash that is not loaded, and a job id", async () => {
+    renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    type(hashOf(2).toUpperCase().replace("0X", "0x"));
+    submit();
+    expect(mockPush).toHaveBeenLastCalledWith(`/jobs/detail?hash=${hashOf(2)}`);
+    type("job-x");
+    submit();
+    expect(mockPush).toHaveBeenLastCalledWith("/jobs/detail?id=job-x");
+  });
+
+  it("asks for the whole hash when a 0x string stops short, and pushes nothing", async () => {
+    renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    type("0x12");
+    submit();
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter the whole burn hash (0x and 64 characters) to look it up.");
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("does nothing for a blank search", async () => {
+    renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    submit();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
+
+  it("starts empty after a node account switch, with no old row", async () => {
+    const { provider } = renderWithSession(<JobsView />, { profile: "jobHistory" });
+    await screen.findByRole("table");
+    type("0019");
+    act(() => provider.controls.switchAccount());
+    expect(await screen.findByText("No jobs yet")).toBeInTheDocument();
+    expect(screen.queryByDisplayValue("0019")).not.toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+});
+

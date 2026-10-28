@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { GnusContractMismatchError, GnusError } from "../../lib/gnus/errors";
 import type { Job, JobList } from "../../lib/gnus/schema";
-import { isFinal, isMarked, shortJobId } from "../../lib/jobs";
+import { isFinal, isMarked, matchesSearch, searchTarget, shortJobId } from "../../lib/jobs";
 import Amount from "../shared/Amount";
 import { useSession } from "../wallet/SessionProvider";
 import { useAccountInfiniteQuery } from "../wallet/useAccountQuery";
@@ -14,6 +15,7 @@ const PAGE_SIZE = 20;
 // A slow re-read while a job on screen can still change; never faster, and paused while the tab is hidden.
 const POLL_MS = 30000;
 const UNEXPECTED = "GeniusWallet returned an unexpected error.";
+const PARTIAL_HASH = "Enter the whole burn hash (0x and 64 characters) to look it up.";
 
 const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" });
 
@@ -55,10 +57,14 @@ const JobsBody: React.FC = () => {
     (last) => last.nextCursor,
     { refetchOnWindowFocus: true, refetchInterval: poll },
   );
-  const links = useRef<Array<HTMLAnchorElement | null>>([]);
+  const router = useRouter();
+  const links = useRef(new Map<string, HTMLAnchorElement>());
   const focusFrom = useRef<number | null>(null);
   const [announcement, setAnnouncement] = useState("");
+  const [term, setTerm] = useState("");
+  const [searchNote, setSearchNote] = useState("");
   const jobs = distinct(query.data?.pages ?? []);
+  const shown = jobs.filter((job) => matchesSearch(job, term));
   const live = jobs.some((job) => !isFinal(job.status));
   useEffect(() => {
     setPoll(live ? POLL_MS : false);
@@ -67,10 +73,12 @@ const JobsBody: React.FC = () => {
   // After "Load more jobs" the focus moves to the first new row so a keyboard user does not start over.
   useEffect(() => {
     if (focusFrom.current !== null && jobs.length > focusFrom.current) {
-      links.current[focusFrom.current]?.focus();
+      const first = jobs[focusFrom.current];
+      links.current.get(first.burnTxHash)?.focus();
       setAnnouncement(`Showing ${jobs.length} jobs`);
       focusFrom.current = null;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the count grows; the rows are read from that render
   }, [jobs.length]);
 
   const unit = accounts?.unit;
@@ -102,48 +110,99 @@ const JobsBody: React.FC = () => {
     focusFrom.current = jobs.length;
     void query.fetchNextPage();
   };
+  // Typing only filters what is loaded; the exact lookup is the detail page's own gnus_getJob.
+  const search = (event: React.FormEvent): void => {
+    event.preventDefault();
+    const target = searchTarget(term);
+    if (target === null) {
+      return;
+    }
+    const matches = jobs.filter((job) => matchesSearch(job, term));
+    if (matches.length === 1) {
+      void router.push(`/jobs/detail?hash=${matches[0].burnTxHash}`);
+    } else if ("burnTxHash" in target) {
+      void router.push(`/jobs/detail?hash=${target.burnTxHash}`);
+    } else if ("jobId" in target) {
+      void router.push(`/jobs/detail?id=${encodeURIComponent(target.jobId)}`);
+    } else {
+      setSearchNote(PARTIAL_HASH);
+    }
+  };
   return (
     <>
-      <div className="table-responsive">
-        <table className="table align-middle">
-          <caption className="visually-hidden">Your jobs, newest first</caption>
-          <thead>
-            <tr>
-              <th scope="col">Status</th>
-              <th scope="col">Submitted</th>
-              <th scope="col">Cost</th>
-              <th scope="col">From</th>
-              <th scope="col">Job</th>
-            </tr>
-          </thead>
-          <tbody>
-            {jobs.map((job, index) => (
-              <tr key={job.burnTxHash}>
-                <td>
-                  <JobStatusBadge status={job.status} explain={isMarked(job.status)} />
-                </td>
-                <td>
-                  <time dateTime={job.submittedAt}>{when.format(new Date(job.submittedAt))}</time>
-                </td>
-                <td>
-                  <Amount value={job.cost} decimals={unit.decimals} symbol={unit.symbol} />
-                </td>
-                <td>{job.origin}</td>
-                <td>
-                  <Link
-                    href={`/jobs/detail?hash=${job.burnTxHash}`}
-                    ref={(element) => {
-                      links.current[index] = element;
-                    }}
-                  >
-                    {shortJobId(job)}
-                  </Link>
-                </td>
+      <form role="search" className="d-flex flex-wrap align-items-end gap-2 mb-3" onSubmit={search}>
+        <div>
+          <label htmlFor="job-search" className="form-label">
+            Search by job id or burn hash
+          </label>
+          <input
+            id="job-search"
+            type="search"
+            className="form-control"
+            value={term}
+            onChange={(event) => {
+              setTerm(event.target.value);
+              setSearchNote("");
+            }}
+          />
+        </div>
+        <button type="submit" className="btn btn-primary">
+          Search
+        </button>
+      </form>
+      {searchNote ? (
+        <p role="alert" className="text-danger-emphasis">
+          {searchNote}
+        </p>
+      ) : null}
+      {shown.length === 0 ? (
+        <p role="status">No loaded job matches.</p>
+      ) : (
+        <div className="table-responsive">
+          <table className="table align-middle">
+            <caption className="visually-hidden">Your jobs, newest first</caption>
+            <thead>
+              <tr>
+                <th scope="col">Status</th>
+                <th scope="col">Submitted</th>
+                <th scope="col">Cost</th>
+                <th scope="col">From</th>
+                <th scope="col">Job</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {shown.map((job) => (
+                <tr key={job.burnTxHash}>
+                  <td>
+                    <JobStatusBadge status={job.status} explain={isMarked(job.status)} />
+                  </td>
+                  <td>
+                    <time dateTime={job.submittedAt}>{when.format(new Date(job.submittedAt))}</time>
+                  </td>
+                  <td>
+                    <Amount value={job.cost} decimals={unit.decimals} symbol={unit.symbol} />
+                  </td>
+                  <td>{job.origin}</td>
+                  <td>
+                    <Link
+                      href={`/jobs/detail?hash=${job.burnTxHash}`}
+                      ref={(element) => {
+                        if (element) {
+                          links.current.set(job.burnTxHash, element);
+                        } else {
+                          links.current.delete(job.burnTxHash);
+                        }
+                      }}
+                    >
+                      {shortJobId(job)}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {query.isFetchNextPageError ? (
         <div role="alert" className="text-danger-emphasis mb-2">
           <p className="mb-1">
@@ -152,12 +211,7 @@ const JobsBody: React.FC = () => {
         </div>
       ) : null}
       {query.hasNextPage || query.isFetchNextPageError ? (
-        <button
-          type="button"
-          className="btn btn-primary"
-          disabled={query.isFetchingNextPage}
-          onClick={loadMore}
-        >
+        <button type="button" className="btn btn-primary" disabled={query.isFetchingNextPage} onClick={loadMore}>
           {query.isFetchingNextPage ? "Loading more jobs" : query.isFetchNextPageError ? "Retry" : "Load more jobs"}
         </button>
       ) : null}

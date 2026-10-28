@@ -129,3 +129,68 @@ describe("My jobs with every state", () => {
   });
 });
 
+const listReads = () => mock.controls.calls.filter((c) => c.method === "gnus_listJobs").length;
+
+describe("Live updates and search", () => {
+  it("changes a row in place when the wallet reports a new status", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).first().should("contain", "Submitted to the network");
+    cy.then(() => mock.controls.advanceJob(hashOf(25), "processing"));
+    cy.get("tbody tr").first().should("contain", "Processing");
+    cy.then(() => expect(listReads()).to.eq(1));
+  });
+
+  it("updates an open detail and reads its result when the job completes", () => {
+    visit(`/jobs/detail?hash=${hashOf(25)}`);
+    cy.contains("Submitted to the network", { timeout: 12000 });
+    cy.then(() => mock.controls.advanceJob(hashOf(25), "completed"));
+    cy.contains("dd", "Completed");
+    cy.then(() => {
+      expect(mock.controls.calls.filter((c) => c.method === "gnus_getJob")).to.have.length(2);
+    });
+  });
+
+  it("reads the list again when the tab becomes visible", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.window().then((win) => win.dispatchEvent(new win.Event("visibilitychange")));
+    cy.wrap(null).should(() => expect(listReads()).to.eq(2));
+  });
+
+  it("recovers from a disconnect with Retry and reads the list again", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.then(() => mock.controls.disconnect());
+    cy.get("h1").should("have.text", "GeniusWallet isn't responding");
+    cy.contains("button", "Retry").click();
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.wrap(null).should(() => expect(listReads()).to.eq(2));
+  });
+
+  it("filters loaded rows by what is typed", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.get("#job-search").type("0019");
+    cy.get("tbody tr").should("have.length", 1);
+    cy.get("#job-search").clear().type("zzzz");
+    cy.contains("No loaded job matches.");
+  });
+
+  it("opens a job that is not loaded by its whole burn hash", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.get("#job-search").type(`${hashOf(2)}{enter}`);
+    cy.url().should("include", `/jobs/detail?hash=${hashOf(2)}`);
+    cy.get("h1").should("have.text", "Job detail");
+    cy.contains("dd", "seed-2");
+  });
+
+  it("asks for the whole hash when a 0x string stops short", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.get("#job-search").type("0x12{enter}");
+    cy.contains("Enter the whole burn hash (0x and 64 characters) to look it up.");
+    cy.location("pathname").should("eq", "/jobs");
+  });
+});
+
