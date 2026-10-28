@@ -36,7 +36,7 @@ export interface MockProvider extends InjectedProvider {
 }
 
 type Params = Record<string, unknown>;
-type JobRecord = Job & { result: { cids: string[] } | null };
+type JobRecord = Job & { result: { cids: string[]; data?: Record<string, unknown> } | null; error?: string };
 
 interface Replay {
   at: number;
@@ -210,7 +210,7 @@ function createFacade(state: MockState): MockProvider {
   const amounts = amountsFor(profile);
   const node = (): string => state.accounts.node.sdkAddress;
   const mine = (): JobRecord[] => state.jobs.filter((job) => job.sdkAddress === node());
-  const publicJob = ({ result: _result, ...job }: JobRecord): Job => job;
+  const publicJob = ({ result: _result, error: _error, ...job }: JobRecord): Job => job;
 
   async function getAccounts(): Promise<Accounts> {
     await admit("gnus_getAccounts");
@@ -490,7 +490,9 @@ function createFacade(state: MockState): MockProvider {
       return null;
     }
     const completed = data === "populated" && found.status === "completed";
-    return { ...publicJob(found), result: completed ? { cids: ["bafy" + "q".repeat(40)] } : null };
+    // A record with its own stored result or error answers with them; otherwise the populated default applies.
+    const result = found.result ?? (completed ? { cids: ["bafy" + "q".repeat(40)] } : null);
+    return { ...publicJob(found), result, ...(found.error === undefined ? {} : { error: found.error }) };
   }
 
   async function getEarnings(args: RequestArgs): Promise<Earnings> {

@@ -60,3 +60,66 @@ describe("readsFail", () => {
     await expect(provider.request({ method: "gnus_getAccounts" })).resolves.toBeTruthy();
   });
 });
+
+describe("jobResults", () => {
+  const hash = (n) => `0x7e57${n.toString(16).padStart(60, "0")}`;
+  const getJob = (provider, n) => provider.request({ method: "gnus_getJob", params: { burnTxHash: hash(n) } });
+
+  it("lists nine jobs, one per state, with job ids except on the two the wallet reports today", async () => {
+    const provider = createMockProvider({ profile: "jobResults" });
+    const { jobs } = jobListSchema.parse(await list(provider, { limit: 100 }));
+    expect(jobs).toHaveLength(9);
+    const byStatus = Object.fromEntries(jobs.map((job) => [job.burnTxHash, job]));
+    expect(jobs.map((job) => job.status).sort()).toEqual(
+      ["bridgedNotProcessed", "completed", "failed", "failed", "processing", "queued", "submitted", "unconfirmed", "unknown"].sort(),
+    );
+    for (const job of jobs) {
+      expect(job.jobId === null).toBe(job.status === "bridgedNotProcessed" || job.status === "unconfirmed");
+    }
+    expect(Object.keys(byStatus)).toHaveLength(9);
+  });
+
+  it("gives the completed job two CIDs and data, and the failed job its error", async () => {
+    const provider = createMockProvider({ profile: "jobResults" });
+    const done = jobLookupSchema.parse(await getJob(provider, 4));
+    expect(done.status).toBe("completed");
+    expect(done.result.cids).toHaveLength(2);
+    expect(done.result.data).toEqual({ frames: 24, label: "pose" });
+    const failed = jobLookupSchema.parse(await getJob(provider, 5));
+    expect(failed.error).toBe("The node ran out of memory.");
+  });
+
+  it("keeps result and error out of listJobs and out of jobUpdated payloads", async () => {
+    const provider = createMockProvider({ profile: "jobResults" });
+    const { jobs } = await list(provider, { limit: 100 });
+    for (const job of jobs) {
+      expect(job).not.toHaveProperty("result");
+      expect(job).not.toHaveProperty("error");
+    }
+    const seen = [];
+    provider.on("gnus_jobUpdated", (payload) => seen.push(payload));
+    provider.controls.advanceJob(hash(4), "failed");
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).not.toHaveProperty("result");
+    expect(seen[0]).not.toHaveProperty("error");
+  });
+
+  it("parses an unseen status to unknown instead of failing", async () => {
+    const provider = createMockProvider({ profile: "jobResults" });
+    const { jobs } = jobListSchema.parse(await list(provider, { limit: 100 }));
+    expect(jobs.find((job) => job.jobId === "job-archived").status).toBe("unknown");
+  });
+
+  it("carries markup and script payloads in the hostile job's origin, error and data", async () => {
+    const provider = createMockProvider({ profile: "jobResults" });
+    const hostile = jobLookupSchema.parse(await getJob(provider, 9));
+    expect(hostile.origin).toContain('<img src="x" onerror=');
+    expect(hostile.error).toContain("onerror");
+    expect(JSON.stringify(hostile.result.data)).toContain("<script>");
+  });
+
+  it("leaves profiles without seeds as they were", async () => {
+    const provider = createMockProvider({ profile: "today" });
+    expect((await list(provider)).jobs).toEqual([]);
+  });
+});

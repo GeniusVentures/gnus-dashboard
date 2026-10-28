@@ -71,6 +71,11 @@ export const MOCK_PROFILES = {
     data: "today",
     jobs: "history",
   },
+  jobResults: {
+    description: "Populated: nine jobs, one per state plus an unseen status and a hostile one, with stored results and errors",
+    data: "populated",
+    jobs: "results",
+  },
   readsFail: {
     description: "Job history is seeded but gnus_listJobs, gnus_getJob and gnus_getEarnings fail with -32603",
     data: "today",
