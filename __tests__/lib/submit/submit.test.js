@@ -160,6 +160,28 @@ describe("a disconnect during a submit", () => {
   });
 });
 
+describe("the chain a burn is linked on", () => {
+  it("a key sent again on another chain names no chain, so no explorer link can point at the wrong one", async () => {
+    const made = await ready({ profile: "manualConfirm" });
+    const key = state(made).draft.idempotencyKey;
+    const sending = made.submit.submit();
+    await settle();
+    made.provider.controls.answerConfirm(false);
+    await sending;
+    expect(state(made).draft.chainId).toBe(80002);
+
+    made.provider.controls.setNetwork({ sdk: made.session.getState().accounts.network.sdk, evmChainId: 137 });
+    await made.submit.estimate();
+    expect(state(made).draft.idempotencyKey).toBe(key);
+    const again = made.submit.submit();
+    await until(() => state(made).step === "confirm");
+    made.provider.controls.answerConfirm(true);
+    await again;
+    expect(state(made).outcome.kind).toBe("done");
+    expect(state(made).draft.chainId).toBeNull();
+  });
+});
+
 describe("outcomes from the wallet's own replies", () => {
   it.each([
     ["bridgedNotProcessedStatus", "paidNotProcessed", true],

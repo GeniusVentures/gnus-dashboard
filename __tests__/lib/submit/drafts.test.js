@@ -111,6 +111,17 @@ describe("prune", () => {
   });
 });
 
+describe("markSent", () => {
+  it("keeps the chain while every send is on it, and drops it for good once a send is on another", () => {
+    const storage = new MemoryStorage();
+    const first = markSent(storage, make(storage, "k1"), 80002, 2);
+    expect(markSent(storage, first, 80002, 3).chainId).toBe(80002);
+    const moved = markSent(storage, first, 137, 4);
+    expect(moved).toMatchObject({ chainId: null, sentAt: 4 });
+    expect(markSent(storage, moved, 80002, 5).chainId).toBeNull();
+  });
+});
+
 describe("newestSent", () => {
   it("gives the identity's most recently sent draft and ignores other identities", () => {
     const storage = new MemoryStorage();

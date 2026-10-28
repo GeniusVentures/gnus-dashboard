@@ -106,9 +106,13 @@ export function createDraft(storage: DraftStorage, init: DraftInit): Draft | nul
   return writeDraft(storage, draft) ? draft : null;
 }
 
-/** Writes sentAt and chainId; null means nothing was written and no call may go out. */
+/**
+ * Writes sentAt and chainId; null means nothing was written and no call may go out. A key sent on two chains gets no
+ * chain: the wallet may replay the first burn, and no explorer link is better than one to a chain without the payment.
+ */
 export function markSent(storage: DraftStorage, draft: Draft, chainId: number | null, now: number): Draft | null {
-  const next: Draft = { ...draft, sentAt: now, chainId };
+  const chain = draft.sentAt === null || draft.chainId === chainId ? chainId : null;
+  const next: Draft = { ...draft, sentAt: now, chainId: chain };
   return writeDraft(storage, next) ? next : null;
 }
 
