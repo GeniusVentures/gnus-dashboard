@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "lint": "next lint",
+    "lint": "next lint --dir pages --dir sub-components --dir layouts --dir lib --dir data",
     "test": "jest",
     "serve:out": "node scripts/serve-out.js",
     "cy:run": "cypress run",

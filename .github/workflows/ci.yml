@@ -22,6 +22,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn tsc -p tsconfig.strict.json
+      - run: yarn lint
       - run: yarn build
       - run: yarn test --ci
       - run: yarn test:e2e
