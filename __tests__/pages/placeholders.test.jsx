@@ -3,8 +3,18 @@ import { render, screen } from '@testing-library/react';
 import { renderWithSession } from '../mocks/session';
 
 describe('placeholder routes', () => {
+  it('renders the home page and explains the two identities', async () => {
+    const Page = require('../../pages/index').default;
+    renderWithSession(<Page />);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
+    expect(screen.getByText(/node account that owns your jobs and earnings/)).toBeInTheDocument();
+    expect(screen.getByText(/wallet that pays/)).toBeInTheDocument();
+    ['Submit a job', 'My jobs', 'Earnings'].forEach((name) => {
+      expect(screen.getByRole('link', { name })).toBeInTheDocument();
+    });
+  });
+
   it.each([
-    ['../../pages/index', 'Dashboard'],
     ['../../pages/submit/index', 'Submit a job'],
     ['../../pages/jobs/index', 'My jobs'],
     ['../../pages/jobs/detail', 'Job detail'],
