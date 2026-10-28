@@ -77,7 +77,7 @@ The `gnus_*` contract is owned by GeniusWallet (`research/gnus-rpc-contract.md`)
 
 ### Submit
 
-- [ ] **SUB-01**: An idempotency key (`crypto.randomUUID()`) is created at the review step, bound to a hash of the job body, and written to `localStorage` with the job before `gnus_submitJob` is called. It is reused on any retry of the same job, replaced on any edit, and dropped after about 23 h.
+- [ ] **SUB-01**: An idempotency key (`crypto.randomUUID()`) is created at the review step, bound to a SHA-256 of the canonical job JSON, and written to `localStorage` with that hash and a short label (never the job body, which can reach 5 MiB) before `gnus_submitJob` is called. It is reused on any retry of the same job, replaced on any edit, and dropped after about 23 h.
 - [ ] **SUB-02**: Submit is disabled while a submit is in flight, a `-32005` (`submit_in_flight`, `confirm_open`) shows "A confirm is already open in your wallet", and the dashboard never retries `gnus_submitJob` on its own.
 - [ ] **SUB-03**: While the wallet's confirm is open the page shows "Confirm in your wallet" with no timeout (over WalletConnect: open GeniusWallet on your phone); a dashboard-side Cancel says the wallet prompt stays open.
 - [ ] **SUB-04**: A rejected confirm (`4001`) returns the user to the job with the form and the same key intact, saying nothing was spent.

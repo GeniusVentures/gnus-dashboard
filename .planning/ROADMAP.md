@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Teardown and static shell** - The app exports to static files with no server, no secrets and no old payment path, and a merge to main cannot break the live site
 - [x] **Phase 2: Contract client and mock wallet** - One typed `gnus_*` client and a mock wallet with real faults, so every later phase builds and tests without a wallet
 - [x] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
-- [ ] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
+- [x] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
 - [ ] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
 - [ ] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
 - [ ] **Phase 7: Hosting and CSP hardening** - The export runs on the pinned origin with a strict CSP, no third-party code, and an a11y pass
@@ -99,7 +99,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Submitting shows "Confirm in your wallet" until the wallet answers; a reject returns to the job with nothing spent; success shows the burn hash with a block-explorer link (v2 JOBX-03, pulled forward and accepted 2026-10-28), the job id or "Job id pending", and a link to the job.
   4. A paid-but-not-processed result, in either shape, shows a persistent banner with the burn hash, a copy button and a pointer to the wallet and no retry button, and every other error shows its own message.
   5. Reloading at each step of a submit ends with the true outcome on screen and exactly one burn in the mock, and a second click or a second tab never opens a second confirm.
-**Plans**: TBD
+**Plans**: 7 plans in 5 waves
+- [x] 04-01-PLAN.md - Tracer: load the example, estimate, pay, Job submitted; key saved before the call (wave 1)
+- [x] 04-02-PLAN.md - Mock: a confirm the test answers, submit intents, a wallet that stops mid-submit (wave 1)
+- [x] 04-03-PLAN.md - Job input: file, paste, example, 5 MB cap, shape errors, preview (wave 2)
+- [x] 04-04-PLAN.md - Estimate states, exact integer comparison of amounts (wave 2)
+- [x] 04-05-PLAN.md - Confirm screen, every outcome screen, lookup by key (wave 3)
+- [x] 04-06-PLAN.md - Draft reuse by job hash, expiry, recovery after a reload (wave 4)
+- [x] 04-07-PLAN.md - axe sweep of every submit state in light and dark, focus (wave 5)
 **UI hint**: yes
 
 ### Phase 5: My jobs and earnings
@@ -166,7 +173,7 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | 1. Teardown and static shell | 6/6 | Verified locally; remote CI not run (no push) | 2026-10-27 |
 | 2. Contract client and mock wallet | 7/7 | Verified locally (human_needed: real-wallet conformance run, dev-server browser check) | 2026-10-27 |
 | 3. Connect and identity | 6/6 | Verified locally (human_needed: light and dark look, real-wallet run) | 2026-10-28 |
-| 4. Submit a job | 0/TBD | Not started | - |
+| 4. Submit a job | 7/7 | Verified locally (human_needed: light and dark look, real-wallet confirm and burn) | 2026-10-28 |
 | 5. My jobs and earnings | 0/TBD | Not started | - |
 | 6. WalletConnect browser flow | 0/TBD | Not started | - |
 | 7. Hosting and CSP hardening | 0/TBD | Not started | - |
