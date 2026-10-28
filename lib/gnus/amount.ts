@@ -26,3 +26,11 @@ export function formatAmount(base: string | null, decimals: number): string | nu
   const fraction = decimals === 0 ? "" : (value % scale).toString().padStart(decimals, "0").replace(/0+$/, "");
   return fraction === "" ? whole : `${whole}.${fraction}`;
 }
+
+// Exact comparison of two base-unit amounts; BigInt lives only in this file so no amount ever passes through Number.
+export function exceeds(amount: string, limit: string): boolean {
+  if (!baseUnitsSchema.safeParse(amount).success || !baseUnitsSchema.safeParse(limit).success) {
+    throw new RangeError("exceeds: invalid base units");
+  }
+  return BigInt(amount) > BigInt(limit);
+}

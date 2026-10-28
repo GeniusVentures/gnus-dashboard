@@ -1,4 +1,4 @@
-import { formatAmount } from "../../../lib/gnus/amount";
+import { exceeds, formatAmount } from "../../../lib/gnus/amount";
 
 describe("formatAmount", () => {
   test.each([
@@ -26,5 +26,25 @@ describe("formatAmount", () => {
 
   test.each([[37], [-1], [1.5]])("rejects decimals %p", (decimals) => {
     expect(() => formatAmount("1", decimals)).toThrow(RangeError);
+  });
+});
+
+describe("exceeds", () => {
+  test.each([
+    ["1000000000000000000001", "1000000000000000000000", true],
+    ["1000000000000000000000", "1000000000000000000000", false],
+    ["9007199254740993", "9007199254740992", true],
+    ["9007199254740992", "9007199254740993", false],
+    ["0", "0", false],
+    ["007", "7", false],
+    ["010", "9", true],
+  ])("%s exceeds %s is %s", (amount, limit, expected) => {
+    expect(exceeds(amount, limit)).toBe(expected);
+  });
+
+  test("a non-digit string throws RangeError, as formatAmount does", () => {
+    expect(() => exceeds("1.5", "1")).toThrow(RangeError);
+    expect(() => exceeds("1", "-1")).toThrow(RangeError);
+    expect(() => exceeds("", "1")).toThrow(RangeError);
   });
 });
