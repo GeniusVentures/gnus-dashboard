@@ -4,7 +4,13 @@ import { createInjectedTransport } from "../gnus/transport/injected";
 import { DetectEnv, detectTransport } from "../gnus/transport/select";
 import { INITIAL_STATE, SessionEvent, SessionState, reduce } from "./machine";
 
-export type SessionEnv = DetectEnv;
+export interface SessionEnv extends DetectEnv {
+  /** False while the tab is hidden. Left out, the tab counts as visible. */
+  isVisible?(): boolean;
+}
+
+/** A tracked read unanswered for this long shows "GeniusWallet isn't responding"; the read is not abandoned. */
+export const NO_REPLY_MS = 15000;
 
 /** Seconds between getAccounts retries while the wallet is starting up; the last step repeats. */
 export const STARTUP_RETRY_SECONDS = [1, 2, 4, 8, 16, 30];
@@ -36,7 +42,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   let client: GnusClient | null = null;
   let retryTimer: unknown = null;
   let retryStep = 0;
-  let retryInFlight = false;
+  let readInFlight = false;
+  let slowReads = 0;
   const cleanups: Array<() => void> = [];
   const listeners = new Set<() => void>();
 
@@ -54,7 +61,7 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       retryStep = 0;
       return;
     }
-    if (retryTimer !== null || retryInFlight || disposed) {
+    if (retryTimer !== null || readInFlight || disposed) {
       return;
     }
     const seconds = STARTUP_RETRY_SECONDS[Math.min(retryStep, STARTUP_RETRY_SECONDS.length - 1)];
@@ -76,26 +83,55 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     syncRetryTimer();
   }
 
-  // No timeout: the wallet may hold a connect call until the user answers its prompt.
-  function readAccounts(): void {
-    if (!client || retryInFlight) {
+  function track<T>(read: Promise<T>): Promise<T> {
+    let slow = false;
+    const timer = env.setTimeout(() => {
+      slow = true;
+      slowReads += 1;
+      dispatch({ type: "noReply" });
+    }, NO_REPLY_MS);
+    const settled = (): void => {
+      env.clearTimeout(timer);
+      if (slow) {
+        slowReads -= 1;
+        if (slowReads === 0 && !disposed) {
+          dispatch({ type: "replyArrived" });
+        }
+      }
+    };
+    read.then(settled, settled);
+    return read;
+  }
+
+  // The connect call has no timeout: the wallet may hold it until the user answers its prompt.
+  // A re-read of a connected session is tracked like any other read.
+  function readAccounts(source: "connect" | "identity" = "connect"): void {
+    if (!client || readInFlight) {
       return;
     }
-    retryInFlight = true;
-    client.getAccounts().then(
+    readInFlight = true;
+    const read = client.getAccounts();
+    (source === "identity" ? track(read) : read).then(
       (accounts) => {
-        retryInFlight = false;
+        readInFlight = false;
         if (!disposed) {
           dispatch({ type: "accountsReceived", accounts });
         }
       },
       (err: unknown) => {
-        retryInFlight = false;
+        readInFlight = false;
         if (!disposed) {
-          dispatch({ type: "connectFailed", error: normalizeError(err) });
+          const error = normalizeError(err);
+          dispatch(source === "connect" ? { type: "connectFailed", error } : { type: "errorReported", error, source });
         }
       },
     );
+  }
+
+  function onVisible(): void {
+    if (env.isVisible?.() !== false && (state.phase === "ready" || state.phase === "switching")) {
+      readAccounts("identity");
+    }
   }
 
   function connect(first: SessionEvent): void {
@@ -120,6 +156,13 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     );
     cleanups.push(
       injected.on(
+        "disconnect",
+        () => dispatch({ type: "disconnected" }),
+        () => dispatch({ type: "disconnected" }),
+      ),
+    );
+    cleanups.push(
+      injected.on(
         "gnus_networkChanged",
         (network) => dispatch({ type: "networkChanged", network }),
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
@@ -135,6 +178,9 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     started = true;
     const detection = detectTransport(env, { hasActiveWalletConnectSession: () => false });
     cleanups.push(() => detection.dispose());
+    cleanups.push(detection.onNotReady(() => dispatch({ type: "noBridge" })));
+    env.win.addEventListener("visibilitychange", onVisible);
+    cleanups.push(() => env.win.removeEventListener("visibilitychange", onVisible));
     cleanups.push(
       detection.onSwitch(() => {
         if (!disposed) {
@@ -171,7 +217,7 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       readAccounts();
     },
     getClient: () => client,
-    track: (read) => read,
+    track,
     report: (error) => dispatch({ type: "errorReported", error, source: "query" }),
     dispose() {
       disposed = true;
@@ -192,6 +238,7 @@ export function getSessionStore(win: Window = window): SessionStore {
   if (!store) {
     store = createSessionStore({
       win: win as unknown as DetectEnv["win"],
+      isVisible: () => win.document.visibilityState === "visible",
       userAgent: win.navigator.userAgent,
       setTimeout: (fn, ms) => win.setTimeout(fn, ms),
       clearTimeout: (id) => win.clearTimeout(id as number),

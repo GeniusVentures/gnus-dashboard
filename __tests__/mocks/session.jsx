@@ -22,7 +22,8 @@ export function makeEnv({ provider, userAgent = "Mozilla/5.0" } = {}) {
 
 // provider: null means no wallet; leave it out for a mock of the given profile.
 export function makeStore({ profile, provider = createMockProvider({ profile }), userAgent } = {}) {
-  return { store: createSessionStore(makeEnv({ provider, userAgent })), provider };
+  const env = makeEnv({ provider, userAgent });
+  return { store: createSessionStore(env), provider, env };
 }
 
 export function renderWithSession(ui, { strict = false, ...options } = {}) {

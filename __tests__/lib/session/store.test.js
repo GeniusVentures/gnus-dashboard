@@ -166,3 +166,121 @@ describe("connect-time recovery in the store", () => {
     expect(store.getState().phase).toBe("ready");
   });
 });
+
+describe("runtime states in the store", () => {
+  const { WALLET_UA } = require("../../mocks/session");
+
+  async function ready() {
+    const made = makeStore();
+    made.store.start();
+    await tick(0);
+    expect(made.store.getState().phase).toBe("ready");
+    return made;
+  }
+
+  test("a disconnect event gives notResponding/disconnected and Retry reconnects", async () => {
+    jest.useFakeTimers();
+    const { store, provider } = await ready();
+    act(() => provider.controls.disconnect());
+    expect(store.getState()).toMatchObject({ phase: "notResponding", cause: "disconnected", accounts: null });
+    store.retry();
+    await tick(0);
+    expect(store.getState().phase).toBe("ready");
+  });
+
+  test("a tracked read unanswered at 15 s is notResponding/noReply, and the late answer restores ready", async () => {
+    jest.useFakeTimers();
+    const { store } = await ready();
+    let answer;
+    const read = store.track(new Promise((resolve) => (answer = resolve)));
+    await tick(14999);
+    expect(store.getState().phase).toBe("ready");
+    await tick(1);
+    expect(store.getState()).toMatchObject({ phase: "notResponding", cause: "noReply" });
+    expect(store.getState().accounts).not.toBeNull();
+    answer("late");
+    await expect(read).resolves.toBe("late");
+    await tick(0);
+    expect(store.getState().phase).toBe("ready");
+  });
+
+  test("a read answered in time never shows the hint, and two slow reads need both answers", async () => {
+    jest.useFakeTimers();
+    const { store } = await ready();
+    await store.track(Promise.resolve(1));
+    await tick(60000);
+    expect(store.getState().phase).toBe("ready");
+    let first;
+    let second;
+    store.track(new Promise((resolve) => (first = resolve)));
+    store.track(new Promise((resolve) => (second = resolve)));
+    await tick(15000);
+    expect(store.getState().phase).toBe("notResponding");
+    first();
+    await tick(0);
+    expect(store.getState().phase).toBe("notResponding");
+    second();
+    await tick(0);
+    expect(store.getState().phase).toBe("ready");
+  });
+
+  test("inside the wallet with no injection, noBridge shows at 10 s and a later injection still connects", async () => {
+    jest.useFakeTimers();
+    const env = makeEnv({ provider: null, userAgent: WALLET_UA });
+    const store = createSessionStore(env);
+    store.start();
+    await tick(9999);
+    expect(store.getState().phase).toBe("detecting");
+    await tick(1);
+    expect(store.getState()).toMatchObject({ phase: "notResponding", cause: "noBridge" });
+    env.win.gnus = createMockProvider();
+    env.win.dispatchEvent(new Event("gnus#initialized"));
+    await tick(0);
+    expect(store.getState().phase).toBe("ready");
+  });
+
+  test("returning to the tab re-reads getAccounts once; a second event meanwhile sends nothing; nothing polls", async () => {
+    jest.useFakeTimers();
+    const mock = createMockProvider();
+    const hold = { release: null };
+    const provider = {
+      isGeniusWallet: true,
+      request(args) {
+        if (hold.release === "wait") {
+          return new Promise((resolve) => (hold.release = () => resolve(mock.request(args))));
+        }
+        return mock.request(args);
+      },
+      on: (...a) => mock.on(...a),
+      removeListener: (...a) => mock.removeListener(...a),
+    };
+    const { store, env } = makeStore({ provider });
+    store.start();
+    await tick(0);
+    const reads = () => mock.controls.calls.filter((call) => call.method === GET_ACCOUNTS).length;
+    await tick(10 * 60 * 1000);
+    expect(reads()).toBe(1);
+    hold.release = "wait";
+    env.win.dispatchEvent(new Event("visibilitychange"));
+    env.win.dispatchEvent(new Event("visibilitychange"));
+    await tick(0);
+    expect(typeof hold.release).toBe("function");
+    hold.release();
+    await tick(0);
+    expect(reads()).toBe(2);
+    env.win.dispatchEvent(new Event("visibilitychange"));
+    await tick(0);
+    expect(reads()).toBe(3);
+  });
+
+  test("a hidden tab does not re-read", async () => {
+    jest.useFakeTimers();
+    const made = makeStore();
+    made.env.isVisible = () => false;
+    made.store.start();
+    await tick(0);
+    made.env.win.dispatchEvent(new Event("visibilitychange"));
+    await tick(0);
+    expect(made.provider.controls.calls.filter((call) => call.method === GET_ACCOUNTS)).toHaveLength(1);
+  });
+});

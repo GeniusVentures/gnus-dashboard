@@ -8,7 +8,7 @@ import { useSession } from "./SessionProvider";
 
 const SITE = "https://gnus.ai/";
 
-type Action = "connectAgain" | "tryNow" | "retry";
+type Action = "connectAgain" | "tryNow" | "retry" | "reload";
 
 interface Screen {
   heading: string;
@@ -37,6 +37,24 @@ function screenFor(state: SessionState): Screen | null {
         spinner: true,
         action: { label: "Try now", run: "tryNow" },
       };
+    case "notResponding": {
+      const heading = "GeniusWallet isn't responding";
+      if (state.cause === "noBridge") {
+        return {
+          heading,
+          body: "GeniusWallet opened this page but has not connected to it yet.",
+          action: { label: "Reload page", run: "reload" },
+        };
+      }
+      return {
+        heading,
+        body:
+          state.cause === "disconnected"
+            ? "GeniusWallet closed its connection to this page."
+            : "GeniusWallet hasn't answered for 15 seconds. If it is asking you to allow this site, approve it there.",
+        action: { label: "Retry", run: "retry" },
+      };
+    }
     case "denied":
       return {
         heading: "Allow this site in GeniusWallet",
@@ -80,6 +98,7 @@ function screenFor(state: SessionState): Screen | null {
 }
 
 const RUN: Record<Action, (store: SessionStore) => void> = {
+  reload: () => window.location.reload(),
   connectAgain: (store) => store.connectAgain(),
   tryNow: (store) => store.tryNow(),
   retry: (store) => store.retry(),

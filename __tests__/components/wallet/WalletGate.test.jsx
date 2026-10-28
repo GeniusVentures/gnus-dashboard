@@ -90,6 +90,27 @@ const CASES = [
     null,
   ],
   [
+    "notResponding noReply",
+    phase("notResponding", { cause: "noReply" }),
+    "GeniusWallet isn't responding",
+    "GeniusWallet hasn't answered for 15 seconds. If it is asking you to allow this site, approve it there.",
+    "Retry",
+  ],
+  [
+    "notResponding disconnected",
+    phase("notResponding", { cause: "disconnected" }),
+    "GeniusWallet isn't responding",
+    "GeniusWallet closed its connection to this page.",
+    "Retry",
+  ],
+  [
+    "notResponding noBridge",
+    phase("notResponding", { cause: "noBridge" }),
+    "GeniusWallet isn't responding",
+    "GeniusWallet opened this page but has not connected to it yet.",
+    "Reload page",
+  ],
+  [
     "failed",
     phase("failed", { error: new GnusError(-32603) }),
     "GeniusWallet couldn't connect",
@@ -181,6 +202,7 @@ describe("WalletGate screens", () => {
     ["Connect again", phase("denied", { cause: "declined" }), "connectAgain"],
     ["Try now", phase("startingUp"), "tryNow"],
     ["Retry", phase("failed", { error: new GnusError(-32603) }), "retry"],
+    ["Retry", phase("notResponding", { cause: "disconnected" }), "retry"],
   ])("%s calls the store", async (label, state, method) => {
     const { store } = show(state);
     await userEvent.click(screen.getByRole("button", { name: label }));
