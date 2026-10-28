@@ -1,5 +1,5 @@
-import type { GnusError } from "../gnus/errors";
-import type { Accounts } from "../gnus/schema";
+import { GnusContractMismatchError, GnusError } from "../gnus/errors";
+import { Accounts, CONTRACT_VERSION } from "../gnus/schema";
 import type { TransportChoice } from "../gnus/transport/select";
 
 export type Phase =
@@ -25,11 +25,58 @@ export interface SessionState {
 
 export const INITIAL_STATE: SessionState = { phase: "detecting", cause: null, accounts: null, error: null };
 
+/** Where an error came from decides how much of the session it can move: only the connect call may end in `failed`. */
+export type ErrorSource = "connect" | "identity" | "query";
+
 export type SessionEvent =
   | { type: "detected"; choice: TransportChoice }
+  | { type: "lateInjection" }
   | { type: "connectStarted" }
+  | { type: "connectAgain" }
   | { type: "accountsReceived"; accounts: Accounts }
-  | { type: "connectFailed"; error: GnusError };
+  | { type: "connectFailed"; error: GnusError }
+  | { type: "errorReported"; error: GnusError; source: ErrorSource };
+
+const away = (phase: Phase, cause: Cause | null, error: GnusError | null): SessionState => ({
+  phase,
+  cause,
+  accounts: null,
+  error,
+});
+
+function unsupportedCause(error: GnusError): Cause {
+  const version = error instanceof GnusContractMismatchError ? error.version : null;
+  return version !== null && /^\d+$/.test(version) && Number(version) > Number(CONTRACT_VERSION)
+    ? "pageOld"
+    : "walletOld";
+}
+
+function onError(state: SessionState, error: GnusError, source: ErrorSource): SessionState {
+  const { code, kind } = error;
+  if (code === 4001 || code === 4100) {
+    return away("denied", code === 4001 ? "declined" : "notAllowed", error);
+  }
+  if (code === 4900) {
+    return away("startingUp", null, error);
+  }
+  if (kind === "switching" && code === -32015) {
+    return state.accounts ? { ...state, phase: "switching" } : state;
+  }
+  if (kind === "confirmOpen") {
+    return away("connecting", null, null);
+  }
+  if (kind === "rateLimited") {
+    // Connect again keeps the denied screen and shows this message.
+    const wasDenied = state.cause === "declined" || state.cause === "notAllowed";
+    if (wasDenied && (state.phase === "denied" || state.phase === "connecting")) {
+      return away("denied", state.cause, error);
+    }
+  }
+  if (code === 4200 || error instanceof GnusContractMismatchError) {
+    return source === "query" ? state : away("unsupported", unsupportedCause(error), error);
+  }
+  return source === "connect" ? away("failed", null, error) : state;
+}
 
 export function reduce(state: SessionState, event: SessionEvent): SessionState {
   switch (event.type) {
@@ -37,11 +84,22 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
       return event.choice === "walletconnect" && state.phase === "detecting"
         ? { ...INITIAL_STATE, phase: "noWallet" }
         : state;
+    case "lateInjection":
+      return state.phase === "noWallet" ? away("connecting", null, null) : state;
     case "connectStarted":
-      return { ...INITIAL_STATE, phase: "connecting" };
+      return away("connecting", null, null);
+    case "connectAgain":
+      return { phase: "connecting", cause: state.cause, accounts: null, error: null };
     case "accountsReceived":
-      return { phase: "ready", cause: null, accounts: event.accounts, error: null };
+      return {
+        phase: "ready",
+        cause: null,
+        accounts: event.accounts,
+        error: null,
+      };
     case "connectFailed":
-      return { ...INITIAL_STATE, phase: "failed", error: event.error };
+      return onError(state, event.error, "connect");
+    case "errorReported":
+      return onError(state, event.error, event.source);
   }
 }
