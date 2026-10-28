@@ -1,5 +1,8 @@
+import React from "react";
 import { createHash } from "crypto";
-import { createSubmitStore } from "../../lib/submit/store";
+import { render } from "@testing-library/react";
+import { getSubmitStore } from "../../lib/submit/store";
+import { SessionProvider } from "../../sub-components/wallet/SessionProvider";
 import { makeStore } from "./session";
 
 // Backed by a Map so a test can keep it across a "reload", record every write, or make writes fail.
@@ -61,10 +64,20 @@ export async function makeSubmit({ profile, provider, storage = new MemoryStorag
   const made = makeStore(provider ? { provider } : { profile });
   await untilReady(made.store);
   const deps = { storage, now, newKey: newKey ?? counterKeys(), digest: nodeDigest };
-  const submit = createSubmitStore(made.store, deps);
+  const submit = getSubmitStore(made.store, deps);
   return { ...made, session: made.store, submit, storage, deps };
 }
 
 export function submitCalls(provider) {
   return provider.controls.calls.filter((call) => call.method === "gnus_submitJob");
+}
+
+// Renders ui under a session whose submit store has Map-backed storage; the session starts with the provider.
+export function renderWithSubmit(ui, { profile, provider, storage = new MemoryStorage(), now = () => 1000, newKey, strict = false } = {}) {
+  const made = makeStore(provider ? { provider } : { profile });
+  const deps = { storage, now, newKey: newKey ?? counterKeys(), digest: nodeDigest };
+  const submit = getSubmitStore(made.store, deps);
+  const tree = <SessionProvider store={made.store}>{ui}</SessionProvider>;
+  const result = render(strict ? <React.StrictMode>{tree}</React.StrictMode> : tree);
+  return { ...result, ...made, session: made.store, submit, storage, deps };
 }
