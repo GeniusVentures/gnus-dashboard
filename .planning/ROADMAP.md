@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Teardown and static shell** - The app exports to static files with no server, no secrets and no old payment path, and a merge to main cannot break the live site
 - [x] **Phase 2: Contract client and mock wallet** - One typed `gnus_*` client and a mock wallet with real faults, so every later phase builds and tests without a wallet
-- [ ] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
+- [x] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
 - [ ] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
 - [ ] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
 - [ ] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
@@ -80,12 +80,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. After a mock account or network switch nothing from the old account stays on screen, a reply delayed across the switch is dropped (test), and a network that is not this build's shows a banner.
   5. A browser with no GeniusWallet shows "GeniusWallet required" with a way to get the wallet and no submit control.
 **Plans**: 6 plans in 4 waves
-- [ ] 03-01-PLAN.md - Tracer: mock to session store to identity header and gated home page; no-wallet screen (wave 1)
-- [ ] 03-02-PLAN.md - lib/gnus to the 2026-10-28 contract; mock connect prompt, decline and revoke (wave 1)
-- [ ] 03-03-PLAN.md - Connect-time states: confirm, denied, starting up, update wallet, late injection (wave 2)
-- [ ] 03-04-PLAN.md - Copy buttons with fallback, new header, nav and footer, light and dark from the OS (wave 3)
-- [ ] 03-05-PLAN.md - react-query keyed by account, switching, wrong network, not responding (wave 3)
-- [ ] 03-06-PLAN.md - axe sweep of every state in light and dark, keyboard walk (wave 4)
+- [x] 03-01-PLAN.md - Tracer: mock to session store to identity header and gated home page; no-wallet screen (wave 1)
+- [x] 03-02-PLAN.md - lib/gnus to the 2026-10-28 contract; mock connect prompt, decline and revoke (wave 1)
+- [x] 03-03-PLAN.md - Connect-time states: confirm, denied, starting up, update wallet, late injection (wave 2)
+- [x] 03-04-PLAN.md - Copy buttons with fallback, new header, nav and footer, light and dark from the OS (wave 3)
+- [x] 03-05-PLAN.md - react-query keyed by account, switching, wrong network, not responding (wave 3)
+- [x] 03-06-PLAN.md - axe sweep of every state in light and dark, keyboard walk (wave 4)
 **UI hint**: yes
 
 ### Phase 4: Submit a job
@@ -165,7 +165,7 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 |-------|----------------|--------|-----------|
 | 1. Teardown and static shell | 6/6 | Verified locally; remote CI not run (no push) | 2026-10-27 |
 | 2. Contract client and mock wallet | 7/7 | Verified locally (human_needed: real-wallet conformance run, dev-server browser check) | 2026-10-27 |
-| 3. Connect and identity | 0/TBD | Not started | - |
+| 3. Connect and identity | 6/6 | Verified locally (human_needed: light and dark look, real-wallet run) | 2026-10-28 |
 | 4. Submit a job | 0/TBD | Not started | - |
 | 5. My jobs and earnings | 0/TBD | Not started | - |
 | 6. WalletConnect browser flow | 0/TBD | Not started | - |

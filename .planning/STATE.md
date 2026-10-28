@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Static dashboard on the gnus_* contract
-current_phase: 3
-current_phase_name: "Connect and identity"
+current_phase: 4
+current_phase_name: "Submit a job"
 status: ready_to_plan
-stopped_at: "2026-10-27 overnight: Phases 1 and 2 executed, reviewed (all critical/warning findings fixed) and verified human_needed. Phase 3 (connect UI) not started: first user-facing UI, wants Braian. Nothing pushed."
-last_updated: "2026-10-26T23:59:00.000Z"
-last_activity: 2026-10-26
-last_activity_desc: Requirements and roadmap defined (overnight auto mode)
+stopped_at: "2026-10-28: Phase 3 executed (6 plans). Needs a human look at light and dark, and a run against a real wallet. Phases 4 and 5 can plan next. Nothing pushed."
+last_updated: "2026-10-28T12:00:00.000Z"
+last_activity: 2026-10-28
+last_activity_desc: Phase 3 executed on the mock; D-11 revised so the EVM chain never blocks
 progress:
   total_phases: 8
-  completed_phases: 2
-  total_plans: 13
-  completed_plans: 13
-  percent: 25
+  completed_phases: 3
+  total_plans: 19
+  completed_plans: 19
+  percent: 38
 resume_file: null
 ---
 
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 ## Current Position
 
-Phase: 3 of 8 (Connect and identity)
+Phase: 4 of 8 (Submit a job)
 Plan: 0 of TBD in current phase
-Status: Ready to plan (Phases 1-2 done, verified locally, remote CI not run)
-Last activity: 2026-10-27 - Phase 2 executed, reviewed and verified overnight
+Status: Ready to plan (Phases 1-3 done and verified locally; remote CI not run)
+Last activity: 2026-10-28 - Phase 3 executed on the mock
 
-Progress: [..........] 0%
+Progress: [####......] 38%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [..........] 0%
 Full log in PROJECT.md Key Decisions. Every item below was taken overnight in auto mode and is open to Braian's review.
 
 - D1: `@tanstack/react-query` for server state keyed by `sdkAddress`, plus one small React context for provider and session; Redux deleted. (D) overnight, not reviewed by Braian
+- D1b: The dashboard never decides which EVM chains may estimate or submit. The wallet burns on Amoy, BNB Testnet and Sepolia and answers `-32013 bridge_unavailable` for any other; the header shows the reported network, and only a different SDK network (`NEXT_PUBLIC_GNUS_SDK_NETWORK`, default staging) shows a banner and blocks. (Braian, 2026-10-28)
 - D1a: The account-switch epoch is the react-query key `[kind, network, sdkAddress]`; `gnus_accountsChanged` and `switching` flips cancel and remove old keys; a delayed-response-across-a-switch test is required. (D) overnight, not reviewed by Braian
 - D2: `@walletconnect/sign-client` 2.26.0, pinned, dynamic import only; no AppKit, no UniversalProvider. (D) overnight, not reviewed by Braian
 - D3: Stay on Next 14.2.x for v1; Next 16 is a follow-up (PLAT-01). (D) overnight, not reviewed by Braian
