@@ -21,6 +21,11 @@ export interface SessionEnv extends DetectEnv {
 /** A tracked read unanswered for this long shows "GeniusWallet isn't responding"; the read is not abandoned. */
 export const NO_REPLY_MS = 15000;
 
+/** The text the wallet gave for declining a pairing is shown cut to this many characters. */
+const MAX_DETAIL = 200;
+const PROPOSAL_EXPIRED = "Proposal expired";
+const END_REASON = { code: 6000, message: "User disconnected." };
+
 /** Seconds between getAccounts retries while the wallet is starting up; the last step repeats. */
 export const STARTUP_RETRY_SECONDS = [1, 2, 4, 8, 16, 30];
 
@@ -54,6 +59,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   let wcSession: WcSession | null = null;
   // Counts pairings, so an answer to a code that was replaced is ignored.
   let pairingRun = 0;
+  // A proposal expired while the tab was hidden; the next visit asks for a fresh code.
+  let pairingStale = false;
   let retryTimer: unknown = null;
   let retryStep = 0;
   let readInFlight = false;
@@ -146,7 +153,12 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   }
 
   function onVisible(): void {
-    if (env.isVisible?.() !== false && (state.phase === "ready" || state.phase === "switching")) {
+    if (env.isVisible?.() === false) {
+      return;
+    }
+    if (pairingStale) {
+      pair();
+    } else if (state.phase === "ready" || state.phase === "switching") {
       readAccounts("identity");
     }
   }
@@ -206,11 +218,39 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     attach(wcModule.createWalletConnectTransport(walletConnect, session), "walletconnect");
   }
 
+  // The wallet's decision stands, but a session that is not GeniusWallet, or too old, is ended here so the next connect pairs fresh.
+  function onApproved(session: WcSession): void {
+    const verdict = wcModule?.classifyNamespaces(session) ?? "notGenius";
+    if (verdict === "ok") {
+      attachSession(session);
+      return;
+    }
+    walletConnect?.disconnect({ topic: session.topic, reason: END_REASON }).catch(() => {});
+    dispatch({ type: "pairingRefused", cause: verdict === "notGenius" ? "notGenius" : "walletOld" });
+  }
+
+  function onPairingFailed(err: unknown): void {
+    const { code, message } = (err ?? {}) as { code?: unknown; message?: unknown };
+    if (code === 0 || message === PROPOSAL_EXPIRED) {
+      if (env.isVisible?.() === false) {
+        pairingStale = true;
+      } else {
+        pair();
+      }
+      return;
+    }
+    dispatch({
+      type: "pairingDeclined",
+      message: typeof message === "string" && message.length > 0 ? message.slice(0, MAX_DETAIL) : null,
+    });
+  }
+
   function pair(): void {
     const wc = walletConnect;
     if (!wc) {
       return;
     }
+    pairingStale = false;
     const run = (pairingRun += 1);
     void (async () => {
       try {
@@ -221,10 +261,12 @@ export function createSessionStore(env: SessionEnv): SessionStore {
         dispatch({ type: "pairingStarted", uri: proposal.uri ?? "" });
         const session = await proposal.approval();
         if (!disposed && run === pairingRun) {
-          attachSession(session);
+          onApproved(session);
         }
-      } catch {
-        // Declined and expired proposals get their own handling in the next step.
+      } catch (err) {
+        if (!disposed && run === pairingRun) {
+          onPairingFailed(err);
+        }
       }
     })();
   }
@@ -294,7 +336,7 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     },
     start,
     retry: () => connect({ type: "connectStarted" }),
-    connectAgain: () => connect({ type: "connectAgain" }),
+    connectAgain: () => (walletConnect && !wcSession ? pair() : connect({ type: "connectAgain" })),
     tryNow() {
       stopRetryTimer();
       retryStep = 0;

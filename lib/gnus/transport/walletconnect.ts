@@ -60,9 +60,26 @@ export interface WalletConnectModule {
   /** Null when this build has no Reown project id. */
   createClient(): Promise<SignClientLike | null>;
   createWalletConnectTransport(client: SignClientLike, session: WcSession): Transport;
+  classifyNamespaces(session: WcSession): SessionKind;
 }
 
 export type WalletConnectLoader = () => Promise<WalletConnectModule>;
+
+export type SessionKind = "ok" | "notGenius" | "oldGenius";
+
+/** What the wallet approved: every gnus method and event on the Amoy chain, some of them, or none. */
+export function classifyNamespaces(session: WcSession): SessionKind {
+  const namespace = session.namespaces.eip155;
+  const methods = namespace ? WC_METHODS.filter((method) => namespace.methods.includes(method)) : [];
+  if (!namespace || methods.length === 0) {
+    return "notGenius";
+  }
+  const onChain =
+    namespace.chains?.includes(WC_CHAIN) === true || namespace.accounts.some((a) => a.startsWith(`${WC_CHAIN}:`));
+  const complete =
+    methods.length === WC_METHODS.length && WC_EVENTS.every((event) => namespace.events.includes(event)) && onChain;
+  return complete ? "ok" : "oldGenius";
+}
 
 const PROPOSAL = {
   optionalNamespaces: { eip155: { chains: [WC_CHAIN], methods: [...WC_METHODS], events: [...WC_EVENTS] } },

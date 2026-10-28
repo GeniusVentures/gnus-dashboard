@@ -21,13 +21,14 @@ describe("browser path over a fake relay", () => {
   test("no wallet for 3 s loads WalletConnect once and shows the pairing link", async () => {
     const relay = createFakeRelay();
     const loadWalletConnect = relayLoader(relay);
-    renderWithSession(<Page />, { provider: null, loadWalletConnect });
+    const { container } = renderWithSession(<Page />, { provider: null, loadWalletConnect });
     await tick(2999);
     expect(loadWalletConnect).not.toHaveBeenCalled();
     await tick(1);
     expect(loadWalletConnect).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: "Connect GeniusWallet" })).toBeInTheDocument();
-    expect(screen.getByText(/^wc:/)).toBeInTheDocument();
+    expect(relay.controls.proposals[0].uri).toMatch(/^wc:/);
+    expect(container.querySelector("svg")).not.toBeNull();
   });
 
   test("approval shows the confirm screen while the first call waits, then both identities", async () => {

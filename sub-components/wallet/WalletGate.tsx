@@ -79,9 +79,18 @@ function screenFor(state: SessionState): Screen | null {
           error instanceof GnusContractMismatchError
             ? error.message
             : "This GeniusWallet does not support this page. Update it, then open the page again.",
+        action: state.transport === "walletconnect" ? { label: "Connect again", run: "connectAgain" } : undefined,
         link: { label: "Get the latest GeniusWallet", href: SITE },
       };
     case "noWallet":
+      if (state.cause === "notGenius") {
+        return {
+          heading: "GeniusWallet required",
+          body: "The wallet you connected is not GeniusWallet. Connect GeniusWallet instead.",
+          action: { label: "Connect again", run: "connectAgain" },
+          link: { label: "Get GeniusWallet", href: SITE },
+        };
+      }
       return {
         heading: "GeniusWallet required",
         body: "This dashboard pays for jobs and shows your earnings through GeniusWallet. Open this page from GeniusWallet.",
@@ -130,8 +139,14 @@ const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </>
     );
   }
-  if (state.phase === "pairing") {
-    return <PairPanel uri={state.uri ?? ""} />;
+  if (state.phase === "pairing" || state.phase === "pairingDeclined") {
+    return (
+      <PairPanel
+        uri={state.phase === "pairing" ? (state.uri ?? "") : null}
+        declined={state.detail}
+        onTryAgain={() => store?.connectAgain()}
+      />
+    );
   }
   const screen = screenFor(state);
   if (!screen) {
