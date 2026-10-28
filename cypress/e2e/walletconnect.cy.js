@@ -20,6 +20,13 @@ describe("WalletConnect stays out of the wallet", () => {
     });
   });
 
+  // Static files are immutable, so a chunk loaded by an earlier test would come from the cache and never reach the spies.
+  beforeEach(() => {
+    const send = (command, params = {}) => Cypress.automation("remote:debugger:protocol", { command, params });
+    cy.then(() => send("Network.enable"));
+    cy.then(() => send("Network.setCacheDisabled", { cacheDisabled: true }));
+  });
+
   it("a browser with no wallet asks for the module once and shows GeniusWallet required", () => {
     watch();
     cy.visit("/");
