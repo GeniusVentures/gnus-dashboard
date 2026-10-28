@@ -5,6 +5,7 @@ import React from "react";
 import Head from "next/head";
 import DefaultLayout from "../layouts/DefaultLayout";
 import { ToastContainer } from "react-toastify";
+import { SessionProvider } from "../sub-components/wallet/SessionProvider";
 import type { AppProps } from "next/app";
 
 // Dev and test builds only; CI proves the export carries none of it.
@@ -30,9 +31,11 @@ const GNUSDashboard: React.FC<AppProps> = ({ Component, pageProps }) => {
         closeOnClick={true}
         draggable={false}
       />
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
+      <SessionProvider>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </SessionProvider>
     </>
   );
 };

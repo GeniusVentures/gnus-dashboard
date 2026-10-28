@@ -1,3 +1,5 @@
+import { installMock } from "../../lib/gnus/mock/install";
+
 const routes = [
   { path: "/", h1: "Dashboard" },
   { path: "/submit", h1: "Submit a job" },
@@ -17,7 +19,11 @@ describe("static shell", () => {
 
   routes.forEach(({ path, h1 }) => {
     it(`shows ${path}`, () => {
-      cy.visit(path);
+      cy.visit(path, {
+        onBeforeLoad(win) {
+          installMock(win, {});
+        },
+      });
       cy.get("h1").should("have.text", h1);
       cy.title().should("eq", `${h1} | GNUS.AI Dashboard`);
       cy.get("nav a[href='/submit']").should("exist");

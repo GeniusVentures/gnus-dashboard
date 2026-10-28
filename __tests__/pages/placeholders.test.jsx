@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { renderWithSession } from '../mocks/session';
 
 describe('placeholder routes', () => {
   it.each([
@@ -8,10 +9,10 @@ describe('placeholder routes', () => {
     ['../../pages/jobs/index', 'My jobs'],
     ['../../pages/jobs/detail', 'Job detail'],
     ['../../pages/earnings/index', 'Earnings'],
-  ])('renders the %s placeholder', (modulePath, heading) => {
+  ])('renders the %s placeholder', async (modulePath, heading) => {
     const Page = require(modulePath).default;
-    render(<Page />);
-    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    renderWithSession(<Page />);
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(screen.getByText('This page is not available yet.')).toBeInTheDocument();
   });
 

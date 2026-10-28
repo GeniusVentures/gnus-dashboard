@@ -7,7 +7,10 @@
   },
   "include": [
     "lib/**/*.ts",
-    "sub-components/shared/Amount.tsx"
+    "sub-components/shared/Amount.tsx",
+    "sub-components/shared/ExternalLink.tsx",
+    "sub-components/wallet/**/*.ts",
+    "sub-components/wallet/**/*.tsx"
   ],
   "exclude": [
     "node_modules"

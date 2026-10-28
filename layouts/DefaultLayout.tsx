@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import NavbarDefault from "./navbars/NavbarDefault";
 import Footer from "./footers/Footer";
+import IdentityHeader from "sub-components/wallet/IdentityHeader";
 import StaticVideoBG from "sub-components/videos/StaticVideoBG";
 
 const DefaultLayout = (props) => {
@@ -15,6 +16,9 @@ const DefaultLayout = (props) => {
         }
       />
       <NavbarDefault />
+      <div className="pt-8">
+        <IdentityHeader />
+      </div>
       <main style={{ minHeight: "100vh" }}>{props.children}</main>
       <Footer />
     </Fragment>
