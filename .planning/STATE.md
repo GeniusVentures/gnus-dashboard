@@ -4,16 +4,16 @@ milestone: v1.0
 milestone_name: Static dashboard on the gnus_* contract
 current_phase: 7
 current_phase_name: "Hosting and CSP hardening"
-status: ready_to_execute
-stopped_at: "2026-10-28: Phase 6 executed (4 plans) on the fake relay. WC-08, the real pairing, waits on a Reown project id and a wallet phase 47 build. Phase 7 is planned and can execute. Nothing pushed."
-last_updated: "2026-10-28T15:00:00.000Z"
+status: waiting_on_human
+stopped_at: "2026-10-28: Phases 6 and 7 executed on the fake relay and serve-out.js (7 of 8 plans); 07-04 (enforce the CSP) waits. Cloudflare, Reown and a wallet phase 47 build do not exist yet. Nothing pushed."
+last_updated: "2026-10-28T17:00:00.000Z"
 last_activity: 2026-10-28
-last_activity_desc: Phase 6 executed on the fake relay; contract suite runs through the WalletConnect transport in CI
+last_activity_desc: Phase 7 executed locally; the Cloudflare deploy workflow is complete and has never run
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 40
-  completed_plans: 36
+  completed_plans: 39
   percent: 75
 resume_file: null
 ---
@@ -30,9 +30,9 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 ## Current Position
 
 Phase: 7 of 8 (Hosting and CSP hardening)
-Plan: 0 of 4 in current phase
-Status: Ready to execute (Phases 1-6 done and verified locally; remote CI not run)
-Last activity: 2026-10-28 - Phase 6 executed on the fake relay
+Plan: 3 of 4 in current phase (07-04 waits on a human)
+Status: Waiting on a human (Phases 1-6 done and verified locally; phase 7 executed except enforcement; remote CI and the deploy workflow have never run)
+Last activity: 2026-10-28 - Phase 7 executed locally
 
 Progress: [#######...] 75%
 
@@ -70,6 +70,7 @@ Full log in PROJECT.md Key Decisions. Every item below was taken overnight in au
 - Explorer link for the burn hash on the submit result is in v1 (was v2 JOBX-03). (Braian, 2026-10-28)
 - Job status words, the 30 s poll only while a job can change, and the IPFS gateway constant (`ipfs.io`, for Braian to confirm) live in `lib/jobs.ts`. `yarn lint` (every external link through `ExternalLink`) runs in CI. (D) overnight, not reviewed by Braian
 - Phase 6: the secret gate lists the 17 public curve constants that `@noble/curves` ships in the WalletConnect chunk by exact value in `.gitleaks.toml`, and `check-secrets.sh` reads that list; the WC-01 export test watches the module chunk because a build without a Reown id never fetches Reown's client. (D) not reviewed by Braian
+- Phase 7: policy and headers live in `scripts/headers.js` only; `CSP_ENFORCED` stays false until a hosted pairing passes under report-only. Three prerendered style attributes became classes instead of opening `style-src-attr`. Disconnect buttons use `btn border` (outline-secondary failed light contrast). (D) not reviewed by Braian
 - Roadmap: Earnings folded into My jobs; SUMMARY's Phase 8 split into hosting/CSP (Phase 7) and device walks plus cutover (Phase 8); "Load example" only, no example download. (D) overnight, not reviewed by Braian
 
 ### Pending Todos
@@ -79,7 +80,7 @@ None yet.
 ### Blockers/Concerns
 
 - SDK-CA: live cost is always 0, so a real submit cannot be walked end to end; the UI ships "Price unavailable" until it lands.
-- Host and pinned origin are undecided: they block Phase 7 and the wallet's Phase 46 release pinning. Raise before Phase 7 planning.
+- Cloudflare Pages is chosen but nothing exists on it: no account, token, project, domain or Reown project ids. The origin is still undecided and the wallet's Phase 46 release pinning needs it. The deploy workflow skips itself until the secrets exist.
 - The leaked private key stays valid until a human rotates it and moves funds off the server account (DEP-04 gate).
 - The contract is a hand transcription with no machine-readable fixtures; `version` is the tripwire.
 

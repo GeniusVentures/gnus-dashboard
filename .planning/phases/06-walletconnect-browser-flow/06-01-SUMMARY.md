@@ -23,17 +23,15 @@ With no `window.gnus`, the page loads the WalletConnect code, shows a pairing li
 ## What exists
 
 - `lib/gnus/transport/walletconnect.ts`: `SignClientLike`, the real adapter `createClient()` (null without an id, otherwise dynamic-imports sign-client 2.26.0, `telemetryEnabled: false`, metadata from `window.location.origin`), and `createWalletConnectTransport` (eip155:80002, params always an object, error and null-result decoding, event filter).
-- `lib/gnus/mock/relay.ts`: the fake relay with all ten profiles and the wallet's wire encoding. Only `approve` is exercised here.
+- `lib/gnus/mock/relay.ts`: the fake relay with all ten profiles and the wallet's wire encoding; only `approve` is tested here, plans 02 and 03 test the rest.
 - The store takes `loadWalletConnect` in its env and imports `walletconnect.ts` only by type, so the chunk loads on the browser path alone. `setWalletConnectLoader` is the one seam for the dev server.
 - The machine gained `transport`, `uri`, `detail`, the phases `pairing`, `pairingDeclined`, `disconnected` and causes `offline`, `notGenius`.
-- `yarn.lock` integrity of both new packages equals the registry's; the audit gate still passes.
+- Integrity in `yarn.lock` equals the registry's for both packages; the audit gate passes.
 
 ## Deviations
 
 - [Rule 3] The out/ secret scan failed on 17 quoted 64-hex values that `@noble/curves` ships in the sign-client chunk (curve parameters, found in `node_modules/@noble/curves`, plus one ABI offset). They are listed by exact value in `.gitleaks.toml`; `scripts/check-secrets.sh` reads that list for its grep scan, so the list stays the single source.
-- `jest.setup.js` forces an empty id so a developer's `.env.local` cannot switch on the real client in tests.
-- The relay and its other profiles were written in full here; plans 02 and 03 add their tests.
-- The wire note appended to section 2 of the snapshot names wallet phase 47 D-06 and D-08, as 06-CONTEXT D-25 asks.
+- `jest.setup.js` forces an empty id so a developer's `.env.local` cannot switch on the real client in tests. The snapshot's wire note names wallet phase 47 D-06 and D-08 (D-25).
 
 ## Gaps for a human
 

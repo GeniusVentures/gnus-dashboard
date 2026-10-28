@@ -158,7 +158,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. CI runs a Cypress smoke against `out/` served by `scripts/serve-out.js` with the production headers.
   4. The mock's hostile-text profile shows as plain text on every page, and lint fails on `dangerouslySetInnerHTML`.
   5. Every route passes an automated WCAG 2.1 AA check, and a keyboard-only user can complete the submit flow on the mock.
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves
+- [x] 07-01-PLAN.md - Tracer: one policy module to _headers, serve-out and a browser; self-hosted fonts; check-deploy (wave 1)
+- [x] 07-02-PLAN.md - Zero violations on every route, hostile wallet text, axe on every route, keyboard-only submit (wave 2)
+- [x] 07-03-PLAN.md - Cloudflare Pages workflow that skips itself until configured (wave 2; has never run)
+- [ ] 07-04-PLAN.md - Enforce the CSP after a hosted pairing under report-only (wave 3; waits on wallet phase 47 and Reown Verify)
 
 ### Phase 8: Device walks and cutover
 **Goal**: The dashboard is walked end to end in the wallet on every platform it ships on and over WalletConnect, and the live origin moves from EC2 to the static build only when the cutover gate passes, with EC2 kept for rollback.
@@ -186,5 +190,5 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | 4. Submit a job | 7/7 | Verified locally (human_needed: light and dark look, real-wallet confirm and burn) | 2026-10-28 |
 | 5. My jobs and earnings | 6/6 | Verified locally (human_needed: light and dark look, real-wallet lists and events) | 2026-10-28 |
 | 6. WalletConnect browser flow | 4/4 | Verified locally (human_needed: WC-08 real pairing with a wallet phase 47 build and a Reown project id, light and dark look) | 2026-10-28 |
-| 7. Hosting and CSP hardening | 0/TBD | Not started | - |
+| 7. Hosting and CSP hardening | 3/4 | Executed locally; 07-04 waits (human_needed: Cloudflare account, token, project and origin; Reown ids and Verify; wallet phase 47 build; light and dark look at the relay screens) | - |
 | 8. Device walks and cutover | 0/TBD | Not started | - |
