@@ -51,7 +51,7 @@ const AddressChip: React.FC<Props> = ({ label, address, copyName }) => {
       <span>
         {label} <code>{shorten(address)}</code>
       </span>
-      <button type="button" className="btn btn-sm btn-outline-primary" aria-label={copyName} onClick={copy}>
+      <button type="button" className="btn btn-sm btn-link" aria-label={copyName} onClick={copy}>
         Copy
       </button>
       <span aria-live="polite">

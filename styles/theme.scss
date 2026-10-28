@@ -28,3 +28,9 @@
 
 // Theme
 @import "theme/theme";
+
+// Keyboard focus is a 2px ring in the body emphasis colour, visible in both colour schemes.
+:is(a, button, input, select, textarea, [tabindex], .btn, .nav-link):focus-visible {
+  outline: 2px solid var(--#{$prefix}emphasis-color);
+  outline-offset: 2px;
+}

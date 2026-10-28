@@ -212,11 +212,11 @@
 // Make a button look and behave like a link
 .btn-link {
   font-weight: $font-weight-semi-bold;
-  color: $btn-link-color;
+  color: var(--#{$prefix}link-color);
   text-decoration: underline;
 
   &:hover {
-    color: $btn-link-hover-color;
+    color: var(--#{$prefix}link-hover-color);
     text-decoration: underline;
   }
 
