@@ -20,6 +20,10 @@ export interface MockControls {
   /** Forgets the origin: its next call prompts again, and open spend confirms reject 4100. */
   revokeOrigin(): void;
   burnCount(): number;
+  /** Answers the open manual confirm: approve burns, reject answers the waiting call with 4001. Throws when none is open. */
+  answerConfirm(approve: boolean): void;
+  /** How many native confirms have opened since the mock was created. */
+  confirmCount(): number;
   readonly calls: Array<{ method: string; params?: unknown }>;
 }
 
@@ -40,6 +44,16 @@ interface Replay {
   rejected: boolean;
 }
 
+/** What the wallet writes once a confirm is approved, before it knows how the burn and Process ended. */
+interface Intent {
+  body: string;
+  sdkAddress: string;
+  payer: string | null;
+  cost: string;
+  createdAt: number;
+  burnTxHash: string | null;
+}
+
 interface MockState {
   profile: MockProfile;
   accounts: Accounts;
@@ -51,6 +65,9 @@ interface MockState {
   replays: Map<string, Replay>;
   cursors: Set<string>;
   submitInFlight: boolean;
+  intents: Map<string, Intent>;
+  confirms: number;
+  pendingConfirm: { answer: (approve: boolean) => void } | null;
   createdAt: number;
   firstCallPending: boolean;
   estimating: boolean;
@@ -279,6 +296,24 @@ function createFacade(state: MockState): MockProvider {
     });
   }
 
+  // Waits for controls.answerConfirm; a node account change or a revoke aborts it like the timed confirm.
+  function manualConfirmWait(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const abort = (err: WireError): void => {
+        state.pendingConfirm = null;
+        reject(err);
+      };
+      state.accountWatchers.add(abort);
+      state.pendingConfirm = {
+        answer(approve) {
+          state.accountWatchers.delete(abort);
+          state.pendingConfirm = null;
+          resolve(approve);
+        },
+      };
+    });
+  }
+
   async function submitJob(args: RequestArgs): Promise<unknown> {
     const params = paramsOf(args, true);
     const job = jobOf(params);
@@ -296,6 +331,21 @@ function createFacade(state: MockState): MockProvider {
       }
       return earlier.reply;
     }
+    // An intent without a record means the wallet lost how the earlier submit ended; a retry must not pay again.
+    const intent = state.intents.get(key);
+    if (intent) {
+      if (intent.body !== body) {
+        throw invalid("The idempotency key was used for a different job", "idempotency_key_reused");
+      }
+      throw fail(-32603, "The earlier submit has no recorded outcome", "submission_outcome_unknown", {
+        idempotencyKey: key,
+        burnTxHash: intent.burnTxHash,
+        sdkAddress: intent.sdkAddress,
+        payer: intent.payer,
+        cost: intent.cost,
+        createdAt: new Date(intent.createdAt).toISOString(),
+      });
+    }
     if (state.submitInFlight) {
       throw fail(-32005, "A submit is already in flight", "submit_in_flight");
     }
@@ -307,26 +357,47 @@ function createFacade(state: MockState): MockProvider {
       if (profile.balanceUnreadable) {
         throw fail(-32603, "The payer balance cannot be read", "balance_unavailable");
       }
-      await confirmWait(profile.confirmDelayMs ?? 0);
-      if (profile.confirm === "reject") {
+      state.confirms += 1;
+      let approved = profile.confirm !== "reject";
+      if (profile.confirm === "manual") {
+        approved = await manualConfirmWait();
+      } else {
+        await confirmWait(profile.confirmDelayMs ?? 0);
+      }
+      if (!approved) {
         throw fail(4001, "User rejected the request");
       }
       const outcome = profile.submitOutcome ?? "submitted";
       if (outcome === "bridgeFailed") {
         throw fail(-32013, "The bridge transaction failed");
       }
+      const written: Intent = {
+        body,
+        sdkAddress: node(),
+        payer: state.accounts.payer.evmAddress,
+        cost: amounts.cost,
+        createdAt: Date.now(),
+        burnTxHash: null,
+      };
+      state.intents.set(key, written);
       if (outcome === "outcomeUnknown") {
         throw fail(-32603, "The earlier submit has no recorded outcome", "submission_outcome_unknown", {
           idempotencyKey: key,
           burnTxHash: null,
-          sdkAddress: node(),
-          payer: state.accounts.payer.evmAddress,
-          cost: amounts.cost,
-          createdAt: new Date().toISOString(),
+          sdkAddress: written.sdkAddress,
+          payer: written.payer,
+          cost: written.cost,
+          createdAt: new Date(written.createdAt).toISOString(),
         });
       }
       state.burns += 1;
       const burnTxHash = "0x" + state.burns.toString(16).padStart(64, "0");
+      written.burnTxHash = burnTxHash;
+      if (outcome === "walletStops") {
+        // As after a wallet restart: the burn happened, the call never answers, and the in-flight slot is free again.
+        state.submitInFlight = false;
+        return new Promise<never>(() => {});
+      }
       const record: JobRecord = {
         jobId: null,
         burnTxHash: burnTxHash as Job["burnTxHash"],
@@ -339,6 +410,7 @@ function createFacade(state: MockState): MockProvider {
         result: null,
       };
       state.jobs.push(record);
+      state.intents.delete(key);
       if (outcome === "bridgedNotProcessedError") {
         const error: WireError = { code: -32014, message: "Burn succeeded, Process failed", data: { burnTxHash } };
         state.replays.set(key, { at: Date.now(), body, reply: error, rejected: true });
@@ -400,6 +472,20 @@ function createFacade(state: MockState): MockProvider {
     await admit("gnus_getJob");
     const found = mine().find((job) => job[selector] === value);
     if (!found) {
+      const pending = selector === "idempotencyKey" ? state.intents.get(value) : undefined;
+      if (pending && pending.sdkAddress === node()) {
+        return {
+          status: "pending",
+          jobId: null,
+          burnTxHash: pending.burnTxHash,
+          sdkAddress: pending.sdkAddress,
+          origin: MOCK_ORIGIN,
+          idempotencyKey: value,
+          submittedAt: new Date(pending.createdAt).toISOString(),
+          cost: pending.cost,
+          result: null,
+        };
+      }
       return null;
     }
     const completed = data === "populated" && found.status === "completed";
@@ -535,6 +621,13 @@ function createFacade(state: MockState): MockProvider {
       }
     },
     burnCount: () => state.burns,
+    answerConfirm(approve) {
+      if (!state.pendingConfirm) {
+        throw new Error("Mock has no open confirm");
+      }
+      state.pendingConfirm.answer(approve);
+    },
+    confirmCount: () => state.confirms,
     calls: state.calls,
   };
 
@@ -575,6 +668,9 @@ export function createMockProvider(options?: { profile?: string }): MockProvider
     replays: new Map(),
     cursors: new Set(),
     submitInFlight: false,
+    intents: new Map(),
+    confirms: 0,
+    pendingConfirm: null,
     createdAt: Date.now(),
     firstCallPending: profile.firstCallError !== undefined,
     estimating: false,

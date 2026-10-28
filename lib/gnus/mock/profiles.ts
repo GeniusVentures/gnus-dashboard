@@ -21,15 +21,17 @@ export interface MockProfile {
   readonly switchingForMs?: number;
   /** The native confirm takes this long. */
   readonly confirmDelayMs?: number;
-  /** reject: 4001 after the delay, nothing burned. */
-  readonly confirm?: "approve" | "reject";
+  /** reject: 4001 after the delay, nothing burned. manual: waits for controls.answerConfirm. */
+  readonly confirm?: "approve" | "reject" | "manual";
   readonly submitOutcome?:
     | "submitted"
     | "bridgeFailed"
     | "bridgedNotProcessedStatus"
     | "bridgedNotProcessedError"
     | "unconfirmed"
-    | "outcomeUnknown";
+    | "outcomeUnknown"
+    /** The burn happens, then the call never answers: the wallet died mid-submit. */
+    | "walletStops";
   /** The origin starts unconnected: the first call opens a prompt that approves itself after this long unless answered. */
   readonly connectPromptMs?: number;
   /** Estimate takes 1000 ms; a second one meanwhile is -32005 rate_limited. */
@@ -187,6 +189,16 @@ export const MOCK_PROFILES = {
     description: "Contract drift: getAccounts has no unit",
     data: "today",
     malformed: "missingField",
+  },
+  manualConfirm: {
+    description: "The native confirm stays open until a test calls controls.answerConfirm",
+    data: "today",
+    confirm: "manual",
+  },
+  walletStopsMidSubmit: {
+    description: "The wallet burns, then stops: the submit call never answers and getJob by key says pending",
+    data: "today",
+    submitOutcome: "walletStops",
   },
 } satisfies Record<string, MockProfile>;
 
