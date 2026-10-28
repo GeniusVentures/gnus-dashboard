@@ -22,6 +22,8 @@ function screenFor(outcome: Outcome): Screen {
   switch (outcome.kind) {
     case "done":
       return { heading: "Job submitted", body: "GeniusWallet paid for this job and sent it to the network." };
+    case "recorded":
+      return { heading: "Payment recorded", body: "GeniusWallet recorded this payment. Open the job to see its status." };
     case "paidNotProcessed":
       return {
         heading: "Paid but not processed",
@@ -138,7 +140,10 @@ const SubmitResult: React.FC = () => {
       {outcome.kind !== "outcomeUnknown" && hash ? <BurnHash hash={hash} chainId={chainId} /> : null}
       {outcome.kind !== "checking" ? (
         <p className="d-flex flex-wrap gap-3 align-items-center mb-0">
-          {outcome.kind === "done" || outcome.kind === "paidNotProcessed" || outcome.kind === "unconfirmed" ? (
+          {outcome.kind === "done" ||
+          outcome.kind === "recorded" ||
+          outcome.kind === "paidNotProcessed" ||
+          outcome.kind === "unconfirmed" ? (
             hash ? <Link href={`/jobs/detail?hash=${hash}`}>View this job</Link> : null
           ) : null}
           {canCheck ? (

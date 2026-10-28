@@ -149,6 +149,25 @@ describe("outcome screens", () => {
     },
   );
 
+  it("a looked-up record that failed says the payment was recorded, never that the job was sent", async () => {
+    const provider = createMockProvider({ profile: "today" });
+    const request = provider.request;
+    provider.request = async (args) => {
+      if (args.method === "gnus_submitJob") {
+        await request(args);
+        throw { code: -32603, message: "Internal error" };
+      }
+      const reply = await request(args);
+      return args.method === "gnus_getJob" ? { ...reply, status: "failed" } : reply;
+    };
+    const view = await submitOn({ provider });
+    const h = await heading("Payment recorded");
+    expect(h.closest("[role=status]")).toHaveTextContent("GeniusWallet recorded this payment. Open the job to see its status.");
+    expect(screen.queryByText(/sent it to the network/)).toBeNull();
+    expect(screen.getByRole("link", { name: "View this job" })).toHaveAttribute("href", `/jobs/detail?hash=0x${"0".repeat(63)}1`);
+    expect(await axe(view.container)).toHaveNoViolations();
+  });
+
   it("unconfirmed", async () => {
     const view = await submitOn({ profile: "unconfirmedSubmit" });
     const h = await heading("Payment not confirmed");

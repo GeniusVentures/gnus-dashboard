@@ -4,6 +4,8 @@ import type { JobLookup, SubmitResult } from "../gnus/schema";
 /** What the submit page shows after a payment; the words live in SubmitResult. */
 export type Outcome =
   | { kind: "done"; jobId: string | null; burnTxHash: string }
+  /** A record with a status that says nothing about the payment going through: failed, or one this page doesn't know. */
+  | { kind: "recorded"; burnTxHash: string; status: "failed" | "unknown" }
   | { kind: "paidNotProcessed"; burnTxHash: string | null }
   | { kind: "unconfirmed"; burnTxHash: string | null }
   | { kind: "outcomeUnknown"; message: string; details: SubmissionOutcome | null }
@@ -23,7 +25,10 @@ export type ErrorClass =
 export type LookupClass = { kind: "outcome"; outcome: Outcome } | { kind: "notSeen" };
 
 /** The wallet answered for the key for good. Anything else keeps the key, so the same job can never pay twice. */
-export const isDefinitive = (outcome: Outcome): boolean => outcome.kind === "done" || outcome.kind === "paidNotProcessed";
+export const isDefinitive = (outcome: Outcome): boolean =>
+  outcome.kind === "done" ||
+  outcome.kind === "paidNotProcessed" ||
+  (outcome.kind === "recorded" && outcome.status === "failed");
 
 const NOTHING_SPENT_CODES = new Set([4001, 4200, 4900, -32005, -32010, -32011, -32012, -32013, -32015, -32602]);
 const NOTHING_SPENT_INTERNAL = new Set(["balance_unavailable", "checking", "missing_data"]);
@@ -79,14 +84,21 @@ export function classifyLookup(job: JobLookup): LookupClass {
       return { kind: "outcome", outcome: { kind: "unconfirmed", burnTxHash: job.burnTxHash } };
     case "pending":
       return { kind: "outcome", outcome: { kind: "pending", burnTxHash: job.burnTxHash } };
+  }
+  // Only a pending record carries a null hash; if any other status did, the safe screen is the pending one.
+  if (job.burnTxHash === null) {
+    return { kind: "outcome", outcome: { kind: "pending", burnTxHash: null } };
+  }
+  switch (job.status) {
+    case "submitted":
+    case "queued":
+    case "processing":
+    case "completed":
+      return { kind: "outcome", outcome: { kind: "done", jobId: job.jobId, burnTxHash: job.burnTxHash } };
     default:
-      // Only a pending record carries a null hash; if any other status did, the safe screen is the pending one.
       return {
         kind: "outcome",
-        outcome:
-          job.burnTxHash === null
-            ? { kind: "pending", burnTxHash: null }
-            : { kind: "done", jobId: job.jobId, burnTxHash: job.burnTxHash },
+        outcome: { kind: "recorded", burnTxHash: job.burnTxHash, status: job.status === "failed" ? "failed" : "unknown" },
       };
   }
 }

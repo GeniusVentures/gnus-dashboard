@@ -1,5 +1,5 @@
 import { GnusContractMismatchError, GnusError } from "../../../lib/gnus/errors";
-import { classifyError, classifyLookup, classifyResult } from "../../../lib/submit/outcome";
+import { classifyError, classifyLookup, classifyResult, isDefinitive } from "../../../lib/submit/outcome";
 
 const HASH = "0x" + "ab".repeat(32);
 const NODE = "0x" + "a1".repeat(64);
@@ -108,10 +108,18 @@ describe("classifyLookup", () => {
     ["queued", "done"],
     ["processing", "done"],
     ["completed", "done"],
-    ["failed", "done"],
-    ["unknown", "done"],
+    ["failed", "recorded"],
+    ["unknown", "recorded"],
   ])("status %s gives %s", (status, kind) => {
     expect(classifyLookup(record(status)).outcome.kind).toBe(kind);
+  });
+
+  it("a failed or unknown status never claims the job was sent; only failed retires the key", () => {
+    const failed = classifyLookup(record("failed")).outcome;
+    const unknown = classifyLookup(record("unknown")).outcome;
+    expect(failed).toEqual({ kind: "recorded", burnTxHash: HASH, status: "failed" });
+    expect(isDefinitive(failed)).toBe(true);
+    expect(isDefinitive(unknown)).toBe(false);
   });
 
   it("null is not seen", () => {
