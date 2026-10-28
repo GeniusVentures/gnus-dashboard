@@ -98,7 +98,7 @@ export async function createClient(): Promise<SignClientLike | null> {
     telemetryEnabled: false,
     metadata: {
       name: "GNUS Dashboard",
-      description: "Submit jobs to the GNUS network and follow what your node earns",
+      description: "Submit jobs to the GNUS network and follow what you earn",
       url: origin,
       icons: [`${origin}/favicon.ico`],
     },
