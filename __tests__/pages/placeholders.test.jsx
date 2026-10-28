@@ -15,7 +15,6 @@ describe('placeholder routes', () => {
   });
 
   it.each([
-    ['../../pages/submit/index', 'Submit a job'],
     ['../../pages/jobs/index', 'My jobs'],
     ['../../pages/jobs/detail', 'Job detail'],
     ['../../pages/earnings/index', 'Earnings'],

@@ -1,9 +1,9 @@
-import Placeholder from "../../sub-components/shared/Placeholder";
+import SubmitFlow from "../../sub-components/submit/SubmitFlow";
 import WalletGate from "../../sub-components/wallet/WalletGate";
 
 const Submit: React.FC = () => (
   <WalletGate>
-    <Placeholder title="Submit a job" />
+    <SubmitFlow />
   </WalletGate>
 );
 
