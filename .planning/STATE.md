@@ -5,7 +5,7 @@ milestone_name: Static dashboard on the gnus_* contract
 current_phase: 7
 current_phase_name: "Hosting and CSP hardening"
 status: waiting_on_human
-stopped_at: "2026-10-28: Phases 6 and 7 executed on the fake relay and serve-out.js (7 of 8 plans); 07-04 (enforce the CSP) waits. Cloudflare, Reown and a wallet phase 47 build do not exist yet. Nothing pushed."
+stopped_at: "2026-10-28: Phases 1-6 done, phase 7 executed except 07-04 (CSP enforcement), which waits on a hosted pairing. Linux walk passed in the wallet and over WalletConnect from Chromium. Cloudflare, the Reown projects and the pinned origin do not exist yet. Branch pushed."
 last_updated: "2026-10-28T17:00:00.000Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 7 executed locally; the Cloudflare deploy workflow is complete and has never run
@@ -31,7 +31,9 @@ See: .planning/PROJECT.md (updated 2026-10-26)
 
 Phase: 7 of 8 (Hosting and CSP hardening)
 Plan: 3 of 4 in current phase (07-04 waits on a human)
-Status: Waiting on a human (Phases 1-6 done and verified locally; phase 7 executed except enforcement; remote CI and the deploy workflow have never run)
+Status: Waiting on a human (Phases 1-6 done and verified locally; phase 7 executed except enforcement; the deploy workflow has never run)
+Numbers: Jest 834, Cypress 189, CSP check 7 of 7 routes with zero violations.
+Linux walk (2026-10-28, loopback origin): in the wallet and over WalletConnect from Chromium (pair, connect, header, disconnect) passed. A live spend is untested until SDK-CA; the hosted origin, the Reown ids and CSP enforcement are untested.
 Last activity: 2026-10-28 - Phase 7 executed locally
 
 Progress: [#######...] 75%

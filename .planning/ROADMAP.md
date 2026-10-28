@@ -23,8 +23,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
 - [x] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
 - [x] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
-- [x] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
-- [ ] **Phase 7: Hosting and CSP hardening** - The export runs on the pinned origin with a strict CSP, no third-party code, and an a11y pass
+- [x] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it (walk: Linux wallet paired from Chromium 2026-10-28; Reown project id and hosted origin pending)
+- [ ] **Phase 7: Hosting and CSP hardening** - The export runs on the pinned origin with a strict CSP, no third-party code, and an a11y pass (3 of 4 plans done; 07-04 CSP enforcement waits on a hosted pairing)
 - [ ] **Phase 8: Device walks and cutover** - Walked end to end on every wallet platform and over WalletConnect; the origin moves off EC2 only when the gate passes
 
 ## Phase Details
@@ -162,7 +162,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] 07-01-PLAN.md - Tracer: one policy module to _headers, serve-out and a browser; self-hosted fonts; check-deploy (wave 1)
 - [x] 07-02-PLAN.md - Zero violations on every route, hostile wallet text, axe on every route, keyboard-only submit (wave 2)
 - [x] 07-03-PLAN.md - Cloudflare Pages workflow that skips itself until configured (wave 2; has never run)
-- [ ] 07-04-PLAN.md - Enforce the CSP after a hosted pairing under report-only (wave 3; waits on wallet phase 47 and Reown Verify)
+- [ ] 07-04-PLAN.md - Enforce the CSP after a hosted pairing under report-only (wave 3; waits on a hosted preview, a Reown project with the domain verified, and a pairing under report-only; `CSP_ENFORCED = true` is one line, tried and reverted, `yarn test:csp` 7 of 7 routes with zero violations when enforced)
 
 ### Phase 8: Device walks and cutover
 **Goal**: The dashboard is walked end to end in the wallet on every platform it ships on and over WalletConnect, and the live origin moves from EC2 to the static build only when the cutover gate passes, with EC2 kept for rollback.
@@ -189,6 +189,6 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | 3. Connect and identity | 6/6 | Verified locally (human_needed: light and dark look, real-wallet run) | 2026-10-28 |
 | 4. Submit a job | 7/7 | Verified locally (human_needed: light and dark look, real-wallet confirm and burn) | 2026-10-28 |
 | 5. My jobs and earnings | 6/6 | Verified locally (human_needed: light and dark look, real-wallet lists and events) | 2026-10-28 |
-| 6. WalletConnect browser flow | 4/4 | Verified locally (human_needed: WC-08 real pairing with a wallet phase 47 build and a Reown project id, light and dark look) | 2026-10-28 |
-| 7. Hosting and CSP hardening | 3/4 | Executed locally; 07-04 waits (human_needed: Cloudflare account, token, project and origin; Reown ids and Verify; wallet phase 47 build; light and dark look at the relay screens) | - |
+| 6. WalletConnect browser flow | 4/4 | Verified locally; WC-08 walked on Linux 2026-10-28 (the Linux wallet paired from Chromium, connect, header, disconnect) on a loopback origin, not a hosted one. Human needed: Reown project id, hosted pairing, light and dark look | 2026-10-28 |
+| 7. Hosting and CSP hardening | 3/4 | Executed locally (Jest 834, Cypress 189, CSP 7/7). 07-04 waits on a hosted pairing under report-only. Human needed: Cloudflare project, token and account id, `production` and `preview` environments with `NEXT_PUBLIC_WC_PROJECT_ID`, two Reown projects with the domain verified; the deploy workflow has never run | - |
 | 8. Device walks and cutover | 0/TBD | Not started | - |
