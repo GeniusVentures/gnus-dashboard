@@ -1,5 +1,5 @@
 import { JOB_STATUSES } from "../../lib/gnus/schema";
-import { IPFS_GATEWAY, STATUS_TEXT, cidHref, isFinal, isMarked, parseJobRef, shortJobId } from "../../lib/jobs";
+import { IPFS_GATEWAY, STATUS_TEXT, cidHref, isFinal, isMarked, matchesSearch, parseJobRef, replaceInDetail, replaceInPages, searchTarget, shortJobId } from "../../lib/jobs";
 
 const HASH = "0x" + "ab".repeat(32);
 
@@ -72,5 +72,77 @@ describe("cidHref", () => {
 
   it.each(["a/b", "a:b", "a b", "a.b", "a%2Fb", "", "javascript:alert(1)", "//evil.com"])("gives null for %j", (cid) => {
     expect(cidHref(cid)).toBeNull();
+  });
+});
+
+describe("replaceInPages", () => {
+  const job = (n, status = "submitted") => ({ burnTxHash: "0x" + String(n).repeat(64), status, jobId: null });
+  const pages = () => [
+    { jobs: [job(1), job(2)], nextCursor: "c2" },
+    { jobs: [job(3)], nextCursor: null },
+  ];
+
+  it("swaps the job wherever its page is, keeping order", () => {
+    const given = pages();
+    const result = replaceInPages(given, job(3, "completed"));
+    expect(result.found).toBe(true);
+    expect(result.pages[1].jobs[0].status).toBe("completed");
+    expect(result.pages[0].jobs.map((j) => j.burnTxHash)).toEqual([job(1).burnTxHash, job(2).burnTxHash]);
+    expect(result.pages[0]).toBe(given[0]);
+  });
+
+  it("reports not found and returns the same pages untouched", () => {
+    const given = pages();
+    const result = replaceInPages(given, job(9));
+    expect(result.found).toBe(false);
+    expect(result.pages).toBe(given);
+  });
+});
+
+describe("replaceInDetail", () => {
+  const detail = { burnTxHash: "0x" + "1".repeat(64), status: "processing", result: { cids: ["a"] }, error: "late" };
+  const event = { burnTxHash: detail.burnTxHash, status: "completed", jobId: "job-1" };
+
+  it("updates the job fields and keeps result and error", () => {
+    expect(replaceInDetail(detail, event)).toEqual({ ...detail, status: "completed", jobId: "job-1" });
+  });
+
+  it("returns a different job or a null detail unchanged", () => {
+    expect(replaceInDetail(detail, { ...event, burnTxHash: "0x" + "2".repeat(64) })).toBe(detail);
+    expect(replaceInDetail(null, event)).toBeNull();
+    expect(replaceInDetail(undefined, event)).toBeUndefined();
+  });
+});
+
+describe("searchTarget", () => {
+  const hash = "0x" + "ab".repeat(32);
+
+  it("reads a whole burn hash in any case, lowercased", () => {
+    expect(searchTarget(hash)).toEqual({ burnTxHash: hash });
+    expect(searchTarget("  0X" + "AB".repeat(32) + " ")).toEqual({ burnTxHash: hash });
+  });
+
+  it("reads other text as a job id and a short 0x string as a partial hash", () => {
+    expect(searchTarget("job-x")).toEqual({ jobId: "job-x" });
+    expect(searchTarget("0x12")).toEqual({ partialHash: "0x12" });
+    expect(searchTarget(hash + "0")).toEqual({ partialHash: hash + "0" });
+    expect(searchTarget("x".repeat(257))).toBeNull();
+  });
+
+  it("gives null for blank text", () => {
+    expect(searchTarget("")).toBeNull();
+    expect(searchTarget("   ")).toBeNull();
+  });
+});
+
+describe("matchesSearch", () => {
+  const job = { jobId: "Job-ABC", burnTxHash: "0x" + "ab".repeat(32) };
+
+  it("is a case-insensitive substring test on the job id and the burn hash", () => {
+    expect(matchesSearch(job, "job-a")).toBe(true);
+    expect(matchesSearch(job, "ABAB")).toBe(true);
+    expect(matchesSearch(job, "zzz")).toBe(false);
+    expect(matchesSearch({ jobId: null, burnTxHash: job.burnTxHash }, "job")).toBe(false);
+    expect(matchesSearch(job, "")).toBe(true);
   });
 });

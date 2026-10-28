@@ -1,4 +1,4 @@
-import type { JobStatus } from "./gnus/schema";
+import type { Job, JobStatus } from "./gnus/schema";
 import { shorten } from "../sub-components/wallet/AddressChip";
 
 export interface StatusInfo {
@@ -103,3 +103,48 @@ export const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
 
 /** A CID becomes a link only when it is plain letters and digits, so it cannot carry a path, query or scheme. */
 export const cidHref = (cid: string): string | null => (/^[A-Za-z0-9]+$/.test(cid) ? IPFS_GATEWAY + cid : null);
+
+interface JobsPage {
+  jobs: Job[];
+  nextCursor: string | null;
+}
+
+/** Swaps the job with the same burn hash wherever a loaded page holds it; found is false when none does. */
+export function replaceInPages<P extends JobsPage>(pages: P[], job: Job): { pages: P[]; found: boolean } {
+  let found = false;
+  const next = pages.map((page) => {
+    const at = page.jobs.findIndex((row) => row.burnTxHash === job.burnTxHash);
+    if (at === -1) {
+      return page;
+    }
+    found = true;
+    return { ...page, jobs: page.jobs.map((row, index) => (index === at ? job : row)) };
+  });
+  return { pages: found ? next : pages, found };
+}
+
+/** An event carries a Job without its result or error, so a matching detail keeps both. */
+export function replaceInDetail<D extends { burnTxHash: string | null }>(detail: D | null | undefined, job: Job): D | null | undefined {
+  return detail && detail.burnTxHash === job.burnTxHash ? { ...detail, ...job } : detail;
+}
+
+export type SearchTarget = { burnTxHash: string } | { jobId: string } | { partialHash: string } | null;
+
+/** What a submitted search term means: a whole burn hash, a job id, or a hash that stops short. */
+export function searchTarget(text: string): SearchTarget {
+  const term = text.trim();
+  if (term === "") {
+    return null;
+  }
+  if (term.slice(0, 2).toLowerCase() === "0x") {
+    const lower = term.toLowerCase();
+    return BURN_HASH.test(lower) ? { burnTxHash: lower } : { partialHash: term };
+  }
+  return term.length <= MAX_ID ? { jobId: term } : null;
+}
+
+/** The live filter over loaded rows: a case-insensitive substring of the job id or the burn hash. */
+export function matchesSearch(job: { jobId?: string | null; burnTxHash: string }, text: string): boolean {
+  const term = text.trim().toLowerCase();
+  return job.burnTxHash.toLowerCase().includes(term) || (job.jobId?.toLowerCase().includes(term) ?? false);
+}
