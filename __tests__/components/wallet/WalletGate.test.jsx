@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { GnusContractMismatchError, GnusError } from "../../../lib/gnus/errors";
 import { INITIAL_STATE } from "../../../lib/session/machine";
+import { createMockProvider } from "../../../lib/gnus/mock/provider";
 import { SessionProvider } from "../../../sub-components/wallet/SessionProvider";
 import WalletGate from "../../../sub-components/wallet/WalletGate";
 
@@ -96,6 +97,43 @@ const CASES = [
     "Retry",
   ],
 ];
+
+describe("WalletGate banners", () => {
+  let accounts;
+  beforeAll(async () => {
+    accounts = await createMockProvider().request({ method: "gnus_getAccounts" });
+  });
+  const on = (network, name = "ready") => phase(name, { accounts: { ...accounts, network } });
+
+  test("switching shows its banner over the children, not a full screen", async () => {
+    const { container } = show(on({ sdk: "staging", evmChainId: 80002 }, "switching"));
+    expect(screen.getByText("Switching account")).toBeInTheDocument();
+    expect(screen.getByText("Submitting is paused until GeniusWallet finishes switching.")).toBeInTheDocument();
+    expect(screen.getByText("page content")).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  test("a different SDK network shows both networks; null reads not set", async () => {
+    const { container, unmount } = show(on({ sdk: "mainnet", evmChainId: 1 }));
+    expect(screen.getByText("Wrong network")).toBeInTheDocument();
+    expect(
+      screen.getByText("GeniusWallet is on mainnet. This dashboard works on staging. Switch the network in GeniusWallet."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("page content")).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+    unmount();
+    show(on({ sdk: null, evmChainId: null }));
+    expect(
+      screen.getByText("GeniusWallet is on not set. This dashboard works on staging. Switch the network in GeniusWallet."),
+    ).toBeInTheDocument();
+  });
+
+  test.each([80002, 97, 11155111, 1, null])("staging on EVM chain %s shows no banner", (evmChainId) => {
+    show(on({ sdk: "staging", evmChainId }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByText("page content")).toBeInTheDocument();
+  });
+});
 
 describe("WalletGate screens", () => {
   test.each(CASES)("%s", async (_name, state, heading, body, action) => {

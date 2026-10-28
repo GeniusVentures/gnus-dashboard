@@ -2,7 +2,7 @@ import React from "react";
 import ExternalLink from "../shared/ExternalLink";
 import { GnusContractMismatchError } from "../../lib/gnus/errors";
 import { CONTRACT_VERSION } from "../../lib/gnus/schema";
-import { SessionState } from "../../lib/session/machine";
+import { SessionState, networkMismatch, servedSdkNetwork } from "../../lib/session/machine";
 import { SessionStore } from "../../lib/session/store";
 import { useSession } from "./SessionProvider";
 
@@ -85,10 +85,30 @@ const RUN: Record<Action, (store: SessionStore) => void> = {
   retry: (store) => store.retry(),
 };
 
+const Banner: React.FC<{ title: string; body: string }> = ({ title, body }) => (
+  <div role="status" className="alert alert-warning rounded-0 mb-0 text-center">
+    <strong>{title}</strong> <span>{body}</span>
+  </div>
+);
+
 const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { state, store } = useSession();
-  if (state.phase === "ready") {
-    return <>{children}</>;
+  if (state.phase === "ready" || state.phase === "switching") {
+    const network = state.accounts?.network;
+    return (
+      <>
+        {state.phase === "switching" ? (
+          <Banner title="Switching account" body="Submitting is paused until GeniusWallet finishes switching." />
+        ) : null}
+        {network && networkMismatch(network) ? (
+          <Banner
+            title="Wrong network"
+            body={`GeniusWallet is on ${network.sdk ?? "not set"}. This dashboard works on ${servedSdkNetwork() ?? "not set"}. Switch the network in GeniusWallet.`}
+          />
+        ) : null}
+        {children}
+      </>
+    );
   }
   const screen = screenFor(state);
   if (!screen) {

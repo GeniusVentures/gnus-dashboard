@@ -86,3 +86,58 @@ describe("connect-time transitions", () => {
     expect(reduce(ready(), { type: "lateInjection" })).toEqual(ready());
   });
 });
+
+describe("switching and the served network", () => {
+  const { canEstimate, canSubmit, networkMismatch } = require("../../../lib/session/machine");
+  const withAccounts = (patch) => ({ ...accounts, ...patch });
+
+  test("accounts with switching true give switching, and a later switching false gives ready", () => {
+    const switching = reduce(INITIAL_STATE, { type: "accountsReceived", accounts: withAccounts({ switching: true }) });
+    expect(switching.phase).toBe("switching");
+    expect(reduce(switching, { type: "accountsReceived", accounts }).phase).toBe("ready");
+  });
+
+  test("a reported -32015 keeps the accounts and gives switching; without accounts it does nothing", () => {
+    const next = reduce(ready(), { type: "errorReported", error: new GnusError(-32015), source: "query" });
+    expect(next).toMatchObject({ phase: "switching", accounts });
+    expect(reduce(INITIAL_STATE, { type: "errorReported", error: new GnusError(-32015), source: "query" })).toEqual(INITIAL_STATE);
+  });
+
+  test("staging matches whatever the EVM chain; another SDK network or a null does not", () => {
+    expect(networkMismatch({ sdk: "staging", evmChainId: 80002 })).toBe(false);
+    expect(networkMismatch({ sdk: "staging", evmChainId: 97 })).toBe(false);
+    expect(networkMismatch({ sdk: "staging", evmChainId: 11155111 })).toBe(false);
+    expect(networkMismatch({ sdk: "staging", evmChainId: null })).toBe(false);
+    expect(networkMismatch({ sdk: "mainnet", evmChainId: 80002 })).toBe(true);
+    expect(networkMismatch({ sdk: null, evmChainId: 80002 })).toBe(true);
+  });
+
+  test("networkChanged updates the label in place", () => {
+    const next = reduce(ready(), { type: "networkChanged", network: { sdk: "mainnet", evmChainId: 1 } });
+    expect(next.accounts.network).toEqual({ sdk: "mainnet", evmChainId: 1 });
+    expect(next.phase).toBe("ready");
+    expect(reduce(INITIAL_STATE, { type: "networkChanged", network: { sdk: "x", evmChainId: 1 } })).toEqual(INITIAL_STATE);
+  });
+
+  test("canEstimate needs ready and the served SDK network; canSubmit also needs payer.canSign", () => {
+    expect(canEstimate(ready())).toBe(true);
+    expect(canSubmit(ready())).toBe(true);
+    expect(canEstimate({ ...ready(), phase: "switching" })).toBe(false);
+    expect(canSubmit({ ...ready(), phase: "switching" })).toBe(false);
+    expect(canEstimate(INITIAL_STATE)).toBe(false);
+    const watchOnly = { ...ready(), accounts: withAccounts({ payer: { evmAddress: null, canSign: false } }) };
+    expect(canEstimate(watchOnly)).toBe(true);
+    expect(canSubmit(watchOnly)).toBe(false);
+    const wrong = { ...ready(), accounts: withAccounts({ network: { sdk: "mainnet", evmChainId: 80002 } }) };
+    expect(canEstimate(wrong)).toBe(false);
+    expect(canSubmit(wrong)).toBe(false);
+  });
+
+  test("a chain the wallet cannot burn on does not block estimating; the wallet's own refusal does", () => {
+    const onBnb = { ...ready(), accounts: withAccounts({ network: { sdk: "staging", evmChainId: 97 } }) };
+    expect(canEstimate(onBnb)).toBe(true);
+    const unavailable = new GnusError(-32013, { reason: "bridge_unavailable" });
+    expect(unavailable.kind).toBe("bridgeUnavailable");
+    expect(reduce(onBnb, { type: "errorReported", error: unavailable, source: "query" })).toEqual(onBnb);
+  });
+});

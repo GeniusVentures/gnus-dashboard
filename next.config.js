@@ -14,7 +14,11 @@ const nextConfig = {
   images: { unoptimized: true },
   reactStrictMode: true,
   // Always defined: an unset NEXT_PUBLIC variable is not inlined, so the guarded require in _app would not fold away and the mock chunk would ship.
-  env: { NEXT_PUBLIC_GNUS_MOCK: mockRequested ? "1" : "0" },
+  // The SDK network this build serves. The wallet itself decides which EVM chains can burn.
+  env: {
+    NEXT_PUBLIC_GNUS_MOCK: mockRequested ? "1" : "0",
+    NEXT_PUBLIC_GNUS_SDK_NETWORK: process.env.NEXT_PUBLIC_GNUS_SDK_NETWORK || "staging",
+  },
 };
 
 module.exports = nextConfig;

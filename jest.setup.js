@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom';
 
+// Build-time values next.config.js inlines; the defaults live only there.
+for (const [key, value] of Object.entries(require('./next.config.js').env)) {
+  process.env[key] ??= value;
+}
+
 // Enhanced Jest setup for GNUS Dashboard
 // This file runs after the test framework has been set up
 

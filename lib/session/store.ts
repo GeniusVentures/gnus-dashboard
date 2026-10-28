@@ -118,6 +118,13 @@ export function createSessionStore(env: SessionEnv): SessionStore {
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
       ),
     );
+    cleanups.push(
+      injected.on(
+        "gnus_networkChanged",
+        (network) => dispatch({ type: "networkChanged", network }),
+        (error) => dispatch({ type: "errorReported", error, source: "identity" }),
+      ),
+    );
     connect({ type: "connectStarted" });
   }
 

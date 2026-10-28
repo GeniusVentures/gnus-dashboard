@@ -17,6 +17,15 @@ const loadConfig = (env) => {
   }
 };
 
+describe("next.config.js served network", () => {
+  test("the SDK network defaults to staging and follows the variable; no EVM chain variable exists", () => {
+    const unset = loadConfig({ NEXT_PUBLIC_GNUS_SDK_NETWORK: undefined });
+    expect(unset.env.NEXT_PUBLIC_GNUS_SDK_NETWORK).toBe("staging");
+    expect(loadConfig({ NEXT_PUBLIC_GNUS_SDK_NETWORK: "mainnet" }).env.NEXT_PUBLIC_GNUS_SDK_NETWORK).toBe("mainnet");
+    expect(Object.keys(unset.env).filter((key) => /CHAIN/.test(key))).toEqual([]);
+  });
+});
+
 describe("next.config.js mock flag", () => {
   test("a production build with the mock flag is refused", () => {
     expect(() => loadConfig({ NODE_ENV: "production", NEXT_PUBLIC_GNUS_MOCK: "1" })).toThrow(/dev server only/);

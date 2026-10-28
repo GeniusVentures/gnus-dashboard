@@ -59,6 +59,17 @@ describe("useAccountQuery", () => {
     expect(cacheKeys().join("")).not.toContain(SDK_A);
   });
 
+  test("another chain re-runs the probe under a new key", async () => {
+    const { provider, reads, cacheKeys } = setup();
+    await screen.findByText("phase:ready");
+    await act(async () => {});
+    act(() => provider.controls.setNetwork({ sdk: "staging", evmChainId: 97 }));
+    await act(async () => {});
+    expect(reads).toHaveLength(2);
+    expect(cacheKeys().join("")).toContain("97");
+    expect(cacheKeys().join("")).not.toContain("80002");
+  });
+
   test("while connecting the probe sends no request", async () => {
     const { reads, provider } = setup({ profile: "connectPrompt" });
     await screen.findByText("phase:connecting");

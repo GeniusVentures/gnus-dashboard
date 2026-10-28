@@ -1,5 +1,5 @@
 import { GnusContractMismatchError, GnusError } from "../gnus/errors";
-import { Accounts, CONTRACT_VERSION } from "../gnus/schema";
+import { Accounts, CONTRACT_VERSION, Network } from "../gnus/schema";
 import type { TransportChoice } from "../gnus/transport/select";
 
 export type Phase =
@@ -34,8 +34,24 @@ export type SessionEvent =
   | { type: "connectStarted" }
   | { type: "connectAgain" }
   | { type: "accountsReceived"; accounts: Accounts }
+  | { type: "networkChanged"; network: Network }
+  | { type: "disconnected" }
+  | { type: "noReply" }
+  | { type: "replyArrived" }
+  | { type: "noBridge" }
   | { type: "connectFailed"; error: GnusError }
   | { type: "errorReported"; error: GnusError; source: ErrorSource };
+
+/** The SDK network this build serves, set at build time. The EVM chain never gates anything here: the wallet refuses chains it cannot burn on. */
+export const servedSdkNetwork = (): string | null => process.env.NEXT_PUBLIC_GNUS_SDK_NETWORK ?? null;
+
+export const networkMismatch = (network: Network): boolean => network.sdk === null || network.sdk !== servedSdkNetwork();
+
+/** The gate the estimate and submit buttons read. */
+export const canEstimate = (state: SessionState): boolean =>
+  state.phase === "ready" && state.accounts !== null && !networkMismatch(state.accounts.network);
+
+export const canSubmit = (state: SessionState): boolean => canEstimate(state) && state.accounts?.payer.canSign === true;
 
 const away = (phase: Phase, cause: Cause | null, error: GnusError | null): SessionState => ({
   phase,
@@ -90,9 +106,23 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
       return away("connecting", null, null);
     case "connectAgain":
       return { phase: "connecting", cause: state.cause, accounts: null, error: null };
+    case "networkChanged":
+      return state.accounts ? { ...state, accounts: { ...state.accounts, network: event.network } } : state;
+    case "disconnected":
+      return away("notResponding", "disconnected", null);
+    case "noBridge":
+      return state.phase === "detecting" ? away("notResponding", "noBridge", null) : state;
+    case "noReply":
+      return state.accounts && (state.phase === "ready" || state.phase === "switching")
+        ? { ...state, phase: "notResponding", cause: "noReply" }
+        : state;
+    case "replyArrived":
+      return state.phase === "notResponding" && state.cause === "noReply" && state.accounts
+        ? { ...state, phase: state.accounts.switching ? "switching" : "ready", cause: null }
+        : state;
     case "accountsReceived":
       return {
-        phase: "ready",
+        phase: event.accounts.switching ? "switching" : "ready",
         cause: null,
         accounts: event.accounts,
         error: null,
