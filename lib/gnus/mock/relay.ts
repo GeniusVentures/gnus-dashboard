@@ -14,7 +14,7 @@ export const RELAY_PROFILES = {
   walletEnds: "Approves like approve; the page can end the session from the wallet side",
   latency: "Replies arrive 70 seconds late",
   dropEvents: "Approves like approve; the wallet's events never reach the page",
-  zombie: "Requests reach the wallet and run there, but their replies never reach the page",
+  zombie: "A gnus_submitJob reaches the wallet and runs there, but its reply never reaches the page",
 } as const;
 export type RelayProfile = keyof typeof RELAY_PROFILES;
 
@@ -224,7 +224,7 @@ export function createFakeRelay(options: RelayOptions = {}): FakeRelay {
         return new Promise(() => {});
       }
       const run = provider.request({ method: request.method, params: wire(request.params) });
-      if (profile === "zombie") {
+      if (profile === "zombie" && request.method === "gnus_submitJob") {
         run.catch(() => {});
         return new Promise(() => {});
       }

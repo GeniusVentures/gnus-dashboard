@@ -29,7 +29,9 @@ function screenFor(state: SessionState): Screen | null {
     case "connecting":
       return {
         heading: "Confirm in your wallet",
-        body: "GeniusWallet is asking whether this site may connect. Approve it there to continue.",
+        body: `GeniusWallet is asking whether this site may connect. Approve it there to continue.${
+          state.transport === "walletconnect" ? " Open GeniusWallet where you scanned the code." : ""
+        }`,
         spinner: true,
       };
     case "startingUp":

@@ -20,6 +20,7 @@ const SubmitPanel: React.FC = () => {
         <p role="status">
           GeniusWallet shows the cost, the paying wallet and the account that runs the job. Approve or reject it
           there.
+          {sessionState.transport === "walletconnect" ? " Open GeniusWallet where you scanned the code." : null}
         </p>
         <button type="button" className="btn border" onClick={store.showCancelNote}>
           Cancel

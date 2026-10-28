@@ -81,8 +81,8 @@ export function submitCalls(provider) {
 }
 
 // Renders ui under a session whose submit store has Map-backed storage; the session starts with the provider.
-export function renderWithSubmit(ui, { profile, provider, storage = new MemoryStorage(), now = () => 1000, newKey, strict = false } = {}) {
-  const made = makeStore(provider ? { provider } : { profile });
+export function renderWithSubmit(ui, { profile, provider, loadWalletConnect, storage = new MemoryStorage(), now = () => 1000, newKey, strict = false } = {}) {
+  const made = makeStore(provider === undefined ? { profile, loadWalletConnect } : { provider, loadWalletConnect });
   const deps = { storage, now, newKey: newKey ?? counterKeys(), digest: nodeDigest };
   const submit = getSubmitStore(made.store, deps);
   const tree = <SessionProvider store={made.store}>{ui}</SessionProvider>;
