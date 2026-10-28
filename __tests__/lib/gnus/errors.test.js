@@ -12,6 +12,7 @@ const ROWS = [
   [-32603, "balance_unavailable", "internal", "GeniusWallet cannot read your GNUS balance right now.", "retry"],
   [-32603, "checking", "internal", "GeniusWallet is still checking the paying wallet.", "retry"],
   [-32603, "missing_data", "internal", "GeniusWallet is missing data it needs for this payment.", "openWallet"],
+  [-32603, "submission_outcome_unknown", "submissionOutcomeUnknown", "GeniusWallet can't tell whether this payment went through. Check it in GeniusWallet before you submit again.", "openWallet"],
   [-32005, null, "busy", "GeniusWallet is busy. Try again in a moment.", "retry"],
   [-32005, "rate_limited", "rateLimited", "Too many requests. Wait a moment, then try again.", "retry"],
   [-32005, "confirm_open", "confirmOpen", "A confirm is already open in GeniusWallet. Finish it there first.", "openWallet"],
@@ -27,6 +28,7 @@ const ROWS = [
   [-32012, "not_earning", "payerCannotSign", "This account is not earning in GeniusWallet yet. Start earning there first.", "openWallet"],
   [-32012, "wrong_network", "payerCannotSign", "The paying wallet is on another network. Switch networks in GeniusWallet.", "openWallet"],
   [-32013, null, "bridgeFailed", "The payment did not go through. Nothing was spent.", "retry"],
+  [-32013, "bridge_unavailable", "bridgeUnavailable", "Not available on this network. Switch the network in GeniusWallet.", "openWallet"],
   [-32014, null, "bridgedNotProcessed", "Paid, but the job was not processed. GeniusWallet keeps the payment record.", "openWallet"],
   [-32015, null, "switching", "GeniusWallet is switching accounts.", "waitForSwitch"],
   [-32015, "account_changed", "switching", "Your account changed while the confirm was open. Nothing was spent.", "retry"],
@@ -35,12 +37,13 @@ const ROWS = [
 const make = (code, reason) => new GnusError(code, reason ? { reason } : undefined);
 const codeRows = ROWS.filter((r) => r[1] === null);
 const reasonRows = ROWS.filter((r) => r[1] !== null);
+const OWN_KIND_REASONS = ["submission_outcome_unknown", "bridge_unavailable"];
 const RPC05_REASONS = ["idempotency_key_reused", "rate_limited", "confirm_open", "submit_in_flight"];
 
 describe("error table", () => {
   test("row counts", () => {
     expect(codeRows).toHaveLength(13);
-    expect(reasonRows).toHaveLength(15);
+    expect(reasonRows).toHaveLength(17);
   });
 
   test.each(ROWS)("%s %s", (code, reason, kind, message, action) => {
@@ -61,7 +64,7 @@ describe("error table", () => {
   });
 
   test("the other 11 reason rows keep their code's kind but refine the message", () => {
-    const others = reasonRows.filter((r) => !RPC05_REASONS.includes(r[1]));
+    const others = reasonRows.filter((r) => !RPC05_REASONS.includes(r[1]) && !OWN_KIND_REASONS.includes(r[1]));
     expect(others).toHaveLength(11);
     for (const [code, , kind, message] of others) {
       const base = codeRows.find((r) => r[0] === code);
@@ -118,6 +121,31 @@ describe("burnTxHash and reason", () => {
     expect(new GnusError(-32005, "submit_in_flight").reason).toBeNull();
     expect(new GnusError(-32005, null).reason).toBeNull();
     expect(new GnusError(-32005, { reason: 7 }).reason).toBeNull();
+  });
+});
+
+describe("submission outcome", () => {
+  const good = "0x" + "c3".repeat(32);
+  const unknown = (data) => new GnusError(-32603, { reason: "submission_outcome_unknown", ...data });
+  const full = { idempotencyKey: "k", burnTxHash: good, sdkAddress: "0x" + "a1".repeat(64), payer: "0x" + "b2".repeat(20), cost: "5", createdAt: "2026-10-28T01:02:03Z" };
+
+  test("valid fields are typed and the burn hash is set", () => {
+    const err = unknown(full);
+    expect(err.kind).toBe("submissionOutcomeUnknown");
+    expect(err.action).toBe("openWallet");
+    expect(err.burnTxHash).toBe(good);
+    expect(err.outcome).toEqual(full);
+  });
+  test("a field that does not parse is null and the kind stays", () => {
+    const err = unknown({ ...full, burnTxHash: "0x12", cost: 5, payer: null });
+    expect(err.kind).toBe("submissionOutcomeUnknown");
+    expect(err.outcome).toEqual({ ...full, burnTxHash: null, cost: null, payer: null });
+    expect(err.burnTxHash).toBeNull();
+  });
+  test("no data object gives a null outcome", () => {
+    expect(new GnusError(-32603, undefined).outcome).toBeNull();
+    expect(new GnusError(-32603, { reason: "missing_data" }).outcome).toBeNull();
+    expect(new GnusError(-32603, { reason: "submission_outcome_unknown" }).outcome).toEqual({ idempotencyKey: null, burnTxHash: null, sdkAddress: null, payer: null, cost: null, createdAt: null });
   });
 });
 

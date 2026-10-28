@@ -71,7 +71,7 @@ export const submitResultSchema = z.object({
   jobId: idString.nullable(),
   burnTxHash: txHashSchema,
   sdkAddress: sdkAddressSchema,
-  status: z.enum(["submitted", "bridgedNotProcessed"]),
+  status: z.enum(["submitted", "bridgedNotProcessed", "unconfirmed"]),
 });
 export type SubmitResult = z.infer<typeof submitResultSchema>;
 
@@ -82,6 +82,8 @@ export const JOB_STATUSES = [
   "completed",
   "failed",
   "bridgedNotProcessed",
+  "unconfirmed",
+  "pending",
   "unknown",
 ] as const;
 export type JobStatus = (typeof JOB_STATUSES)[number];
@@ -93,7 +95,7 @@ function toJobStatus(value: string): JobStatus {
 // An unseen status string is a rendered state, not a crash; a non-string is still a mismatch.
 const jobStatusSchema = shortString.transform(toJobStatus);
 
-const isoTimestampSchema = z.iso.datetime({ offset: true });
+export const isoTimestampSchema = z.iso.datetime({ offset: true });
 
 export const jobSchema = z.object({
   jobId: idString.nullable(),
@@ -107,7 +109,7 @@ export const jobSchema = z.object({
 });
 export type Job = z.infer<typeof jobSchema>;
 
-// gnus_getJob answers null when nothing matches; the client wraps this with .nullable().
+// gnus_getJob answers null when nothing matches; see jobLookupSchema.
 export const jobDetailSchema = jobSchema.extend({
   result: z
     .object({
@@ -118,6 +120,24 @@ export const jobDetailSchema = jobSchema.extend({
   error: z.string().max(2000).optional(),
 });
 export type JobDetail = z.infer<typeof jobDetailSchema>;
+
+// Only gnus_getJob by idempotency key answers a pending record, and it nulls whatever the wallet cannot read.
+export const pendingJobSchema = z.object({
+  status: z.literal("pending"),
+  jobId: z.null(),
+  burnTxHash: txHashSchema.nullable(),
+  sdkAddress: sdkAddressSchema.nullable(),
+  origin: shortString.nullable(),
+  idempotencyKey: shortString,
+  submittedAt: isoTimestampSchema.nullable(),
+  cost: baseUnitsSchema.nullable(),
+  result: z.null(),
+  error: z.string().max(2000).optional(),
+});
+export type PendingJob = z.infer<typeof pendingJobSchema>;
+
+export const jobLookupSchema = z.union([jobDetailSchema, pendingJobSchema]).nullable();
+export type JobLookup = z.infer<typeof jobLookupSchema>;
 
 export const jobListSchema = z.object({
   jobs: z.array(jobSchema).max(100),

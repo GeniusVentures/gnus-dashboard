@@ -7,16 +7,16 @@ import {
   GnusEventName,
   GnusEventPayload,
   JobDefinition,
-  JobDetail,
   JobList,
+  JobLookup,
   METHODS,
   SubmitResult,
   accountsSchema,
   earningsSchema,
   estimateSchema,
   eventSchemas,
-  jobDetailSchema,
   jobListSchema,
+  jobLookupSchema,
   submitResultSchema,
 } from "./schema";
 import type { RequestArgs, Transport } from "./transport/types";
@@ -31,7 +31,7 @@ export interface GnusClient {
   estimate(params: { job: JobDefinition }): Promise<Estimate>;
   submitJob(params: { job: JobDefinition; idempotencyKey: string }): Promise<SubmitResult>;
   listJobs(params?: { limit?: number; cursor?: string }): Promise<JobList>;
-  getJob(params: GetJobParams): Promise<JobDetail | null>;
+  getJob(params: GetJobParams): Promise<JobLookup>;
   getEarnings(params?: { includeChildren?: false }): Promise<Earnings>;
   /**
    * Returns an unsubscribe function. onMismatch is required: a payload that fails its schema
@@ -78,8 +78,6 @@ export function createGnusClient(transport: Transport): GnusClient {
     return parsed.data;
   }
 
-  const nullableJobDetail = jobDetailSchema.nullable();
-
   return {
     getAccounts: () => call(METHODS.getAccounts, undefined, accountsSchema),
     estimate: async (params) => {
@@ -92,7 +90,7 @@ export function createGnusClient(transport: Transport): GnusClient {
     },
     submitJob: (params) => call(METHODS.submitJob, params, submitResultSchema),
     listJobs: (params = {}) => call(METHODS.listJobs, params, jobListSchema),
-    getJob: (params) => call(METHODS.getJob, params, nullableJobDetail),
+    getJob: (params) => call(METHODS.getJob, params, jobLookupSchema),
     getEarnings: (params = {}) => call(METHODS.getEarnings, params, earningsSchema),
     on(event, handler, onMismatch) {
       const schema: z.ZodType = eventSchemas[event];

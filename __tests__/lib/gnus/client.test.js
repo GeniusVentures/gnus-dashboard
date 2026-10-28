@@ -83,6 +83,21 @@ describe("request shape", () => {
   });
 });
 
+describe("getJob pending lookup", () => {
+  const pending = {
+    status: "pending", jobId: null, burnTxHash: null, sdkAddress: null, origin: null,
+    idempotencyKey: "k", submittedAt: null, cost: null, result: null,
+  };
+  test("resolves a pending record", async () => {
+    const client = createGnusClient(fakeTransport(() => Promise.resolve(pending)));
+    await expect(client.getJob({ idempotencyKey: "k" })).resolves.toMatchObject({ status: "pending", burnTxHash: null });
+  });
+  test("the same nulls under status submitted are a contract mismatch", async () => {
+    const client = createGnusClient(fakeTransport(() => Promise.resolve({ ...pending, status: "submitted" })));
+    await expect(client.getJob({ idempotencyKey: "k" })).rejects.toBeInstanceOf(GnusContractMismatchError);
+  });
+});
+
 describe("contract mismatch", () => {
   test("numeric amount, swapped address and missing field each name method and version", async () => {
     const transport = fakeTransport((args) => {

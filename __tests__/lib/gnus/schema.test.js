@@ -3,6 +3,7 @@ import {
   submitResultSchema,
   jobSchema,
   jobDetailSchema,
+  jobLookupSchema,
   jobListSchema,
   earningsSchema,
   disconnectSchema,
@@ -183,5 +184,31 @@ describe("payload bounds", () => {
     ok(jobListSchema, list({ jobs: Array.from({ length: 100 }, () => job()) }));
     bad(jobListSchema, list({ jobs: Array.from({ length: 101 }, () => job()) }));
     bad(jobDetailSchema, detail({ result: { cids: Array.from({ length: 1001 }, () => "Qm1") } }));
+  });
+});
+
+describe("unconfirmed and pending", () => {
+  const pending = (over = {}) => ({
+    status: "pending", jobId: null, burnTxHash: null, sdkAddress: null, origin: null,
+    idempotencyKey: "k", submittedAt: null, cost: null, result: null, ...over,
+  });
+  test("a submit result and jobs can be unconfirmed or pending", () => {
+    ok(submitResultSchema, submit({ status: "unconfirmed" }));
+    expect(JOB_STATUSES).toEqual(expect.arrayContaining(["unconfirmed", "pending"]));
+    expect(jobSchema.parse(job({ status: "unconfirmed" })).status).toBe("unconfirmed");
+    expect(jobSchema.parse(job({ status: "pending" })).status).toBe("pending");
+  });
+  test("getJob accepts a pending record with null fields", () => {
+    expect(jobLookupSchema.parse(pending()).status).toBe("pending");
+    ok(jobLookupSchema, pending({ burnTxHash: hash, cost: "5" }));
+    ok(jobLookupSchema, null);
+    ok(jobLookupSchema, detail());
+  });
+  test("the same nulls under another status, or in a list, are rejected", () => {
+    bad(jobLookupSchema, pending({ status: "submitted" }));
+    bad(jobLookupSchema, pending({ jobId: "j" }));
+    bad(jobListSchema, list({ jobs: [pending()] }));
+    bad(jobListSchema, list({ jobs: [job({ burnTxHash: null })] }));
+    bad(eventSchemas.gnus_jobUpdated, pending());
   });
 });
