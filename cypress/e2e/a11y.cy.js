@@ -106,7 +106,7 @@ SCHEMES.forEach(({ name: scheme, background }) => {
   describe(`axe, ${scheme} scheme`, () => {
     STATES.forEach(([state, reach]) => {
       it(`${state} has no WCAG 2.1 A or AA violations`, () => {
-        cy.wrap(emulate(scheme), { log: false });
+        cy.then(() => emulate(scheme));
         reach();
         cy.window({ log: false }).then((win) => {
           expect(win.matchMedia("(prefers-color-scheme: dark)").matches).to.eq(scheme === "dark");
@@ -114,6 +114,75 @@ SCHEMES.forEach(({ name: scheme, background }) => {
         cy.get("body").should("have.css", "background-color", background);
         expectNoViolations();
       });
+    });
+  });
+});
+
+describe("keyboard", () => {
+  const TAB = () => cy.press(Cypress.Keyboard.Keys.TAB);
+
+  function tabUntil(isTarget, left = 15) {
+    TAB();
+    cy.focused().then(($el) => {
+      if (isTarget($el)) {
+        return;
+      }
+      expect(left, "tab presses left").to.be.greaterThan(0);
+      tabUntil(isTarget, left - 1);
+    });
+  }
+
+  const key = (type) =>
+    Cypress.automation("remote:debugger:protocol", {
+      command: "Input.dispatchKeyEvent",
+      params: {
+        type,
+        key: "Enter",
+        code: "Enter",
+        windowsVirtualKeyCode: 13,
+        nativeVirtualKeyCode: 13,
+        ...(type === "keyDown" ? { text: "\r" } : {}),
+      },
+    });
+
+  it("reaches Connect again with Tab, shows a focus ring, and Enter asks the wallet again", () => {
+    cy.then(() => emulate("light"));
+    visit("connectPrompt");
+    cy.get("h1").should("have.text", "Confirm in your wallet");
+    cy.then(() => mock.controls.answerConnect(false));
+    cy.get("h1").should("have.text", "Allow this site in GeniusWallet");
+    tabUntil(($el) => $el.text() === "Connect again");
+    cy.focused().should(($el) => {
+      expect($el[0].matches(":focus-visible"), "focus-visible").to.eq(true);
+      const style = page.getComputedStyle($el[0]);
+      expect(style.outlineStyle).to.not.eq("none");
+      expect(parseFloat(style.outlineWidth)).to.be.at.least(2);
+    });
+    cy.window({ log: false }).then((win) => win.focus());
+    ["keyDown", "keyUp"].forEach((type) => cy.then(() => key(type)));
+    cy.get("h1").should("have.text", "Confirm in your wallet");
+  });
+
+  it("tabs from the top through the brand, both copy buttons and the three sections", () => {
+    cy.viewport(1300, 800);
+    visit("today");
+    header();
+    const seen = [];
+    for (let i = 0; i < 6; i += 1) {
+      TAB();
+      cy.focused().then(($el) => {
+        seen.push($el.attr("aria-label") || $el.text());
+      });
+    }
+    cy.then(() => {
+      expect(seen).to.deep.eq([
+        "GNUS Dashboard",
+        "Copy earning address",
+        "Copy paying address",
+        "Submit a job",
+        "My jobs",
+        "Earnings",
+      ]);
     });
   });
 });
