@@ -26,18 +26,15 @@ Every screen and banner phase 3 adds has zero axe WCAG 2.1 A and AA violations i
 - Keyboard: Tab reaches Connect again within 15 presses, it matches `:focus-visible` with a 2px outline, Enter starts the prompt; on the ready page Tab visits the brand, both copy buttons, then Submit a job, My jobs, Earnings.
 
 ## Fixes the sweep forced (no colour outside the planned set)
-
 - `<html lang="en">` through a new `pages/_document.tsx`; `aria-label` on the seven social links.
 - Brand and menu toggle use the emphasis colour (the toggler was 4.2:1 on black).
 - `.form-control`, `.form-select` and `.form-label` were fixed white on translucent black; they now read the mode-aware body colours with a `--fc-secondary-color` border. `$border-color` was white; it is now gray-300 (gray-700 in dark).
 
 ## Deviations
 
-- Files beyond the plan: `_document.tsx`, `Socials.tsx`, `_form.scss`.
-- The spec sets the scheme inside the command queue (`cy.then`), not at definition time.
+- Files beyond the plan: `_document.tsx`, `Socials.tsx`, `_form.scss`. The spec sets the scheme inside the command queue, not at definition time.
 
 ## Gaps for a human
-
 - Open the dev server with the mock in light and dark and look at the header, a state screen, both banners and the footer. Inside the real wallet this waits on wallet v4.0 phases 43 and 44.
 
 ## Self-Check: PASSED
