@@ -20,6 +20,10 @@ export interface SessionStore {
   connectAgain(): void;
   /** Retries getAccounts now and restarts the startup schedule. */
   tryNow(): void;
+  /** The live client, or null before the injected wallet is attached. */
+  getClient(): GnusClient | null;
+  /** Wraps an account read so the session can notice when the wallet stops answering. */
+  track<T>(read: Promise<T>): Promise<T>;
   /** An account query's error: the session moves only for the codes that concern it. */
   report(error: GnusError): void;
   dispose(): void;
@@ -159,6 +163,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       retryStep = 0;
       readAccounts();
     },
+    getClient: () => client,
+    track: (read) => read,
     report: (error) => dispatch({ type: "errorReported", error, source: "query" }),
     dispose() {
       disposed = true;

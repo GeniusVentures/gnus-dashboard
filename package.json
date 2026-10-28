@@ -12,6 +12,7 @@
     "test:e2e": "node scripts/serve-out.js yarn cy:run"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.105.0",
     "@types/react": "^18.2.79",
     "bootstrap": "^5.2.3",
     "next": "14.2.35",
