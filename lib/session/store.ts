@@ -44,6 +44,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   let retryStep = 0;
   let readInFlight = false;
   let slowReads = 0;
+  // Counts identity events, so a read that began before one cannot put the older identity back.
+  let identityEvents = 0;
   const cleanups: Array<() => void> = [];
   const listeners = new Set<() => void>();
 
@@ -110,11 +112,12 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       return;
     }
     readInFlight = true;
+    const seen = identityEvents;
     const read = client.getAccounts();
     (source === "identity" ? track(read) : read).then(
       (accounts) => {
         readInFlight = false;
-        if (!disposed) {
+        if (!disposed && (seen === identityEvents || state.accounts === null)) {
           dispatch({ type: "accountsReceived", accounts });
         }
       },
@@ -150,7 +153,10 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     cleanups.push(
       injected.on(
         "gnus_accountsChanged",
-        (accounts) => dispatch({ type: "accountsReceived", accounts }),
+        (accounts) => {
+          identityEvents += 1;
+          dispatch({ type: "accountsReceived", accounts });
+        },
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
       ),
     );
@@ -164,7 +170,10 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     cleanups.push(
       injected.on(
         "gnus_networkChanged",
-        (network) => dispatch({ type: "networkChanged", network }),
+        (network) => {
+          identityEvents += 1;
+          dispatch({ type: "networkChanged", network });
+        },
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
       ),
     );

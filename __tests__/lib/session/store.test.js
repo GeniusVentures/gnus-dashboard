@@ -273,6 +273,60 @@ describe("runtime states in the store", () => {
     expect(reads()).toBe(3);
   });
 
+  // getAccounts answers with the identity as it was when the read began, then waits until released.
+  function heldReads() {
+    const mock = createMockProvider();
+    const hold = { on: false, release: null };
+    const provider = {
+      isGeniusWallet: true,
+      async request(args) {
+        const reply = await mock.request(args);
+        if (hold.on && args.method === GET_ACCOUNTS) {
+          const snapshot = structuredClone(reply);
+          await new Promise((resolve) => (hold.release = resolve));
+          return snapshot;
+        }
+        return reply;
+      },
+      on: (...a) => mock.on(...a),
+      removeListener: (...a) => mock.removeListener(...a),
+    };
+    return { mock, hold, provider };
+  }
+
+  test("a re-read that began before an account switch does not put the old account back", async () => {
+    jest.useFakeTimers();
+    const { mock, hold, provider } = heldReads();
+    const { store, env } = makeStore({ provider });
+    store.start();
+    await tick(0);
+    const before = store.getState().accounts.node.sdkAddress;
+    hold.on = true;
+    env.win.dispatchEvent(new Event("visibilitychange"));
+    await tick(0);
+    act(() => mock.controls.switchAccount());
+    const after = store.getState().accounts.node.sdkAddress;
+    expect(after).not.toBe(before);
+    hold.release();
+    await tick(0);
+    expect(store.getState().accounts.node.sdkAddress).toBe(after);
+  });
+
+  test("a re-read that began before a network change does not put the old network back", async () => {
+    jest.useFakeTimers();
+    const { mock, hold, provider } = heldReads();
+    const { store, env } = makeStore({ provider });
+    store.start();
+    await tick(0);
+    hold.on = true;
+    env.win.dispatchEvent(new Event("visibilitychange"));
+    await tick(0);
+    act(() => mock.controls.setNetwork({ sdk: "staging", evmChainId: 137 }));
+    hold.release();
+    await tick(0);
+    expect(store.getState().accounts.network.evmChainId).toBe(137);
+  });
+
   test("a hidden tab does not re-read", async () => {
     jest.useFakeTimers();
     const made = makeStore();
