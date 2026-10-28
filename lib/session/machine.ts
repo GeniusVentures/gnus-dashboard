@@ -60,6 +60,7 @@ export type SessionEvent =
   | { type: "pairingDeclined"; message: string | null }
   | { type: "pairingRefused"; cause: "notGenius" | "walletOld" }
   | { type: "sessionEnded" }
+  | { type: "restoreStarted" }
   | { type: "walletOffline" }
   | { type: "detected"; choice: TransportChoice }
   | { type: "lateInjection" }
@@ -149,6 +150,8 @@ function step(state: SessionState, event: Exclude<SessionEvent, { type: "transpo
       return { ...INITIAL_STATE, phase: "pairingDeclined", detail: event.message };
     case "pairingRefused":
       return event.cause === "notGenius" ? away("noWallet", "notGenius", null) : away("unsupported", "walletOld", null);
+    case "restoreStarted":
+      return INITIAL_STATE;
     case "sessionEnded":
       return away("disconnected", null, null);
     case "walletOffline":

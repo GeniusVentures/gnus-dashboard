@@ -24,6 +24,7 @@ export const NO_REPLY_MS = 15000;
 /** The text the wallet gave for declining a pairing is shown cut to this many characters. */
 const MAX_DETAIL = 200;
 const PROPOSAL_EXPIRED = "Proposal expired";
+const PING_MS = 10000;
 const END_REASON = { code: 6000, message: "User disconnected." };
 
 /** Seconds between getAccounts retries while the wallet is starting up; the last step repeats. */
@@ -34,8 +35,10 @@ export interface SessionStore {
   subscribe(listener: () => void): () => void;
   /** Idempotent: detection and the connect call run once per store. */
   start(): void;
-  /** Re-runs the connect call from a failure screen. */
+  /** Re-runs the connect call from a failure screen; after a restore that got no answer, pings the stored session again. */
   retry(): void;
+  /** WalletConnect only: ends the session and moves to the disconnected screen. */
+  disconnect(): void;
   /** The Connect again button: one more connect call, which prompts in the wallet. */
   connectAgain(): void;
   /** Retries getAccounts now and restarts the startup schedule. */
@@ -57,6 +60,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   let walletConnect: SignClientLike | null = null;
   let wcModule: WalletConnectModule | null = null;
   let wcSession: WcSession | null = null;
+  // A stored session found on start that has not answered a ping yet.
+  let pendingSession: WcSession | null = null;
   // Counts pairings, so an answer to a code that was replaced is ignored.
   let pairingRun = 0;
   // A proposal expired while the tab was hidden; the next visit asks for a fresh code.
@@ -187,7 +192,12 @@ export function createSessionStore(env: SessionEnv): SessionStore {
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
       ),
     );
-    const ended = (): void => dispatch({ type: kind === "walletconnect" ? "sessionEnded" : "disconnected" });
+    const ended = (): void => {
+      if (kind === "walletconnect") {
+        wcSession = null;
+      }
+      dispatch({ type: kind === "walletconnect" ? "sessionEnded" : "disconnected" });
+    };
     cleanups.push(live.on("disconnect", ended, ended));
     cleanups.push(
       live.on(
@@ -206,6 +216,7 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     const closing = walletConnect;
     walletConnect = null;
     wcSession = null;
+    pendingSession = null;
     pairingRun += 1;
     closing?.close().catch(() => {});
   }
@@ -271,6 +282,73 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     })();
   }
 
+  // Waits for the wallet to answer a ping: "gone" when the relay says the session no longer exists.
+  function pingWithin(wc: SignClientLike, topic: string): Promise<"ok" | "timeout" | "gone"> {
+    return new Promise((resolve) => {
+      const timer = env.setTimeout(() => resolve("timeout"), PING_MS);
+      wc.ping({ topic }).then(
+        () => {
+          env.clearTimeout(timer);
+          resolve("ok");
+        },
+        () => {
+          env.clearTimeout(timer);
+          resolve("gone");
+        },
+      );
+    });
+  }
+
+  async function restore(session: WcSession): Promise<void> {
+    const wc = walletConnect;
+    if (!wc) {
+      return;
+    }
+    const run = (pairingRun += 1);
+    pendingSession = session;
+    dispatch({ type: "restoreStarted" });
+    const answer = await pingWithin(wc, session.topic);
+    if (disposed || run !== pairingRun) {
+      return;
+    }
+    if (answer === "ok") {
+      pendingSession = null;
+      attachSession(session);
+    } else if (answer === "timeout") {
+      dispatch({ type: "walletOffline" });
+    } else {
+      pendingSession = null;
+      wc.disconnect({ topic: session.topic, reason: END_REASON }).catch(() => {});
+      pair();
+    }
+  }
+
+  // The newest unexpired session that is GeniusWallet; every other stored session is ended, one provider per session.
+  function newestStored(wc: SignClientLike): WcSession | null {
+    const now = Date.now() / 1000;
+    const sessions = wc.getSessions();
+    const usable = sessions
+      .filter((session) => session.expiry > now && wcModule?.classifyNamespaces(session) === "ok")
+      .sort((a, b) => b.expiry - a.expiry);
+    for (const other of sessions.filter((session) => session !== usable[0])) {
+      wc.disconnect({ topic: other.topic, reason: END_REASON }).catch(() => {});
+    }
+    return usable[0] ?? null;
+  }
+
+  function disconnect(): void {
+    const topic = wcSession?.topic ?? pendingSession?.topic;
+    wcSession = null;
+    pendingSession = null;
+    pairingRun += 1;
+    client?.close();
+    client = null;
+    if (topic) {
+      walletConnect?.disconnect({ topic, reason: END_REASON }).catch(() => {});
+    }
+    dispatch({ type: "sessionEnded" });
+  }
+
   async function startBrowserPath(): Promise<void> {
     let wc: SignClientLike | null = null;
     try {
@@ -291,7 +369,12 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     walletConnect = wc;
     cleanups.push(closeWalletConnect);
     dispatch({ type: "transportChosen", transport: "walletconnect" });
-    pair();
+    const stored = newestStored(wc);
+    if (stored) {
+      await restore(stored);
+    } else {
+      pair();
+    }
   }
 
   function start(): void {
@@ -335,7 +418,8 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       };
     },
     start,
-    retry: () => connect({ type: "connectStarted" }),
+    retry: () => (pendingSession ? void restore(pendingSession) : connect({ type: "connectStarted" })),
+    disconnect,
     connectAgain: () => (walletConnect && !wcSession ? pair() : connect({ type: "connectAgain" })),
     tryNow() {
       stopRetryTimer();

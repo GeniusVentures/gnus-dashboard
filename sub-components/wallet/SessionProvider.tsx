@@ -51,6 +51,10 @@ export const SessionProvider: React.FC<{ store?: SessionStore; children: React.R
     }
     return store.subscribe(() => {
       const current = currentIdentity(store.getState());
+      if (store.getState().phase === "disconnected") {
+        void queryClient.cancelQueries();
+        queryClient.removeQueries();
+      }
       if (current === null) {
         return;
       }

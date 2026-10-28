@@ -3,7 +3,7 @@ import AddressChip from "./AddressChip";
 import { useSession } from "./SessionProvider";
 
 const IdentityHeader: React.FC = () => {
-  const { state } = useSession();
+  const { state, store } = useSession();
   const accounts = state.phase === "ready" || state.phase === "switching" ? state.accounts : null;
   if (!accounts) {
     return <span>Not connected</span>;
@@ -21,6 +21,11 @@ const IdentityHeader: React.FC = () => {
       <span>
         Network: {sdk ?? "not set"}, chain {evmChainId ?? "not set"}
       </span>
+      {state.transport === "walletconnect" ? (
+        <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => store?.disconnect()}>
+          Disconnect
+        </button>
+      ) : null}
     </div>
   );
 };

@@ -9,13 +9,14 @@ import { useSession } from "./SessionProvider";
 
 const SITE = "https://gnus.ai/";
 
-type Action = "connectAgain" | "tryNow" | "retry" | "reload";
+type Action = "connectAgain" | "tryNow" | "retry" | "reload" | "disconnect";
 
 interface Screen {
   heading: string;
   body: string;
   spinner?: boolean;
   action?: { label: string; run: Action };
+  secondary?: { label: string; run: Action };
   link?: { label: string; href: string };
 }
 
@@ -45,6 +46,14 @@ function screenFor(state: SessionState): Screen | null {
           heading,
           body: "GeniusWallet opened this page but has not connected to it yet.",
           action: { label: "Reload page", run: "reload" },
+        };
+      }
+      if (state.cause === "offline") {
+        return {
+          heading: "Wallet offline",
+          body: "GeniusWallet didn't answer over WalletConnect. Open GeniusWallet, then retry.",
+          action: { label: "Retry", run: "retry" },
+          secondary: { label: "Disconnect", run: "disconnect" },
         };
       }
       return {
@@ -96,6 +105,12 @@ function screenFor(state: SessionState): Screen | null {
         body: "This dashboard pays for jobs and shows your earnings through GeniusWallet. Open this page from GeniusWallet.",
         link: { label: "Get GeniusWallet", href: SITE },
       };
+    case "disconnected":
+      return {
+        heading: "Disconnected",
+        body: "This page is no longer connected to GeniusWallet.",
+        action: { label: "Connect again", run: "connectAgain" },
+      };
     case "failed":
       return {
         heading: "GeniusWallet couldn't connect",
@@ -112,6 +127,7 @@ const RUN: Record<Action, (store: SessionStore) => void> = {
   connectAgain: (store) => store.connectAgain(),
   tryNow: (store) => store.tryNow(),
   retry: (store) => store.retry(),
+  disconnect: (store) => store.disconnect(),
 };
 
 const Banner: React.FC<{ title: string; body: string }> = ({ title, body }) => (
@@ -152,7 +168,7 @@ const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   if (!screen) {
     return null;
   }
-  const { action, link } = screen;
+  const { action, secondary, link } = screen;
   return (
     <section className="text-center py-5 container" role="status">
       <h1 className="display-6">{screen.heading}</h1>
@@ -164,6 +180,15 @@ const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       {action ? (
         <button type="button" className="btn btn-primary" onClick={() => store && RUN[action.run](store)}>
           {action.label}
+        </button>
+      ) : null}
+      {secondary ? (
+        <button
+          type="button"
+          className="btn btn-outline-secondary ms-2"
+          onClick={() => store && RUN[secondary.run](store)}
+        >
+          {secondary.label}
         </button>
       ) : null}
       {link ? <ExternalLink href={link.href}>{link.label}</ExternalLink> : null}
