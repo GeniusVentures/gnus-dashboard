@@ -23,7 +23,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Connect and identity** - The user sees which account earns, which wallet pays and which network, and every wallet state has its own screen
 - [x] **Phase 4: Submit a job** - The user loads a job, sees its cost, submits through one wallet confirm and always sees what happened to the payment
 - [x] **Phase 5: My jobs and earnings** - The user finds every job with its true status, live, and sees what the node account holds and earned
-- [ ] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
+- [x] **Phase 6: WalletConnect browser flow** - The dashboard in a desktop browser pairs with GeniusWallet and works the same as inside it
 - [ ] **Phase 7: Hosting and CSP hardening** - The export runs on the pinned origin with a strict CSP, no third-party code, and an a11y pass
 - [ ] **Phase 8: Device walks and cutover** - Walked end to end on every wallet platform and over WalletConnect; the origin moves off EC2 only when the gate passes
 
@@ -140,7 +140,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A session without the `gnus_*` methods (MetaMask, an old wallet) shows "GeniusWallet required" or "Update GeniusWallet", and ending the session in the wallet moves the page to Disconnected with Reconnect.
   4. Account, network and job events over the session update the page as in the wallet, and identity always comes from `gnus_getAccounts`.
   5. One real pairing with a GeniusWallet build round-trips every read method with named params, or the missing build is recorded as a gap naming wallet Phase 47.
-**Plans**: TBD
+**Plans**: 4 plans in 4 waves
+- [x] 06-01-PLAN.md - Tracer: pair from a browser over a fake relay, both identities; config, audit, contract snapshot (wave 1)
+- [x] 06-02-PLAN.md - Pairing screen, declined and expired proposals, wrong wallet, restore by ping, disconnect (wave 2)
+- [x] 06-03-PLAN.md - Page timers, request expiries, lost submit recovered by key, events over the session (wave 3)
+- [x] 06-04-PLAN.md - Contract suite through the transport, late injection, dev view, WC-01 on the export (wave 4)
 **UI hint**: yes
 
 ### Phase 7: Hosting and CSP hardening
@@ -181,6 +185,6 @@ Phases execute in numeric order: 1, 2, 3, then 4 and 5 in parallel, then 6, 7, 8
 | 3. Connect and identity | 6/6 | Verified locally (human_needed: light and dark look, real-wallet run) | 2026-10-28 |
 | 4. Submit a job | 7/7 | Verified locally (human_needed: light and dark look, real-wallet confirm and burn) | 2026-10-28 |
 | 5. My jobs and earnings | 6/6 | Verified locally (human_needed: light and dark look, real-wallet lists and events) | 2026-10-28 |
-| 6. WalletConnect browser flow | 0/TBD | Not started | - |
+| 6. WalletConnect browser flow | 4/4 | Verified locally (human_needed: WC-08 real pairing with a wallet phase 47 build and a Reown project id, light and dark look) | 2026-10-28 |
 | 7. Hosting and CSP hardening | 0/TBD | Not started | - |
 | 8. Device walks and cutover | 0/TBD | Not started | - |

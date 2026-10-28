@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Static dashboard on the gnus_* contract
-current_phase: 6
-current_phase_name: "WalletConnect browser flow"
-status: ready_to_plan
-stopped_at: "2026-10-28: Phases 4 and 5 executed (13 plans) on the mock. Both need a human look at light and dark, and a run against a real wallet. Phase 6 can plan next. Nothing pushed."
-last_updated: "2026-10-28T12:00:00.000Z"
+current_phase: 7
+current_phase_name: "Hosting and CSP hardening"
+status: ready_to_execute
+stopped_at: "2026-10-28: Phase 6 executed (4 plans) on the fake relay. WC-08, the real pairing, waits on a Reown project id and a wallet phase 47 build. Phase 7 is planned and can execute. Nothing pushed."
+last_updated: "2026-10-28T15:00:00.000Z"
 last_activity: 2026-10-28
-last_activity_desc: Phases 4 and 5 executed on the mock; lint step added to CI
+last_activity_desc: Phase 6 executed on the fake relay; contract suite runs through the WalletConnect transport in CI
 progress:
   total_phases: 8
-  completed_phases: 5
-  total_plans: 32
-  completed_plans: 32
-  percent: 63
+  completed_phases: 6
+  total_plans: 40
+  completed_plans: 36
+  percent: 75
 resume_file: null
 ---
 
@@ -25,16 +25,16 @@ resume_file: null
 See: .planning/PROJECT.md (updated 2026-10-26)
 
 **Core value:** A user can submit a job and see what happened to it, with the wallet paying and processing in one confirmed call, and never a fake or misleading number on screen.
-**Current focus:** Phase 1 - Teardown and static shell
+**Current focus:** Phase 7 - Hosting and CSP hardening
 
 ## Current Position
 
-Phase: 6 of 8 (WalletConnect browser flow)
-Plan: 0 of TBD in current phase
-Status: Ready to plan (Phases 1-5 done and verified locally; remote CI not run)
-Last activity: 2026-10-28 - Phases 4 and 5 executed on the mock
+Phase: 7 of 8 (Hosting and CSP hardening)
+Plan: 0 of 4 in current phase
+Status: Ready to execute (Phases 1-6 done and verified locally; remote CI not run)
+Last activity: 2026-10-28 - Phase 6 executed on the fake relay
 
-Progress: [######....] 63%
+Progress: [#######...] 75%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Full log in PROJECT.md Key Decisions. Every item below was taken overnight in au
 - Submit draft: the idempotency key binds to a SHA-256 of the sent JSON; localStorage holds the key, hash, label and timestamps, never the job body. A reload cannot restore the typed job; loading the same job again finds the same key. (Braian, 2026-10-28)
 - Explorer link for the burn hash on the submit result is in v1 (was v2 JOBX-03). (Braian, 2026-10-28)
 - Job status words, the 30 s poll only while a job can change, and the IPFS gateway constant (`ipfs.io`, for Braian to confirm) live in `lib/jobs.ts`. `yarn lint` (every external link through `ExternalLink`) runs in CI. (D) overnight, not reviewed by Braian
+- Phase 6: the secret gate lists the 17 public curve constants that `@noble/curves` ships in the WalletConnect chunk by exact value in `.gitleaks.toml`, and `check-secrets.sh` reads that list; the WC-01 export test watches the module chunk because a build without a Reown id never fetches Reown's client. (D) not reviewed by Braian
 - Roadmap: Earnings folded into My jobs; SUMMARY's Phase 8 split into hosting/CSP (Phase 7) and device walks plus cutover (Phase 8); "Load example" only, no example download. (D) overnight, not reviewed by Braian
 
 ### Pending Todos
