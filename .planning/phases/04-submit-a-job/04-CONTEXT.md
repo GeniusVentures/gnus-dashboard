@@ -142,7 +142,7 @@ phase runs axe in light and dark.
   the identity is restored. Never sent: nothing to show (the page holds no job text); the draft stays for
   reuse by hash. Sent or settled: checking, then `gnus_getJob({ idempotencyKey })` (a tracked read) gives the
   outcome screen; notSeen puts the form back with the same key kept and "GeniusWallet has no record of this
-  submit. If its confirm is still open, answer it there. To submit again, load the same job: the same submit
+  submit. If its confirm is still open, answer it there. You can submit the same job again: the same submit
   is never paid twice."; a failed lookup is unknown. pending and unknown re-check only on "Check again": no
   timer, no polling.
 

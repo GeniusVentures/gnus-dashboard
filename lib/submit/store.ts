@@ -1,11 +1,14 @@
 import exampleJob from "../../data/jobs/posenet-example.json";
 import { exceeds } from "../gnus/amount";
 import { GnusError, normalizeError } from "../gnus/errors";
-import type { Estimate } from "../gnus/schema";
+import type { Estimate, SubmitResult } from "../gnus/schema";
 import { canEstimate, canSubmit } from "../session/machine";
 import type { SessionStore } from "../session/store";
 import { Draft, DraftStorage, browserStorage, createDraft, markSent, markSettled, removeDraft } from "./drafts";
 import { Digest, ParsedJob, browserDigest, hashJob, jobLabel, parseJob } from "./job";
+import { Outcome, classifyError, classifyLookup, classifyResult } from "./outcome";
+
+export type { Outcome } from "./outcome";
 
 export interface SubmitDeps {
   /** Null when the browser has no usable storage: nothing can then be saved, so nothing is sent. */
@@ -22,18 +25,26 @@ export type EstimateState =
   | { status: "ready"; estimate: Estimate }
   | { status: "error"; error: GnusError };
 
-export type Outcome = { kind: "done"; jobId: string | null; burnTxHash: string };
-
 export type Step = "job" | "confirm" | "outcome";
+
+/** A submit that spent nothing: the page is back at the job with the same key. */
+export interface SubmitFailure {
+  error: GnusError;
+  nothingSpentLine: boolean;
+  newKey: boolean;
+}
 
 export interface SubmitState {
   text: string;
   parsed: ParsedJob;
   estimate: EstimateState;
+  jobHash: string | null;
   draft: Draft | null;
   saveError: string | null;
   step: Step;
-  submitError: string | null;
+  cancelNote: boolean;
+  submitError: SubmitFailure | null;
+  notSeen: boolean;
   outcome: Outcome | null;
 }
 
@@ -46,10 +57,13 @@ const INITIAL: SubmitState = {
   text: "",
   parsed: { state: "empty" },
   estimate: { status: "idle" },
+  jobHash: null,
   draft: null,
   saveError: null,
   step: "job",
+  cancelNote: false,
   submitError: null,
+  notSeen: false,
   outcome: null,
 };
 
@@ -76,6 +90,12 @@ export interface SubmitStore {
   loadExample(): void;
   estimate(): Promise<void>;
   submit(): Promise<void>;
+  /** Reveals that this page cannot close the wallet's confirm. */
+  showCancelNote(): void;
+  /** Asks the wallet again what happened to the last submit. */
+  checkAgain(): Promise<void>;
+  /** After idempotency_key_reused: the same job under a new, saved key. */
+  newKey(): void;
   startOver(): void;
 }
 
@@ -83,6 +103,8 @@ const identityOf = (session: SessionStore): string | null => {
   const accounts = session.getState().accounts;
   return accounts ? JSON.stringify([accounts.network, accounts.node.sdkAddress, accounts.payer.evmAddress]) : null;
 };
+
+const reportable = (error: GnusError): boolean => error.code === 4100 || error.code === 4900;
 
 /** True when the paying wallet holds less than the job costs; an unreadable balance never blocks (the wallet fails closed). */
 export const insufficient = (estimate: Estimate): boolean =>
@@ -117,23 +139,30 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
   let lastIdentity = identityOf(session);
   const listeners = new Set<() => void>();
 
-  const set = (patch: Partial<SubmitState>): void => {
-    state = { ...state, ...patch };
+  const notify = (): void => {
     for (const listener of [...listeners]) {
       listener();
     }
   };
+  const set = (patch: Partial<SubmitState>): void => {
+    state = { ...state, ...patch };
+    notify();
+  };
 
   // A reply belongs to the text and the identity it was asked for; anything newer makes it stale.
+  // A drop to no identity (a disconnect) is not a change of account.
   session.subscribe(() => {
     const current = identityOf(session);
-    if (current === lastIdentity) {
+    if (current === null || current === lastIdentity) {
       return;
     }
     lastIdentity = current;
     epoch += 1;
-    if (state.step === "job" && state.estimate.status !== "idle") {
-      set({ estimate: { status: "idle" }, draft: null, saveError: null });
+    if (state.step === "outcome") {
+      state = INITIAL;
+      notify();
+    } else if (state.step === "job" && (state.estimate.status !== "idle" || state.notSeen)) {
+      set({ estimate: { status: "idle" }, jobHash: null, draft: null, saveError: null, notSeen: false });
     }
   });
 
@@ -147,9 +176,11 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       text,
       parsed: parseJob(text),
       estimate: { status: had ? "stale" : "idle" },
+      jobHash: null,
       draft: null,
       saveError: null,
       submitError: null,
+      notSeen: false,
     });
   }
 
@@ -167,14 +198,21 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
       return;
     }
     const mine = ++epoch;
-    set({ estimate: { status: "loading" }, draft: null, saveError: null, submitError: null });
+    set({
+      estimate: { status: "loading" },
+      jobHash: null,
+      draft: null,
+      saveError: null,
+      submitError: null,
+      notSeen: false,
+    });
     let reply: Estimate;
     try {
       reply = await session.track(client.estimate({ job: parsed.job }));
     } catch (err) {
       const error = normalizeError(err);
       // Only these two move the session; a rejected estimate or a busy wallet is just this page's message.
-      if (error.code === 4100 || error.code === 4900) {
+      if (reportable(error)) {
         session.report(error);
       }
       if (mine === epoch) {
@@ -206,7 +244,67 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
             createdAt: deps.now(),
           })
         : null;
-    set({ estimate: { status: "ready", estimate: reply }, draft, saveError: draft ? null : SAVE_FAILED });
+    set({ estimate: { status: "ready", estimate: reply }, jobHash, draft, saveError: draft ? null : SAVE_FAILED });
+  }
+
+  // A payment went or its fate is unknown: the draft is done and the outcome screen takes over.
+  function finish(draft: Draft, outcome: Outcome): void {
+    const settled = deps.storage ? markSettled(deps.storage, draft) : draft;
+    set({ draft: settled, step: "outcome", outcome, cancelNote: false });
+  }
+
+  // Asks the wallet by key; never sends a submit.
+  async function lookup(draft: Draft): Promise<void> {
+    const client = session.getClient();
+    if (!client) {
+      return;
+    }
+    const mine = epoch;
+    set({ step: "outcome", outcome: { kind: "checking" }, cancelNote: false });
+    let found;
+    try {
+      found = await session.track(client.getJob({ idempotencyKey: draft.idempotencyKey }));
+    } catch (err) {
+      const error = normalizeError(err);
+      if (reportable(error)) {
+        session.report(error);
+      }
+      if (mine === epoch) {
+        finish(draft, { kind: "unknown", message: error.message });
+      }
+      return;
+    }
+    if (mine !== epoch) {
+      return;
+    }
+    const result = classifyLookup(found);
+    if (result.kind === "notSeen") {
+      set({ step: "job", outcome: null, notSeen: true });
+    } else {
+      finish(draft, result.outcome);
+    }
+  }
+
+  async function failed(error: GnusError, draft: Draft): Promise<void> {
+    if (reportable(error)) {
+      session.report(error);
+    }
+    const result = classifyError(error);
+    if (result.kind === "outcome") {
+      finish(draft, result.outcome);
+    } else if (result.kind === "notSpent") {
+      if (result.newKey && deps.storage) {
+        removeDraft(deps.storage, draft.idempotencyKey);
+      }
+      set({
+        step: "job",
+        cancelNote: false,
+        draft: result.newKey ? null : draft,
+        submitError: { error, nothingSpentLine: result.nothingSpentLine, newKey: result.newKey },
+      });
+    } else {
+      await lookup(draft);
+    }
   }
 
   async function submit(): Promise<void> {
@@ -231,20 +329,43 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
         set({ saveError: SAVE_FAILED });
         return;
       }
-      set({ draft: sent, step: "confirm", submitError: null });
+      set({ draft: sent, step: "confirm", cancelNote: false, submitError: null, notSeen: false });
+      let result: SubmitResult;
       try {
-        const result = await client.submitJob({ job: parsed.job, idempotencyKey: sent.idempotencyKey });
-        set({
-          draft: markSettled(storage, sent),
-          step: "outcome",
-          outcome: { kind: "done", jobId: result.jobId, burnTxHash: result.burnTxHash },
-        });
+        result = await client.submitJob({ job: parsed.job, idempotencyKey: sent.idempotencyKey });
       } catch (err) {
-        set({ step: "job", submitError: normalizeError(err).message });
+        await failed(normalizeError(err), sent);
+        return;
       }
+      finish(sent, classifyResult(result));
     } finally {
       sending = false;
     }
+  }
+
+  async function checkAgain(): Promise<void> {
+    const { draft, outcome } = state;
+    if (!draft || (outcome?.kind !== "pending" && outcome?.kind !== "unknown")) {
+      return;
+    }
+    await lookup(draft);
+  }
+
+  function newKey(): void {
+    const { jobHash, parsed } = state;
+    const accounts = session.getState().accounts;
+    if (!state.submitError?.newKey || !jobHash || parsed.state !== "ok" || !accounts || !deps.storage) {
+      return;
+    }
+    const draft = createDraft(deps.storage, {
+      idempotencyKey: deps.newKey(),
+      sdkAddress: accounts.node.sdkAddress,
+      sdkNetwork: accounts.network.sdk,
+      jobHash,
+      label: jobLabel(parsed.job),
+      createdAt: deps.now(),
+    });
+    set({ draft, submitError: null, saveError: draft ? null : SAVE_FAILED });
   }
 
   function startOver(): void {
@@ -253,7 +374,7 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     }
     epoch += 1;
     state = INITIAL;
-    set({});
+    notify();
   }
 
   return {
@@ -268,6 +389,9 @@ export function createSubmitStore(session: SessionStore, deps: SubmitDeps): Subm
     loadExample: () => setText(EXAMPLE_TEXT),
     estimate,
     submit,
+    showCancelNote: () => set({ cancelNote: true }),
+    checkAgain,
+    newKey,
     startOver,
   };
 }
