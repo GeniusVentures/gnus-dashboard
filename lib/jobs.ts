@@ -73,8 +73,8 @@ export const isMarked = (status: JobStatus): boolean => STATUS_TEXT[status].mark
 const SHORT_ID_MAX = 14;
 
 /** The id shown in a list: the job id when it is short, else shortened; the burn hash while there is no job id. */
-export function shortJobId(job: { jobId: string | null; burnTxHash: string }): string {
-  if (job.jobId === null) {
+export function shortJobId(job: { jobId?: string | null; burnTxHash: string }): string {
+  if (job.jobId == null) {
     return shorten(job.burnTxHash);
   }
   return job.jobId.length <= SHORT_ID_MAX ? job.jobId : shorten(job.jobId);

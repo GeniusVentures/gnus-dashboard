@@ -22,4 +22,44 @@ describe("My jobs", () => {
       .find("a")
       .should("have.attr", "href", `/jobs/detail?hash=${hashOf(25)}`);
   });
+
+  it("loads the second page, then offers no more", () => {
+    visit("/jobs");
+    cy.contains("button", "Load more jobs", { timeout: 12000 }).click();
+    cy.get("tbody tr").should("have.length", 25);
+    cy.contains("button", "Load more jobs").should("not.exist");
+    cy.get("tbody tr").eq(20).find("a").should("have.focus");
+    cy.contains("Showing 25 jobs");
+  });
+
+  it("shows the empty state for an account with no jobs", () => {
+    visit("/jobs", "today");
+    cy.contains("h2", "No jobs yet", { timeout: 12000 });
+    cy.contains("a", "Submit a job").should("have.attr", "href", "/submit");
+    cy.get("table").should("not.exist");
+  });
+
+  it("shows the error state with Retry when the list cannot be read", () => {
+    visit("/jobs", "readsFail");
+    cy.contains("h2", "Couldn't load your jobs", { timeout: 12000 });
+    cy.contains("GeniusWallet hit an internal error.");
+    cy.contains("button", "Retry");
+    cy.get("h1").should("have.text", "My jobs");
+  });
+
+  it("empties the list when the node account switches", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.then(() => mock.controls.switchAccount());
+    cy.contains("h2", "No jobs yet");
+    cy.get("table").should("not.exist");
+  });
+
+  it("marks paid-but-not-processed and unconfirmed rows with their explanation", () => {
+    visit("/jobs");
+    cy.get("tbody tr", { timeout: 12000 }).should("have.length", 20);
+    cy.contains("td", "Paid but not processed").should("contain", "Check it in GeniusWallet.");
+    cy.contains("td", "Payment not confirmed").should("contain", "The GNUS may be spent");
+    cy.contains("td", "Submitted to the network").should("not.contain", "GeniusWallet can't report");
+  });
 });
