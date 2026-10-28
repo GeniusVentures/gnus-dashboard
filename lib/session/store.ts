@@ -2,11 +2,20 @@ import { GnusClient, createGnusClient } from "../gnus/client";
 import { GnusError, normalizeError } from "../gnus/errors";
 import { createInjectedTransport } from "../gnus/transport/injected";
 import { DetectEnv, detectTransport } from "../gnus/transport/select";
+import type { Transport } from "../gnus/transport/types";
+import type {
+  SignClientLike,
+  WalletConnectLoader,
+  WalletConnectModule,
+  WcSession,
+} from "../gnus/transport/walletconnect";
 import { INITIAL_STATE, SessionEvent, SessionState, reduce } from "./machine";
 
 export interface SessionEnv extends DetectEnv {
   /** False while the tab is hidden. Left out, the tab counts as visible. */
   isVisible?(): boolean;
+  /** Loads the WalletConnect code on the browser path. Left out, the browser path ends at "GeniusWallet required". */
+  loadWalletConnect?: WalletConnectLoader;
 }
 
 /** A tracked read unanswered for this long shows "GeniusWallet isn't responding"; the read is not abandoned. */
@@ -40,6 +49,11 @@ export function createSessionStore(env: SessionEnv): SessionStore {
   let started = false;
   let disposed = false;
   let client: GnusClient | null = null;
+  let walletConnect: SignClientLike | null = null;
+  let wcModule: WalletConnectModule | null = null;
+  let wcSession: WcSession | null = null;
+  // Counts pairings, so an answer to a code that was replaced is ignored.
+  let pairingRun = 0;
   let retryTimer: unknown = null;
   let retryStep = 0;
   let readInFlight = false;
@@ -146,12 +160,13 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     readAccounts();
   }
 
-  function attach(): void {
-    const injected = createGnusClient(createInjectedTransport(env.win));
-    client = injected;
-    cleanups.push(() => injected.close());
+  function attach(transport: Transport, kind: "injected" | "walletconnect"): void {
+    dispatch({ type: "transportChosen", transport: kind });
+    const live = createGnusClient(transport);
+    client = live;
+    cleanups.push(() => live.close());
     cleanups.push(
-      injected.on(
+      live.on(
         "gnus_accountsChanged",
         (accounts) => {
           identityEvents += 1;
@@ -160,15 +175,10 @@ export function createSessionStore(env: SessionEnv): SessionStore {
         (error) => dispatch({ type: "errorReported", error, source: "identity" }),
       ),
     );
+    const ended = (): void => dispatch({ type: kind === "walletconnect" ? "sessionEnded" : "disconnected" });
+    cleanups.push(live.on("disconnect", ended, ended));
     cleanups.push(
-      injected.on(
-        "disconnect",
-        () => dispatch({ type: "disconnected" }),
-        () => dispatch({ type: "disconnected" }),
-      ),
-    );
-    cleanups.push(
-      injected.on(
+      live.on(
         "gnus_networkChanged",
         (network) => {
           identityEvents += 1;
@@ -180,12 +190,74 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     connect({ type: "connectStarted" });
   }
 
+  function closeWalletConnect(): void {
+    const closing = walletConnect;
+    walletConnect = null;
+    wcSession = null;
+    pairingRun += 1;
+    closing?.close().catch(() => {});
+  }
+
+  function attachSession(session: WcSession): void {
+    if (!walletConnect || !wcModule) {
+      return;
+    }
+    wcSession = session;
+    attach(wcModule.createWalletConnectTransport(walletConnect, session), "walletconnect");
+  }
+
+  function pair(): void {
+    const wc = walletConnect;
+    if (!wc) {
+      return;
+    }
+    const run = (pairingRun += 1);
+    void (async () => {
+      try {
+        const proposal = await wc.connect();
+        if (disposed || run !== pairingRun) {
+          return;
+        }
+        dispatch({ type: "pairingStarted", uri: proposal.uri ?? "" });
+        const session = await proposal.approval();
+        if (!disposed && run === pairingRun) {
+          attachSession(session);
+        }
+      } catch {
+        // Declined and expired proposals get their own handling in the next step.
+      }
+    })();
+  }
+
+  async function startBrowserPath(): Promise<void> {
+    let wc: SignClientLike | null = null;
+    try {
+      const loaded = env.loadWalletConnect ? await env.loadWalletConnect() : null;
+      wc = loaded ? await loaded.createClient() : null;
+      wcModule = loaded;
+    } catch {
+      wc = null;
+    }
+    if (disposed) {
+      void wc?.close();
+      return;
+    }
+    if (!wc) {
+      dispatch({ type: "detected", choice: "walletconnect" });
+      return;
+    }
+    walletConnect = wc;
+    cleanups.push(closeWalletConnect);
+    dispatch({ type: "transportChosen", transport: "walletconnect" });
+    pair();
+  }
+
   function start(): void {
     if (started) {
       return;
     }
     started = true;
-    const detection = detectTransport(env, { hasActiveWalletConnectSession: () => false });
+    const detection = detectTransport(env, { hasActiveWalletConnectSession: () => wcSession !== null });
     cleanups.push(() => detection.dispose());
     cleanups.push(detection.onNotReady(() => dispatch({ type: "noBridge" })));
     env.win.addEventListener("visibilitychange", onVisible);
@@ -193,8 +265,9 @@ export function createSessionStore(env: SessionEnv): SessionStore {
     cleanups.push(
       detection.onSwitch(() => {
         if (!disposed) {
+          closeWalletConnect();
           dispatch({ type: "lateInjection" });
-          attach();
+          attach(createInjectedTransport(env.win), "injected");
         }
       }),
     );
@@ -202,9 +275,11 @@ export function createSessionStore(env: SessionEnv): SessionStore {
       if (disposed) {
         return;
       }
-      dispatch({ type: "detected", choice });
       if (choice === "injected") {
-        attach();
+        dispatch({ type: "detected", choice });
+        attach(createInjectedTransport(env.win), "injected");
+      } else {
+        void startBrowserPath();
       }
     });
   }
@@ -241,6 +316,13 @@ export function createSessionStore(env: SessionEnv): SessionStore {
 
 const stores = new WeakMap<object, SessionStore>();
 
+let loadWalletConnect: WalletConnectLoader = () => import("../gnus/transport/walletconnect");
+
+/** For the dev server only: swaps the real WalletConnect code for a fake relay. Production code never calls it. */
+export function setWalletConnectLoader(loader: WalletConnectLoader): void {
+  loadWalletConnect = loader;
+}
+
 /** One store per window, made on first use and never at import. */
 export function getSessionStore(win: Window = window): SessionStore {
   let store = stores.get(win);
@@ -249,6 +331,7 @@ export function getSessionStore(win: Window = window): SessionStore {
       win: win as unknown as DetectEnv["win"],
       isVisible: () => win.document.visibilityState === "visible",
       userAgent: win.navigator.userAgent,
+      loadWalletConnect: () => loadWalletConnect(),
       setTimeout: (fn, ms) => win.setTimeout(fn, ms),
       clearTimeout: (id) => win.clearTimeout(id as number),
     });

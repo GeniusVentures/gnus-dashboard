@@ -14,8 +14,10 @@
   "dependencies": {
     "@tanstack/react-query": "5.105.0",
     "@types/react": "^18.2.79",
+    "@walletconnect/sign-client": "2.26.0",
     "bootstrap": "^5.2.3",
     "next": "14.2.35",
+    "qrcode.react": "4.2.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.7.4",
     "react-dom": "^18.2.0",

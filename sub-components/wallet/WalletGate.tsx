@@ -4,6 +4,7 @@ import { GnusContractMismatchError } from "../../lib/gnus/errors";
 import { CONTRACT_VERSION } from "../../lib/gnus/schema";
 import { SessionState, networkMismatch, servedSdkNetwork } from "../../lib/session/machine";
 import { SessionStore } from "../../lib/session/store";
+import PairPanel from "./PairPanel";
 import { useSession } from "./SessionProvider";
 
 const SITE = "https://gnus.ai/";
@@ -128,6 +129,9 @@ const WalletGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {children}
       </>
     );
+  }
+  if (state.phase === "pairing") {
+    return <PairPanel uri={state.uri ?? ""} />;
   }
   const screen = screenFor(state);
   if (!screen) {

@@ -12,23 +12,55 @@ export type Phase =
   | "denied"
   | "unsupported"
   | "noWallet"
+  | "pairing"
+  | "pairingDeclined"
+  | "disconnected"
   | "failed";
 
-export type Cause = "declined" | "notAllowed" | "walletOld" | "pageOld" | "noReply" | "disconnected" | "noBridge";
+export type Cause =
+  | "declined"
+  | "notAllowed"
+  | "walletOld"
+  | "pageOld"
+  | "noReply"
+  | "disconnected"
+  | "noBridge"
+  | "offline"
+  | "notGenius";
 
 export interface SessionState {
   readonly phase: Phase;
   readonly cause: Cause | null;
   readonly accounts: Accounts | null;
   readonly error: GnusError | null;
+  /** Which wallet connection the session runs on; null until one is chosen. */
+  readonly transport: "injected" | "walletconnect" | null;
+  /** The WalletConnect pairing link while phase is pairing. */
+  readonly uri: string | null;
+  /** The wallet's own words when it declined a pairing. */
+  readonly detail: string | null;
 }
 
-export const INITIAL_STATE: SessionState = { phase: "detecting", cause: null, accounts: null, error: null };
+export const INITIAL_STATE: SessionState = {
+  phase: "detecting",
+  cause: null,
+  accounts: null,
+  error: null,
+  transport: null,
+  uri: null,
+  detail: null,
+};
 
 /** Where an error came from decides how much of the session it can move: only the connect call may end in `failed`. */
 export type ErrorSource = "connect" | "identity" | "query";
 
 export type SessionEvent =
+  | { type: "transportChosen"; transport: "injected" | "walletconnect" }
+  | { type: "pairingStarted"; uri: string }
+  | { type: "pairingDeclined"; message: string | null }
+  | { type: "pairingRefused"; cause: "notGenius" | "walletOld" }
+  | { type: "sessionEnded" }
+  | { type: "walletOffline" }
   | { type: "detected"; choice: TransportChoice }
   | { type: "lateInjection" }
   | { type: "connectStarted" }
@@ -54,9 +86,9 @@ export const canEstimate = (state: SessionState): boolean =>
 export const canSubmit = (state: SessionState): boolean => canEstimate(state) && state.accounts?.payer.canSign === true;
 
 const away = (phase: Phase, cause: Cause | null, error: GnusError | null): SessionState => ({
+  ...INITIAL_STATE,
   phase,
   cause,
-  accounts: null,
   error,
 });
 
@@ -94,18 +126,43 @@ function onError(state: SessionState, error: GnusError, source: ErrorSource): Se
   return source === "connect" ? away("failed", null, error) : state;
 }
 
+/** True while no wallet session exists yet, so a wallet injected late may still take over. */
+const sessionless = (state: SessionState): boolean =>
+  state.phase === "noWallet" ||
+  state.phase === "detecting" ||
+  (state.transport === "walletconnect" && state.accounts === null);
+
+/** Every transition keeps the transport; only transportChosen changes it. */
 export function reduce(state: SessionState, event: SessionEvent): SessionState {
+  if (event.type === "transportChosen") {
+    return state.transport === event.transport ? state : { ...state, transport: event.transport };
+  }
+  const next = step(state, event);
+  return next === state || next.transport === state.transport ? next : { ...next, transport: state.transport };
+}
+
+function step(state: SessionState, event: Exclude<SessionEvent, { type: "transportChosen" }>): SessionState {
   switch (event.type) {
+    case "pairingStarted":
+      return { ...INITIAL_STATE, phase: "pairing", uri: event.uri };
+    case "pairingDeclined":
+      return { ...INITIAL_STATE, phase: "pairingDeclined", detail: event.message };
+    case "pairingRefused":
+      return event.cause === "notGenius" ? away("noWallet", "notGenius", null) : away("unsupported", "walletOld", null);
+    case "sessionEnded":
+      return away("disconnected", null, null);
+    case "walletOffline":
+      return away("notResponding", "offline", null);
     case "detected":
       return event.choice === "walletconnect" && state.phase === "detecting"
         ? { ...INITIAL_STATE, phase: "noWallet" }
         : state;
     case "lateInjection":
-      return state.phase === "noWallet" ? away("connecting", null, null) : state;
+      return sessionless(state) ? away("connecting", null, null) : state;
     case "connectStarted":
       return away("connecting", null, null);
     case "connectAgain":
-      return { phase: "connecting", cause: state.cause, accounts: null, error: null };
+      return { ...INITIAL_STATE, phase: "connecting", cause: state.cause };
     case "networkChanged":
       return state.accounts ? { ...state, accounts: { ...state.accounts, network: event.network } } : state;
     case "disconnected":
@@ -122,10 +179,9 @@ export function reduce(state: SessionState, event: SessionEvent): SessionState {
         : state;
     case "accountsReceived":
       return {
+        ...INITIAL_STATE,
         phase: event.accounts.switching ? "switching" : "ready",
-        cause: null,
         accounts: event.accounts,
-        error: null,
       };
     case "connectFailed":
       return onError(state, event.error, "connect");
