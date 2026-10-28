@@ -1,5 +1,5 @@
 const http = require("http");
-const { headersFor } = require("../../scripts/headers");
+const { CSP_ENFORCED, cspName, headersFor } = require("../../scripts/headers");
 const { checkDeploy } = require("../../scripts/check-deploy");
 
 const ASSET = "/_next/static/chunks/main-abc.js";
@@ -33,7 +33,7 @@ function host(bend = {}) {
     let status = 200;
     let body = PAGE;
     let type = "text/html; charset=utf-8";
-    let headers = headersFor(pathname, { html: true });
+    let headers = headersFor(pathname, { html: true, enforced: bend.enforced });
     if (pathname === ASSET) {
       body = "x";
       type = "text/javascript";
@@ -82,7 +82,7 @@ describe("check-deploy", () => {
 
   test("HTML without the policy is named", async () => {
     const problems = await problemsFor({ noPolicy: true });
-    expect(problems.some((p) => p.startsWith("/: Content-Security-Policy-Report-Only is missing"))).toBe(true);
+    expect(problems.some((p) => p.startsWith(`/: ${cspName(CSP_ENFORCED)} is missing`))).toBe(true);
   });
 
   test("HTML marked immutable is named", async () => {
@@ -100,8 +100,12 @@ describe("check-deploy", () => {
     expect(problems.some((p) => p.includes("/no-such-page: the body is not the 404 page"))).toBe(true);
   });
 
-  test("a host in report-only mode fails an enforced check", async () => {
-    const problems = await problemsFor({}, { enforced: true });
+  test("a host in report-only mode fails an enforced check, and the other way round", async () => {
+    expect(await problemsFor({ enforced: true }, { enforced: true })).toEqual([]);
+    expect(await problemsFor({ enforced: false }, { enforced: false })).toEqual([]);
+    const reverse = await problemsFor({ enforced: true }, { enforced: false });
+    expect(reverse.some((p) => p.includes("sends Content-Security-Policy, expected only Content-Security-Policy-Report-Only"))).toBe(true);
+    const problems = await problemsFor({ enforced: false }, { enforced: true });
     expect(
       problems.some((p) => p.includes("sends Content-Security-Policy-Report-Only, expected only Content-Security-Policy")),
     ).toBe(true);
