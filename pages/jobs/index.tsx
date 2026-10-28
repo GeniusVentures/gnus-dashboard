@@ -1,9 +1,9 @@
-import Placeholder from "../../sub-components/shared/Placeholder";
+import JobsView from "../../sub-components/jobs/JobsView";
 import WalletGate from "../../sub-components/wallet/WalletGate";
 
 const Jobs: React.FC = () => (
   <WalletGate>
-    <Placeholder title="My jobs" />
+    <JobsView />
   </WalletGate>
 );
 

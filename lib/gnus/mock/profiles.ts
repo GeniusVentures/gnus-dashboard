@@ -1,4 +1,5 @@
 import "./marker";
+import type { SeedKind } from "./seeds";
 
 export type WireError = { code: number; message: string; data?: Record<string, unknown> };
 
@@ -11,6 +12,8 @@ export interface MockProfile {
   readonly data: "today" | "populated" | "allNulls";
   /** Amounts above 2^53: balance "9007199254740993", cost "1000000000000000000000", earned.total "18446744073709551617". */
   readonly bigAmounts?: boolean;
+  /** Jobs the first node account already has when the mock starts. */
+  readonly jobs?: SeedKind;
   /** The page's first request rejects with this (connect prompt rejected). */
   readonly firstCallError?: WireError;
   /** A method name, or "*" for every method, rejects with this. */
@@ -62,6 +65,21 @@ export const MOCK_PROFILES = {
     description: "Populated, with amounts above 2^53 that a JS number would round",
     data: "populated",
     bigAmounts: true,
+  },
+  jobHistory: {
+    description: "25 jobs for the first node account, the three statuses the wallet can report today, two pages of 20",
+    data: "today",
+    jobs: "history",
+  },
+  readsFail: {
+    description: "Job history is seeded but gnus_listJobs, gnus_getJob and gnus_getEarnings fail with -32603",
+    data: "today",
+    jobs: "history",
+    errors: {
+      gnus_listJobs: wire(-32603, "Internal error"),
+      gnus_getJob: wire(-32603, "Internal error"),
+      gnus_getEarnings: wire(-32603, "Internal error"),
+    },
   },
   connectRejected: {
     description: "The connect prompt is rejected: the first call is 4001, later calls work",

@@ -2,6 +2,7 @@ import type { Accounts, Earnings, Estimate, Job, JobStatus } from "../schema";
 import { DEFAULT_PROFILE, MOCK_PROFILES, MockProfile, WireError, isMockProfileName } from "./profiles";
 import type { InjectedProvider, Listener, RequestArgs } from "../transport/types";
 import { MOCK_MARKER } from "./marker";
+import { seedJobs } from "./seeds";
 
 export interface MockControls {
   emit(event: string, payload: unknown): void;
@@ -664,7 +665,7 @@ export function createMockProvider(options?: { profile?: string }): MockProvider
     deliver: () => {},
     nodeCount: 0,
     burns: 0,
-    jobs: [],
+    jobs: seedJobs(profile.jobs, sdkAddressFor(0)),
     replays: new Map(),
     cursors: new Set(),
     submitInFlight: false,

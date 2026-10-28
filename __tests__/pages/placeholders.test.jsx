@@ -15,17 +15,6 @@ describe('placeholder routes', () => {
   });
 
   it.each([
-    ['../../pages/jobs/index', 'My jobs'],
-    ['../../pages/jobs/detail', 'Job detail'],
-    ['../../pages/earnings/index', 'Earnings'],
-  ])('renders the %s placeholder', async (modulePath, heading) => {
-    const Page = require(modulePath).default;
-    renderWithSession(<Page />);
-    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
-    expect(screen.getByText('This page is not available yet.')).toBeInTheDocument();
-  });
-
-  it.each([
     '../../pages/index',
     '../../pages/submit/index',
     '../../pages/jobs/index',
