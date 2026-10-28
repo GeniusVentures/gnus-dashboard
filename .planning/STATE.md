@@ -5,7 +5,7 @@ milestone_name: Static dashboard on the gnus_* contract
 current_phase: 7
 current_phase_name: "Hosting and CSP hardening"
 status: waiting_on_human
-stopped_at: "2026-10-28: Phases 1-6 done, phase 7 executed except 07-04 (CSP enforcement), which waits on a hosted pairing. Linux walk passed in the wallet and over WalletConnect from Chromium. Cloudflare, the Reown projects and the pinned origin do not exist yet. Branch pushed."
+stopped_at: "2026-10-28: Phases 1-6 done, phase 7 executed except 07-04 (CSP enforcement), which waits on a hosted pairing. Linux walk passed in the wallet and over WalletConnect from Chromium. Cloudflare, the Reown projects and the pinned origin do not exist yet. Branch pushed, PR #36 open."
 last_updated: "2026-10-28T17:00:00.000Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 7 executed locally; the Cloudflare deploy workflow is complete and has never run

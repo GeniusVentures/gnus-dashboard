@@ -1,7 +1,7 @@
 # Handoff: gnus-dashboard GSD, 2026-10-28
 
 Worktree `C:\Users\User\Documents\Projects\GNUS\gnus-dashboard-gsd`, branch `gsd/dashboard-v1`, cut from local
-`main` 479b95f. The branch is pushed to origin; no PR yet. The main checkout `gnus-dashboard` was not touched.
+`main` 479b95f. The branch is pushed to origin; PR #36 is open. The main checkout `gnus-dashboard` was not touched.
 All commits are authored braianwegmann@gmail.com with no Claude attribution. Every scoping choice marked (D)
 in STATE.md and the phase CONTEXT files is still unreviewed by Braian.
 
