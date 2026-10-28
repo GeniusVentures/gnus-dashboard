@@ -11,7 +11,7 @@ const hashOf = (n) => `0x5eed${n.toString(16).padStart(60, "0")}`;
 const shortOf = (n) => `0x5eed...${n.toString(16).padStart(4, "0")}`;
 
 describe("My jobs", () => {
-  it("lists the seeded jobs newest first with their short ids and cost", () => {
+  it("lists the seeded jobs, newest first, with short ids and cost", () => {
     visit("/jobs");
     cy.get("h1", { timeout: 12000 }).should("have.text", "My jobs");
     cy.get("tbody tr").should("have.length", 20);

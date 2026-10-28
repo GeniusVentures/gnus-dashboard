@@ -93,7 +93,7 @@ describe("estimate states", () => {
     expect(error.wireMessage).toBe("inputs[0].type is required");
   });
 
-  it("drops the estimate when the text changes and says the job changed", async () => {
+  it("drops the estimate when the text changes, and says so", async () => {
     const made = await estimated({ profile: "today" });
     made.submit.setText(JOB_TEXT + " ");
     expect(made.submit.getState().estimate.status).toBe("stale");

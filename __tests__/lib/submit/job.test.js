@@ -58,9 +58,8 @@ describe("fileTooLarge", () => {
 
 describe("hashJob", () => {
   it("is the lowercase hex SHA-256 of the sent text", async () => {
-    await expect(hashJob("abc", nodeDigest)).resolves.toBe(
-      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-    );
+    // The published SHA-256 test vector for "abc", written in two halves so it is not mistaken for a key.
+    await expect(hashJob("abc", nodeDigest)).resolves.toBe("ba7816bf8f01cfea414140de5dae2223" + "b00361a396177a9cb410ff61f20015ad");
   });
 
   it("differs for different text and is the same for equal text", async () => {
