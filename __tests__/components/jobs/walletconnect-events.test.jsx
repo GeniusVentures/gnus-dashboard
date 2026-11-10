@@ -60,7 +60,7 @@ describe("events over the session", () => {
     const { relay } = await pairedJobs();
     act(() => relay.provider.controls.setNetwork({ sdk: "staging", evmChainId: 11155111 }));
     await settle();
-    expect(screen.getByText("Network: staging, chain 11155111")).toBeInTheDocument();
+    expect(screen.getByText("Sepolia testnet")).toBeInTheDocument();
   });
 
   test("identity comes from gnus_getAccounts, not from the account the session lists", async () => {

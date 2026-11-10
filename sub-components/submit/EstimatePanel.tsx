@@ -36,7 +36,7 @@ const EstimatePanel: React.FC = () => {
     <div className="mb-3">
       <button
         type="button"
-        className="btn btn-primary"
+        className="btn btn-outline-primary"
         disabled={!canEstimate(session) || state.parsed.state !== "ok" || loading}
         onClick={() => void store.estimate()}
       >

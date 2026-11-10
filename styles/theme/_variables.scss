@@ -35,7 +35,8 @@ $grays: map-merge(
   $grays
 );
 
-$primary: #36edb5 !default;
+$primary: #36edb5 !default; // gnus.ai mint; on the dark theme fills CTAs with near-black text
+$accent: #36edb5 !default; // Original mint, highlights only — never a text-on-white fill
 $secondary: #36edb5 !default;
 $success: #19cb98 !default;
 $info: #29baf9 !default;
@@ -52,6 +53,9 @@ $light-success: #d1f5ea !default; // NEW
 $light-danger: #fad9d8 !default; // NEW
 $light-warning: #ffeeda !default; // NEW
 $light-info: #e1f6ff !default; // NEW
+$font-family-sans-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif !default;
+$headings-font-family: "Space Grotesk", "Inter", sans-serif !default;
+$font-family-monospace: "Space Mono", "IBM Plex Mono", monospace !default;
 $light-dark: #d1cfd8 !default; // NEW
 
 // Dark color
@@ -125,9 +129,9 @@ $body-emphasis-color-dark: $white;
 // Typography
 // Font, line-height, and color for body text, headings, and more.
 // stylelint-disable value-keyword-case
-$font-family-sans-serif: "Roboto", "sans-serif" !default;
+$font-family-sans-serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif !default;
 $font-family-base: $font-family-sans-serif !default;
-$font-family-heading: $font-family-sans-serif;
+$font-family-heading: "Space Grotesk", "Inter", sans-serif;
 $font-size-base: 0.875rem !default;
 
 // Font Weight

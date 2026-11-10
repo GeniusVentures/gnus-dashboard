@@ -1,0 +1,293 @@
+// Design pass (09-01): shared component styles. CSP keeps inline styles out,
+// so every visual decision here is a class.
+
+// Chain id → human name; anything unknown keeps its numeric id.
+.chain-name::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--#{$prefix}success);
+  margin-right: 0.4rem;
+  vertical-align: 0.05em;
+}
+
+// Monospace pill for addresses; the copy control rides inside it.
+.address-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--#{$prefix}font-monospace);
+  font-size: 0.875rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2rem;
+  padding: 0.15rem 0.35rem 0.15rem 0.6rem;
+}
+
+.address-pill .btn {
+  padding: 0 0.35rem;
+  line-height: 1;
+}
+
+// Status pill: dot + word, no prose.
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 2rem;
+  font-size: 0.875rem;
+  background: rgba(25, 135, 84, 0.12);
+  color: var(--#{$prefix}success);
+}
+
+.status-pill::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--#{$prefix}success);
+}
+
+.status-pill[data-status="idle"] {
+  background: var(--#{$prefix}tertiary-bg);
+  color: var(--#{$prefix}secondary);
+}
+
+.status-pill[data-status="idle"]::before {
+  background: var(--#{$prefix}secondary);
+}
+
+// Landing hero.
+.hero {
+  padding: 4rem 0 3rem;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.hero .lead {
+  color: var(--#{$prefix}secondary);
+  max-width: 42rem;
+  margin-inline: auto;
+}
+
+// The earning/paying explainer: two labelled cards instead of quoted jargon.
+.identity-explainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+  max-width: 46rem;
+  margin: 2.5rem auto 0;
+  text-align: left;
+}
+
+.identity-explainer .card {
+  height: 100%;
+}
+
+.identity-explainer .card-title {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--#{$prefix}secondary);
+}
+
+// Content column for form pages; a 1300px textarea reads like a bug.
+.page-column {
+  max-width: 46rem;
+}
+
+// Numbered steps for guided flows.
+.step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.step-label::before {
+  content: counter(step);
+  counter-increment: step;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: var(--#{$prefix}primary);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.step-flow {
+  counter-reset: step;
+}
+
+// Earnings hero metric: the number is the information.
+.hero-metric {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.hero-metric .unit {
+  font-size: 0.4em;
+  font-weight: 600;
+  color: var(--#{$prefix}secondary);
+  margin-left: 0.35rem;
+}
+
+// Empty state: centred, icon, headline, subtext, CTA.
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.empty-state .empty-icon {
+  font-size: 2.75rem;
+  color: var(--#{$prefix}secondary);
+  margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: var(--#{$prefix}secondary);
+  max-width: 34rem;
+  margin: 0 auto 1.25rem;
+}
+
+// Footer socials: furniture, not a feature.
+footer .socials-row a {
+  color: var(--#{$prefix}secondary);
+}
+
+footer .socials-row a:hover {
+  color: var(--#{$prefix}primary);
+}
+
+footer .socials-row img,
+footer .socials-row svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+// gnus.ai design language (09-02): dark near-black page, mint CTA fills with
+// near-black text, pill buttons, flat lightened panels, glow behind the hero.
+[data-bs-theme="dark"] {
+  --bs-body-bg: #0b1324;
+}
+
+body {
+  background-color: #0b1324;
+}
+
+// Pill buttons, weight 600 — the site's CTA shape.
+.btn {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.btn-lg {
+  padding-inline: 1.6rem;
+}
+
+// Flat lightened panels: radius up, border-subtle, no shadow.
+.card {
+  border-radius: 1.25rem;
+  box-shadow: none;
+}
+
+// Hero: mint-tinted radial glow, key phrase set in mint.
+.hero {
+  background: radial-gradient(60rem 30rem at 50% -10%, rgba(54, 237, 181, 0.14), transparent 65%);
+}
+
+.hero h1 .accent {
+  color: var(--#{$prefix}primary);
+}
+
+// Uppercase micro-label, per the site's section titles.
+.micro-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--#{$prefix}secondary);
+}
+
+.identity-explainer .card-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+// Announcement-style pill: dark green fill, mint left accent bar.
+.announce-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(54, 237, 181, 0.1);
+  border-left: 3px solid var(--#{$prefix}primary);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--#{$prefix}primary);
+}
+
+// Contrast polish from the 09-02 review: dark-theme muted tones were reading
+// at ~25-30% white; card copy and the hero's second line are the fix.
+.identity-explainer .card-text {
+  color: rgba(230, 237, 243, 0.85);
+}
+
+.hero h1 {
+  color: #fff;
+}
+
+.hero .lead {
+  color: rgba(230, 237, 243, 0.75);
+}
+
+// The Geeks theme's dark palette keeps near-black body text (#0b1324 family),
+// which lands on the near-black page — bootstrap's dark flip alone reads as
+// black-on-black. Pin the dark-mode text variables to light values.
+[data-bs-theme="dark"] {
+  --fc-tertiary-bg: #1e293b;
+  --fc-border-color: rgba(255, 255, 255, 0.14);
+  --fc-body-color: rgba(230, 237, 243, 0.92);
+  --fc-body-color-rgb: 230, 237, 243;
+  --fc-emphasis-color: #fff;
+  --fc-emphasis-color-rgb: 255, 255, 255;
+  --fc-secondary: rgba(230, 237, 243, 0.72);
+  --fc-secondary-color: rgba(230, 237, 243, 0.75);
+  --fc-secondary-color-rgb: 230, 237, 243;
+  --fc-tertiary-color: rgba(230, 237, 243, 0.6);
+  --fc-tertiary-color-rgb: 230, 237, 243;
+  --fc-link-color: #36edb5;
+  --fc-link-hover-color: #7bf3cd;
+}
+
+a {
+  color: var(--fc-link-color);
+}
+
+a:hover {
+  color: var(--fc-link-hover-color);
+}
+
+// Mint step circles carry dark text, not white (same contrast rule as the CTAs).
+.step-label::before {
+  color: #0b1324;
+}

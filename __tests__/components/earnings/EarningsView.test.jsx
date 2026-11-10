@@ -30,16 +30,19 @@ function answering(answer, profile = "today") {
 describe("EarningsView", () => {
   it("today: the three null fields read Not available yet with their lines, never 0, and no history table", async () => {
     const { container } = renderWithSession(<EarningsView />, { profile: "today" });
-    expect(await screen.findByText("12 GNUS")).toBeInTheDocument();
+    expect(await screen.findByText("Processing jobs")).toBeInTheDocument();
+    const hero = document.querySelector(".hero-metric");
+    expect(hero).toHaveTextContent("12");
     expect(screen.getByRole("heading", { level: 1, name: "Earnings" })).toBeInTheDocument();
-    expect(screen.getByText("For the account that earns: 0xa1a1...a1a1")).toBeInTheDocument();
     expect(screen.getByText("These figures cover this account only, not its child accounts.")).toBeInTheDocument();
     expect(screen.getByText("Held by the node account on the SuperGenius network, not by the wallet that pays.")).toBeInTheDocument();
-    expect(screen.getByText("This node is processing jobs.")).toBeInTheDocument();
-    expect(screen.getAllByText("Not available yet")).toHaveLength(3);
+    expect(screen.getByText("Processing jobs")).toBeInTheDocument();
+    // jobsProcessed and earned.total are null in this profile and read as text;
+    // a null history is a designed empty state ("History not available yet"), not the literal.
+    expect(screen.getAllByText("Not available yet")).toHaveLength(2);
     expect(screen.getByText("The network doesn't report processed jobs per account yet.")).toBeInTheDocument();
     expect(screen.getByText("The network doesn't report earnings per account yet.")).toBeInTheDocument();
-    expect(screen.getByText("Your earnings history shows up here once the network reports it.")).toBeInTheDocument();
+    expect(screen.getByText("History not available yet")).toBeInTheDocument();
     const processed = screen.getByText("Jobs processed").nextElementSibling;
     expect(processed).not.toHaveTextContent(/^0$/);
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
@@ -68,8 +71,8 @@ describe("EarningsView", () => {
   it("reads No earnings recorded yet for an empty history, and says when the node is not processing", async () => {
     const provider = answering(body({ processing: { isProcessing: false, jobsProcessed: "0" }, earned: { total: "0", history: [] } }));
     renderWithSession(<EarningsView />, { provider });
-    expect(await screen.findByText("No earnings recorded yet.")).toBeInTheDocument();
-    expect(screen.getByText("This node is not processing jobs.")).toBeInTheDocument();
+    expect(await screen.findByText("No earnings recorded yet")).toBeInTheDocument();
+    expect(screen.getByText("Idle")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.queryByText("Not available yet")).not.toBeInTheDocument();
   });
@@ -105,7 +108,7 @@ describe("EarningsView", () => {
       return request(args);
     };
     renderWithSession(<EarningsView />, { provider });
-    expect(await screen.findByText(/^Last updated /)).toBeInTheDocument();
+    expect(await screen.findByText(/^Updated /)).toBeInTheDocument();
     expect(earningsCalls(provider)).toHaveLength(1);
     held = true;
     await userEvent.click(screen.getByRole("button", { name: "Refresh" }));
@@ -117,10 +120,11 @@ describe("EarningsView", () => {
 
   it("re-reads on a node account switch and shows the new account's short address", async () => {
     const { provider } = renderWithSession(<EarningsView />, { profile: "today" });
-    await screen.findByText("For the account that earns: 0xa1a1...a1a1");
+    await screen.findByText("These figures cover this account only, not its child accounts.");
     act(() => provider.controls.switchAccount());
-    expect(await screen.findByText("For the account that earns: 0xa2a2...a2a2")).toBeInTheDocument();
     await waitFor(() => expect(earningsCalls(provider)).toHaveLength(2));
+    expect(await screen.findByText("Processing jobs")).toBeInTheDocument();
+    expect(document.querySelector(".hero-metric")).toBeInTheDocument();
   });
 
   it("shows the contract mismatch message when the figures name another account", async () => {

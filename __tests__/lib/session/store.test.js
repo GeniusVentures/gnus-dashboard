@@ -14,7 +14,7 @@ afterEach(() => jest.useRealTimers());
 describe("session store", () => {
   test("a StrictMode mount sends exactly one gnus_getAccounts", async () => {
     const { provider } = renderWithSession(<IdentityHeader />, { strict: true });
-    expect(await screen.findByText("Network: staging, chain 80002")).toBeInTheDocument();
+    expect(await screen.findByText("Amoy testnet")).toBeInTheDocument();
     expect(provider.controls.calls.filter((call) => call.method === GET_ACCOUNTS)).toHaveLength(1);
   });
 

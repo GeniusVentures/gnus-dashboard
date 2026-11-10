@@ -144,8 +144,8 @@ describe("outcome screens", () => {
       expect(within(banner).getByRole("link", { name: "View the payment on the block explorer" })).toBeInTheDocument();
       const names = within(banner)
         .getAllByRole("button")
-        .map((b) => b.textContent);
-      expect(names).toEqual(["Copy", "Submit another job"]);
+        .map((b) => b.getAttribute("aria-label") ?? b.textContent);
+      expect(names).toEqual(["Copy burn transaction hash", "Submit another job"]);
       expect(screen.queryByRole("button", { name: /retry|try again|pay and submit/i })).not.toBeInTheDocument();
       expect(await axe(view.container)).toHaveNoViolations();
     },

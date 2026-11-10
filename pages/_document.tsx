@@ -1,7 +1,7 @@
 import { Head, Html, Main, NextScript } from "next/document";
 
 const Document: React.FC = () => (
-  <Html lang="en">
+  <Html lang="en" data-bs-theme="dark">
     <Head />
     <body>
       <Main />

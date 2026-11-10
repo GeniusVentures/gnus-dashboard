@@ -97,3 +97,9 @@ None yet.
 Last session: 2026-10-26
 Stopped at: Requirements and roadmap written; Phase 1 ready to plan
 Resume file: None
+
+## Session Continuity (2026-11-10)
+
+Last session: 2026-11-10
+Stopped at: Phase 09-01 design pass implemented and verified (834/834 tests; shots at http://slave:8099/2026-11-10/143954-ui-*.png). Second-pass candidates listed in 09-01-SUMMARY.md. Funding blocker for real-data walks recorded in the wallet's test report (http://slave:8099/2026-11-10/wallet-test-report.html).
+Resume file: None

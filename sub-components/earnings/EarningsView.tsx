@@ -2,7 +2,6 @@ import React from "react";
 import Head from "next/head";
 import { GnusContractMismatchError, GnusError } from "../../lib/gnus/errors";
 import Amount from "../shared/Amount";
-import { shorten } from "../wallet/AddressChip";
 import { useSession } from "../wallet/SessionProvider";
 import { useAccountQuery } from "../wallet/useAccountQuery";
 
@@ -54,24 +53,41 @@ const EarningsBody: React.FC = () => {
   const { history } = data.earned;
   return (
     <>
-      <p>For the account that earns: {shorten(accounts.node.sdkAddress)}</p>
-      <p>These figures cover this account only, not its child accounts.</p>
-      <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
-        <span role="status">Last updated {stamp.format(new Date(query.dataUpdatedAt))}</span>
-        <button type="button" className="btn btn-primary" disabled={query.isFetching} onClick={() => void query.refetch()}>
-          Refresh
-        </button>
-        {query.isFetching ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
+      <div className="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+        <div>
+          <div className="small text-body-secondary mb-1">
+            Node account balance, held on the SuperGenius network &mdash; not by the wallet that pays
+          </div>
+          <div className="hero-metric">
+            <Amount value={data.balance} decimals={unit.decimals} />
+            <span className="unit">{unit.symbol}</span>
+          </div>
+        </div>
+        <div className="d-flex flex-column align-items-end gap-2">
+          <span
+            className="status-pill"
+            data-status={data.processing.isProcessing ? "active" : "idle"}
+          >
+            {data.processing.isProcessing ? "Processing jobs" : "Idle"}
+          </span>
+          <div className="d-flex align-items-center gap-2 small text-body-secondary">
+            <span role="status">Updated {stamp.format(new Date(query.dataUpdatedAt))}</span>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-secondary"
+              disabled={query.isFetching}
+              onClick={() => void query.refetch()}
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
       <dl className="row">
         <dt className="col-sm-4">Node account balance (SGNUS)</dt>
         <dd className="col-sm-8">
           <Amount value={data.balance} decimals={unit.decimals} symbol={unit.symbol} />
           <div className="small">Held by the node account on the SuperGenius network, not by the wallet that pays.</div>
-        </dd>
-        <dt className="col-sm-4">Processing</dt>
-        <dd className="col-sm-8">
-          {data.processing.isProcessing ? "This node is processing jobs." : "This node is not processing jobs."}
         </dd>
         <dt className="col-sm-4">Jobs processed</dt>
         <dd className="col-sm-8">
@@ -88,14 +104,22 @@ const EarningsBody: React.FC = () => {
           ) : null}
         </dd>
       </dl>
+      <p className="small text-body-secondary">
+        These figures cover this account only, not its child accounts.
+      </p>
       <h2 className="h4 mt-4">Earnings history</h2>
       {history === null ? (
-        <>
-          <p className="mb-1">Not available yet</p>
+        <div className="empty-state">
+          <div className="empty-icon" aria-hidden="true">📈</div>
+          <h2>History not available yet</h2>
           <p>Your earnings history shows up here once the network reports it.</p>
-        </>
+        </div>
       ) : history.length === 0 ? (
-        <p>No earnings recorded yet.</p>
+        <div className="empty-state">
+          <div className="empty-icon" aria-hidden="true">📈</div>
+          <h2>No earnings recorded yet</h2>
+          <p>Processed jobs land here as they pay out. Submit or process a job to start.</p>
+        </div>
       ) : (
         <div className="table-responsive">
           <table className="table">

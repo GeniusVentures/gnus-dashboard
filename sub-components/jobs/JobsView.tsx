@@ -99,10 +99,16 @@ const JobsBody: React.FC = () => {
   }
   if (jobs.length === 0 || !unit) {
     return (
-      <div>
-        <h2 className="h4">No jobs yet</h2>
-        <p>Jobs you submit from this account show up here.</p>
-        <Link href="/submit">Submit a job</Link>
+      <div className="empty-state" aria-live="polite">
+        <div className="empty-icon" aria-hidden="true">📋</div>
+        <h2>No jobs yet</h2>
+        <p>
+          Jobs you submit from this account show up here with live status, results and spending.
+          Start by loading a job definition and submitting it.
+        </p>
+        <Link href="/submit" className="btn btn-primary">
+          Submit a job
+        </Link>
       </div>
     );
   }
