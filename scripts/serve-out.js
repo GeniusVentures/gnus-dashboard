@@ -90,8 +90,8 @@ const server = http
       send(res, 404, path.join(root, "404.html"), head, pathname);
     }
   })
-  .listen(port, "127.0.0.1", () => {
-    console.log(`serving out/ on http://127.0.0.1:${port}`);
+  .listen(port, process.env.HOST || "127.0.0.1", () => {
+    console.log(`serving out/ on http://${process.env.HOST || "127.0.0.1"}:${port}`);
     const command = process.argv.slice(2).join(" ");
     if (command) {
       // Async spawn: the server must keep answering while the command runs.

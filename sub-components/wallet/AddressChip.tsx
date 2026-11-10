@@ -47,14 +47,15 @@ const AddressChip: React.FC<Props> = ({ label, address, copyName }) => {
   }
 
   return (
-    <span className="d-inline-flex flex-wrap align-items-center gap-2">
-      <span>
-        {label} <code>{shorten(address)}</code>
+    <span className="d-inline-flex flex-wrap align-items-center gap-1">
+      <span className="small text-body-secondary">{label}</span>
+      <span className="address-pill">
+        <span title={address}>{shorten(address)}</span>
+        <button type="button" className="btn btn-sm btn-link p-0" aria-label={copyName} onClick={copy}>
+          {result === "copied" ? "✓" : "⧉"}
+        </button>
       </span>
-      <button type="button" className="btn btn-sm btn-link" aria-label={copyName} onClick={copy}>
-        Copy
-      </button>
-      <span aria-live="polite">
+      <span aria-live="polite" className="small text-body-secondary">
         {result === "copied" ? "Copied" : null}
         {result === "failed" ? "Copy failed. Select the address to copy it." : null}
       </span>

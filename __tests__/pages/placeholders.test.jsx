@@ -6,11 +6,11 @@ describe('placeholder routes', () => {
   it('renders the home page and explains the two identities', async () => {
     const Page = require('../../pages/index').default;
     renderWithSession(<Page />);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dashboard' })).toBeInTheDocument();
-    expect(screen.getByText(/account your jobs and earnings belong to/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: /Submit compute jobs/ })).toBeInTheDocument();
+    expect(screen.getByText(/account your jobs and their earnings belong to/)).toBeInTheDocument();
     expect(screen.getByText(/wallet that pays/)).toBeInTheDocument();
     ['Submit a job', 'My jobs', 'Earnings'].forEach((name) => {
-      expect(screen.getByRole('link', { name })).toBeInTheDocument();
+      expect(screen.getAllByRole('link', { name }).length).toBeGreaterThan(0);
     });
   });
 

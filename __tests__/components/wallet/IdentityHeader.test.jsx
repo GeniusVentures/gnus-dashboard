@@ -19,7 +19,7 @@ afterEach(() => {
 
 async function connected(options) {
   const view = renderWithSession(<IdentityHeader />, options);
-  await screen.findByText("Network: staging, chain 80002");
+  await screen.findByText("Amoy testnet");
   return view;
 }
 

@@ -3,7 +3,7 @@ import Socials from "sub-components/socials/Socials";
 import ExternalLink from "../../sub-components/shared/ExternalLink";
 
 const Footer: React.FC = () => (
-  <footer className="border-top py-3 mt-5">
+  <footer className="border-top py-3 mt-5 text-body-secondary">
     <div className="container d-flex flex-wrap align-items-center justify-content-between gap-3">
       <span>{`GNUS.AI © ${new Date().getFullYear()}. All Rights Reserved.`}</span>
       <Socials si="sm" />

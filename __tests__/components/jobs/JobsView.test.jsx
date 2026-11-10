@@ -46,7 +46,7 @@ describe("JobsView", () => {
   it("says No jobs yet for an account with no jobs, with a link to submit", async () => {
     const { container } = renderWithSession(<JobsView />, { profile: "today" });
     expect(await screen.findByText("No jobs yet")).toBeInTheDocument();
-    expect(screen.getByText("Jobs you submit from this account show up here.")).toBeInTheDocument();
+    expect(screen.getByText(/Jobs you submit from this account show up here/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Submit a job" })).toHaveAttribute("href", "/submit");
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
