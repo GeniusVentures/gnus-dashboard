@@ -28,7 +28,6 @@ describe('Basic Smoke Tests', () => {
 
     it('has proper test environment setup', () => {
       expect(process.env.NODE_ENV).toBe('test');
-      expect(global.fetch).toBeDefined();
       expect(global.TextEncoder).toBeDefined();
       expect(global.TextDecoder).toBeDefined();
     });

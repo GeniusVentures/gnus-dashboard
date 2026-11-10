@@ -1,89 +1,55 @@
-import { Fragment, useEffect, useState } from "react";
-import { Button, Row } from "react-bootstrap";
-import BlockchainInfo from "sub-components/dashboard/BlockchainInfo";
-import { useRouter } from "next/router";
-import lastUpdate from "../functions/time/lastUpdate";
-import StaticVideoBG from "sub-components/videos/StaticVideoBG";
+import Head from "next/head";
+import Link from "next/link";
+import WalletGate from "../sub-components/wallet/WalletGate";
 
-const Landing: React.FC = () => {
-  const router = useRouter();
-  const [updated, setUpdated] = useState(null);
-  const [width, setWidth] = useState<number>(0);
-  const [show, setShow] = useState<boolean>(false);
-
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  useEffect(() => {
-    setUpdated(lastUpdate());
-  }, []);
-
-  useEffect(() => {
-    if (show) {
-      setShow(false);
-      setTimeout(() => {
-        setShow(true);
-      }, 500);
-    }
-  }, [width]);
-
-  return (
-    <Fragment>
-      <div>
-        <div
-          className="w-100 fs-3 py-15"
-          style={{
-            minHeight: "100vh",
-            alignContent: "center",
-            height: "100%",
-            backgroundColor: "#00000060",
-          }}>
-          <Row className="justify-content-center mx-3 mx-lg-10">
-            {width >= 1200 && (
-              <div className="text-center mt-5">
-                <h1 className="display-3 text-white">Testnet Dashboard</h1>
-                <p className="text-white pb-5">Last updated: {updated}</p>
-              </div>
-            )}
-            {width >= 900 && width < 1200 && (
-              <div className="text-center mt-5">
-                <h1 className="display-4 text-white">Testnet Dashboard</h1>
-                <p className="text-white pb-5">Last updated: {updated}</p>
-              </div>
-            )}
-            {width < 900 && (
-              <div className="text-center mt-5">
-                <h1 className="display-5 text-white">Testnet Dashboard</h1>
-                <p className="text-white fs-5 pb-5">Last updated: {updated}</p>
-              </div>
-            )}
-
-            <Row className="px-0">
-              <BlockchainInfo />
-            </Row>
-          </Row>
-          <Row className="justify-content-center mt-5">
-            <div style={{ width: "250px" }} className="mx-auto mx-sm-0">
-              <Button
-                onClick={() => router.push("/analytics")}
-                style={{
-                  backgroundColor: " #00000000",
-                }}
-                className="btn-gnus py-2 w-100">
-                View Analytics
-              </Button>
-            </div>
-          </Row>
+const Dashboard: React.FC = () => (
+  <WalletGate>
+    <section className="container">
+      <Head>
+        <title>Dashboard | GNUS.AI Dashboard</title>
+      </Head>
+      <div className="hero">
+        <p className="micro-label">GNUS.AI Dashboard</p>
+        <h1>
+          Submit <span className="accent">compute jobs</span>.
+          <br />
+          Watch the network run them.
+        </h1>
+        <p className="lead">
+          Send a job to the SuperGenius network from this dashboard. Your wallet confirms the payment,
+          your earning account receives the result, and every job is tracked here.
+        </p>
+        <div className="d-flex flex-wrap justify-content-center gap-3 mt-4">
+          <Link href="/submit" className="btn btn-primary btn-lg px-4">
+            Submit a job
+          </Link>
+          <Link href="/jobs" className="btn btn-outline-secondary btn-lg px-4">
+            My jobs
+          </Link>
+        </div>
+        <p className="mt-3 mb-0 text-body-secondary small">
+          How it works: 1 &mdash; connect your wallet &middot; 2 &mdash; submit a job &middot; 3 &mdash; track it
+          under My jobs and watch your earnings grow. <Link href="/earnings">Earnings</Link>
+        </p>
+      </div>
+      <div className="identity-explainer">
+        <div className="card">
+          <div className="card-body">
+            <h2 className="card-title">Earning as</h2>
+            <p className="card-text mb-0">
+              The account your jobs and their earnings belong to. Your node processes work under this identity.
+            </p>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-body">
+            <h2 className="card-title">Paying from</h2>
+            <p className="card-text mb-0">The wallet that pays for the jobs you submit. Every payment needs your approval.</p>
+          </div>
         </div>
       </div>
-    </Fragment>
-  );
-};
+    </section>
+  </WalletGate>
+);
 
-export default Landing;
+export default Dashboard;

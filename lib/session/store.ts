@@ -1,0 +1,467 @@
+import { GnusClient, createGnusClient } from "../gnus/client";
+import { GnusError, normalizeError } from "../gnus/errors";
+import { createInjectedTransport } from "../gnus/transport/injected";
+import { DetectEnv, detectTransport } from "../gnus/transport/select";
+import type { Transport } from "../gnus/transport/types";
+import type {
+  SignClientLike,
+  WalletConnectLoader,
+  WalletConnectModule,
+  WcSession,
+} from "../gnus/transport/walletconnect";
+import { INITIAL_STATE, SessionEvent, SessionState, reduce } from "./machine";
+
+export interface SessionEnv extends DetectEnv {
+  /** False while the tab is hidden. Left out, the tab counts as visible. */
+  isVisible?(): boolean;
+  /** Loads the WalletConnect code on the browser path. Left out, the browser path ends at "GeniusWallet required". */
+  loadWalletConnect?: WalletConnectLoader;
+}
+
+/** A tracked read unanswered for this long shows "GeniusWallet isn't responding"; the read is not abandoned. */
+export const NO_REPLY_MS = 15000;
+
+/** The text the wallet gave for declining a pairing is shown cut to this many characters. */
+const MAX_DETAIL = 200;
+const PROPOSAL_EXPIRED = "Proposal expired";
+const PING_MS = 10000;
+const END_REASON = { code: 6000, message: "User disconnected." };
+
+/** Seconds between getAccounts retries while the wallet is starting up; the last step repeats. */
+export const STARTUP_RETRY_SECONDS = [1, 2, 4, 8, 16, 30];
+
+export interface SessionStore {
+  getState(): SessionState;
+  subscribe(listener: () => void): () => void;
+  /** Idempotent: detection and the connect call run once per store. */
+  start(): void;
+  /** Re-runs the connect call from a failure screen; after a restore that got no answer, pings the stored session again. */
+  retry(): void;
+  /** WalletConnect only: ends the session and moves to the disconnected screen. */
+  disconnect(): void;
+  /** The Connect again button: one more connect call, which prompts in the wallet. */
+  connectAgain(): void;
+  /** Retries getAccounts now and restarts the startup schedule. */
+  tryNow(): void;
+  /** The live client, or null before the injected wallet is attached. */
+  getClient(): GnusClient | null;
+  /** Wraps an account read so the session can notice when the wallet stops answering. */
+  track<T>(read: Promise<T>): Promise<T>;
+  /** An account query's error: the session moves only for the codes that concern it. */
+  report(error: GnusError): void;
+  dispose(): void;
+}
+
+export function createSessionStore(env: SessionEnv): SessionStore {
+  let state = INITIAL_STATE;
+  let started = false;
+  let disposed = false;
+  let client: GnusClient | null = null;
+  let walletConnect: SignClientLike | null = null;
+  let wcModule: WalletConnectModule | null = null;
+  let wcSession: WcSession | null = null;
+  // A stored session found on start that has not answered a ping yet.
+  let pendingSession: WcSession | null = null;
+  // Counts pairings, so an answer to a code that was replaced is ignored.
+  let pairingRun = 0;
+  // A proposal expired while the tab was hidden; the next visit asks for a fresh code.
+  let pairingStale = false;
+  let retryTimer: unknown = null;
+  let retryStep = 0;
+  let readInFlight = false;
+  let slowReads = 0;
+  // Counts identity events, so a read that began before one cannot put the older identity back.
+  let identityEvents = 0;
+  const cleanups: Array<() => void> = [];
+  const listeners = new Set<() => void>();
+
+  function stopRetryTimer(): void {
+    if (retryTimer !== null) {
+      env.clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+  }
+
+  // One timer while the wallet is starting up; leaving that phase cancels it.
+  function syncRetryTimer(): void {
+    if (state.phase !== "startingUp") {
+      stopRetryTimer();
+      retryStep = 0;
+      return;
+    }
+    if (retryTimer !== null || readInFlight || disposed) {
+      return;
+    }
+    const seconds = STARTUP_RETRY_SECONDS[Math.min(retryStep, STARTUP_RETRY_SECONDS.length - 1)];
+    retryStep += 1;
+    retryTimer = env.setTimeout(() => {
+      retryTimer = null;
+      readAccounts();
+    }, seconds * 1000);
+  }
+
+  function dispatch(event: SessionEvent): void {
+    const next = reduce(state, event);
+    if (next !== state) {
+      state = next;
+      for (const listener of [...listeners]) {
+        listener();
+      }
+    }
+    syncRetryTimer();
+  }
+
+  function track<T>(read: Promise<T>): Promise<T> {
+    let slow = false;
+    const timer = env.setTimeout(() => {
+      slow = true;
+      slowReads += 1;
+      dispatch({ type: "noReply" });
+    }, NO_REPLY_MS);
+    const settled = (): void => {
+      env.clearTimeout(timer);
+      if (slow) {
+        slowReads -= 1;
+        if (slowReads === 0 && !disposed) {
+          dispatch({ type: "replyArrived" });
+        }
+      }
+    };
+    read.then(settled, settled);
+    return read;
+  }
+
+  // The connect call has no timeout: the wallet may hold it until the user answers its prompt.
+  // A re-read of a connected session is tracked like any other read.
+  function readAccounts(source: "connect" | "identity" = "connect"): void {
+    if (!client || readInFlight) {
+      return;
+    }
+    readInFlight = true;
+    const seen = identityEvents;
+    const read = client.getAccounts();
+    (source === "identity" ? track(read) : read).then(
+      (accounts) => {
+        readInFlight = false;
+        if (!disposed && (seen === identityEvents || state.accounts === null)) {
+          dispatch({ type: "accountsReceived", accounts });
+        }
+      },
+      (err: unknown) => {
+        readInFlight = false;
+        if (!disposed) {
+          const error = normalizeError(err);
+          dispatch(source === "connect" ? { type: "connectFailed", error } : { type: "errorReported", error, source });
+        }
+      },
+    );
+  }
+
+  function onVisible(): void {
+    if (env.isVisible?.() === false) {
+      return;
+    }
+    if (pairingStale) {
+      pair();
+    } else if (state.phase === "ready" || state.phase === "switching") {
+      readAccounts("identity");
+    }
+  }
+
+  function connect(first: SessionEvent): void {
+    if (!client) {
+      return;
+    }
+    stopRetryTimer();
+    dispatch(first);
+    readAccounts();
+  }
+
+  function attach(transport: Transport, kind: "injected" | "walletconnect"): void {
+    dispatch({ type: "transportChosen", transport: kind });
+    const live = createGnusClient(transport);
+    client = live;
+    cleanups.push(() => live.close());
+    cleanups.push(
+      live.on(
+        "gnus_accountsChanged",
+        (accounts) => {
+          identityEvents += 1;
+          dispatch({ type: "accountsReceived", accounts });
+        },
+        (error) => dispatch({ type: "errorReported", error, source: "identity" }),
+      ),
+    );
+    const ended = (): void => {
+      if (kind === "walletconnect") {
+        wcSession = null;
+      }
+      dispatch({ type: kind === "walletconnect" ? "sessionEnded" : "disconnected" });
+    };
+    cleanups.push(live.on("disconnect", ended, ended));
+    cleanups.push(
+      live.on(
+        "gnus_networkChanged",
+        (network) => {
+          identityEvents += 1;
+          dispatch({ type: "networkChanged", network });
+        },
+        (error) => dispatch({ type: "errorReported", error, source: "identity" }),
+      ),
+    );
+    connect({ type: "connectStarted" });
+  }
+
+  function closeWalletConnect(): void {
+    const closing = walletConnect;
+    walletConnect = null;
+    wcSession = null;
+    pendingSession = null;
+    pairingRun += 1;
+    closing?.close().catch(() => {});
+  }
+
+  function attachSession(session: WcSession): void {
+    if (!walletConnect || !wcModule) {
+      return;
+    }
+    wcSession = session;
+    attach(wcModule.createWalletConnectTransport(walletConnect, session), "walletconnect");
+  }
+
+  // The wallet's decision stands, but a session that is not GeniusWallet, or too old, is ended here so the next connect pairs fresh.
+  function onApproved(session: WcSession): void {
+    const verdict = wcModule?.classifyNamespaces(session) ?? "notGenius";
+    if (verdict === "ok") {
+      attachSession(session);
+      return;
+    }
+    walletConnect?.disconnect({ topic: session.topic, reason: END_REASON }).catch(() => {});
+    dispatch({ type: "pairingRefused", cause: verdict === "notGenius" ? "notGenius" : "walletOld" });
+  }
+
+  function onPairingFailed(err: unknown): void {
+    const { code, message } = (err ?? {}) as { code?: unknown; message?: unknown };
+    if (code === 0 || message === PROPOSAL_EXPIRED) {
+      if (env.isVisible?.() === false) {
+        pairingStale = true;
+      } else {
+        pair();
+      }
+      return;
+    }
+    dispatch({
+      type: "pairingDeclined",
+      message: typeof message === "string" && message.length > 0 ? message.slice(0, MAX_DETAIL) : null,
+    });
+  }
+
+  function pair(): void {
+    const wc = walletConnect;
+    if (!wc) {
+      return;
+    }
+    pairingStale = false;
+    const run = (pairingRun += 1);
+    void (async () => {
+      try {
+        const proposal = await wc.connect();
+        if (disposed || run !== pairingRun) {
+          return;
+        }
+        dispatch({ type: "pairingStarted", uri: proposal.uri ?? "" });
+        const session = await proposal.approval();
+        if (!disposed && run === pairingRun) {
+          onApproved(session);
+        }
+      } catch (err) {
+        if (!disposed && run === pairingRun) {
+          onPairingFailed(err);
+        }
+      }
+    })();
+  }
+
+  // Waits for the wallet to answer a ping: "gone" when the relay says the session no longer exists.
+  function pingWithin(wc: SignClientLike, topic: string): Promise<"ok" | "timeout" | "gone"> {
+    return new Promise((resolve) => {
+      const timer = env.setTimeout(() => resolve("timeout"), PING_MS);
+      wc.ping({ topic }).then(
+        () => {
+          env.clearTimeout(timer);
+          resolve("ok");
+        },
+        () => {
+          env.clearTimeout(timer);
+          resolve("gone");
+        },
+      );
+    });
+  }
+
+  async function restore(session: WcSession): Promise<void> {
+    const wc = walletConnect;
+    if (!wc) {
+      return;
+    }
+    const run = (pairingRun += 1);
+    pendingSession = session;
+    dispatch({ type: "restoreStarted" });
+    const answer = await pingWithin(wc, session.topic);
+    if (disposed || run !== pairingRun) {
+      return;
+    }
+    if (answer === "ok") {
+      pendingSession = null;
+      attachSession(session);
+    } else if (answer === "timeout") {
+      dispatch({ type: "walletOffline" });
+    } else {
+      pendingSession = null;
+      wc.disconnect({ topic: session.topic, reason: END_REASON }).catch(() => {});
+      pair();
+    }
+  }
+
+  // The newest unexpired session that is GeniusWallet; every other stored session is ended, one provider per session.
+  function newestStored(wc: SignClientLike): WcSession | null {
+    const now = Date.now() / 1000;
+    const sessions = wc.getSessions();
+    const usable = sessions
+      .filter((session) => session.expiry > now && wcModule?.classifyNamespaces(session) === "ok")
+      .sort((a, b) => b.expiry - a.expiry);
+    for (const other of sessions.filter((session) => session !== usable[0])) {
+      wc.disconnect({ topic: other.topic, reason: END_REASON }).catch(() => {});
+    }
+    return usable[0] ?? null;
+  }
+
+  function disconnect(): void {
+    const topic = wcSession?.topic ?? pendingSession?.topic;
+    wcSession = null;
+    pendingSession = null;
+    pairingRun += 1;
+    client?.close();
+    client = null;
+    if (topic) {
+      walletConnect?.disconnect({ topic, reason: END_REASON }).catch(() => {});
+    }
+    dispatch({ type: "sessionEnded" });
+  }
+
+  async function startBrowserPath(): Promise<void> {
+    let wc: SignClientLike | null = null;
+    try {
+      const loaded = env.loadWalletConnect ? await env.loadWalletConnect() : null;
+      wc = loaded ? await loaded.createClient() : null;
+      wcModule = loaded;
+    } catch {
+      wc = null;
+    }
+    if (disposed) {
+      void wc?.close();
+      return;
+    }
+    if (!wc) {
+      dispatch({ type: "detected", choice: "walletconnect" });
+      return;
+    }
+    walletConnect = wc;
+    cleanups.push(closeWalletConnect);
+    dispatch({ type: "transportChosen", transport: "walletconnect" });
+    const stored = newestStored(wc);
+    if (stored) {
+      await restore(stored);
+    } else {
+      pair();
+    }
+  }
+
+  function start(): void {
+    if (started) {
+      return;
+    }
+    started = true;
+    const detection = detectTransport(env, { hasActiveWalletConnectSession: () => wcSession !== null });
+    cleanups.push(() => detection.dispose());
+    cleanups.push(detection.onNotReady(() => dispatch({ type: "noBridge" })));
+    env.win.addEventListener("visibilitychange", onVisible);
+    cleanups.push(() => env.win.removeEventListener("visibilitychange", onVisible));
+    cleanups.push(
+      detection.onSwitch(() => {
+        if (!disposed) {
+          closeWalletConnect();
+          dispatch({ type: "lateInjection" });
+          attach(createInjectedTransport(env.win), "injected");
+        }
+      }),
+    );
+    void detection.choice.then((choice) => {
+      if (disposed) {
+        return;
+      }
+      if (choice === "injected") {
+        dispatch({ type: "detected", choice });
+        attach(createInjectedTransport(env.win), "injected");
+      } else {
+        void startBrowserPath();
+      }
+    });
+  }
+
+  return {
+    getState: () => state,
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    start,
+    retry: () => (pendingSession ? void restore(pendingSession) : connect({ type: "connectStarted" })),
+    disconnect,
+    connectAgain: () => (walletConnect && !wcSession ? pair() : connect({ type: "connectAgain" })),
+    tryNow() {
+      stopRetryTimer();
+      retryStep = 0;
+      readAccounts();
+    },
+    getClient: () => client,
+    track,
+    report: (error) => dispatch({ type: "errorReported", error, source: "query" }),
+    dispose() {
+      disposed = true;
+      listeners.clear();
+      stopRetryTimer();
+      for (const cleanup of cleanups.splice(0)) {
+        cleanup();
+      }
+    },
+  };
+}
+
+const stores = new WeakMap<object, SessionStore>();
+
+let loadWalletConnect: WalletConnectLoader = () => import("../gnus/transport/walletconnect");
+
+/** For the dev server only: swaps the real WalletConnect code for a fake relay. Production code never calls it. */
+export function setWalletConnectLoader(loader: WalletConnectLoader): void {
+  loadWalletConnect = loader;
+}
+
+/** One store per window, made on first use and never at import. */
+export function getSessionStore(win: Window = window): SessionStore {
+  let store = stores.get(win);
+  if (!store) {
+    store = createSessionStore({
+      win: win as unknown as DetectEnv["win"],
+      isVisible: () => win.document.visibilityState === "visible",
+      userAgent: win.navigator.userAgent,
+      loadWalletConnect: () => loadWalletConnect(),
+      setTimeout: (fn, ms) => win.setTimeout(fn, ms),
+      clearTimeout: (id) => win.clearTimeout(id as number),
+    });
+    stores.set(win, store);
+  }
+  return store;
+}

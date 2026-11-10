@@ -12,11 +12,6 @@ if (typeof global.TextEncoder === 'undefined') {
   global.TextDecoder = TextDecoder;
 }
 
-// Polyfill for fetch (if not already available)
-if (typeof global.fetch === 'undefined') {
-  global.fetch = require('node-fetch');
-}
-
 // Polyfill for AbortController
 if (typeof global.AbortController === 'undefined') {
   global.AbortController = class AbortController {

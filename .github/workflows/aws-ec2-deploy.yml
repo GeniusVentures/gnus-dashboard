@@ -1,12 +1,6 @@
 name: CI/CD Deploy Genius Dashboard Backend/Frontend
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - '.github/**'
   workflow_dispatch:
 
 jobs:
@@ -14,6 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
     steps:
+      - name: EC2 deploy disabled
+        run: |
+          echo "static export: EC2 deploy disabled until cutover, see DEP-04/DEP-05" >&2
+          exit 1
 #      - name: Deploy to CloudFlare
 #        run: |
 #          curl -s -X POST "${{ secrets.CLOUD_FLARE_TRIGGER_DEPLOY }}" > /dev/null

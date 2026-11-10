@@ -1,0 +1,5 @@
+# Historical false positives, fixed in the tree by d9fc4cf; pinned by exact fingerprint.
+# Two test sentences matched the mnemonic rule; the hex is SHA-256("abc"), the standard test vector.
+f378ac85c771197b6e45f9892a1632decd610339:cypress/e2e/jobs.cy.js:mnemonic-phrase:14
+af4a0957110cac42ad17e2eac7592e154e4240b5:__tests__/lib/submit/estimate.test.js:mnemonic-phrase:96
+4a6c5e4f8aeee2b2f62bf24525d6bd8861f39935:__tests__/lib/submit/job.test.js:hex-private-key:62

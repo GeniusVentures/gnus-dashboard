@@ -1,3 +1,23 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "react/no-danger": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "JSXAttribute[name.name='target']",
+        "message": "Links that leave the dashboard go through ExternalLink, which alone sets target."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name!='ExternalLink'] > JSXAttribute[name.name='href'][value.value=/^(https?:)?\\x2f\\x2f/]",
+        "message": "An absolute link must be an ExternalLink so it opens the system browser."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["sub-components/shared/ExternalLink.tsx"],
+      "rules": { "no-restricted-syntax": "off" }
+    }
+  ]
 }
